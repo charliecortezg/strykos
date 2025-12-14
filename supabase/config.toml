@@ -1,1 +1,4 @@
 project_id = "ounhzchuuvziyqriyjdb"
+
+[functions.setup-platform-admin]
+verify_jwt = false
