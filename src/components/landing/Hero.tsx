@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/brand/Logo";
 import { ArrowRight, Shield, Users, ClipboardCheck } from "lucide-react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 export function Hero() {
   return (
@@ -16,12 +17,16 @@ export function Hero() {
         <nav className="flex items-center justify-between">
           <Logo variant="dark" size="md" />
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm">
-              Iniciar sesión
-            </Button>
-            <Button variant="default" size="sm">
-              Solicitar demo
-            </Button>
+            <Link to="/login">
+              <Button variant="ghost" size="sm">
+                Iniciar sesión
+              </Button>
+            </Link>
+            <Link to="/registro-academia">
+              <Button variant="default" size="sm">
+                Comenzar ahora
+              </Button>
+            </Link>
           </div>
         </nav>
       </header>
@@ -65,10 +70,12 @@ export function Hero() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4"
           >
-            <Button variant="hero" size="lg">
-              Comenzar ahora
-              <ArrowRight className="w-5 h-5" />
-            </Button>
+            <Link to="/registro-academia">
+              <Button variant="hero" size="lg">
+                Comenzar ahora
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
             <Button variant="outline" size="lg">
               Ver demostración
             </Button>

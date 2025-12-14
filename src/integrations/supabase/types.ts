@@ -14,16 +14,206 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      organizations: {
+        Row: {
+          approximate_students: number
+          city: string
+          country: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          org_access_key: string
+          org_code: string
+          organization_type: Database["public"]["Enums"]["organization_type"]
+          phone: string
+          plan: Database["public"]["Enums"]["subscription_plan"] | null
+          primary_sport: string
+          updated_at: string | null
+        }
+        Insert: {
+          approximate_students: number
+          city: string
+          country: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          org_access_key: string
+          org_code: string
+          organization_type: Database["public"]["Enums"]["organization_type"]
+          phone: string
+          plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          primary_sport: string
+          updated_at?: string | null
+        }
+        Update: {
+          approximate_students?: number
+          city?: string
+          country?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          org_access_key?: string
+          org_code?: string
+          organization_type?: Database["public"]["Enums"]["organization_type"]
+          phone?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          primary_sport?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean | null
+          must_change_password: boolean | null
+          organization_id: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name: string
+          id: string
+          is_active?: boolean | null
+          must_change_password?: boolean | null
+          organization_id: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean | null
+          must_change_password?: boolean | null
+          organization_id?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sports: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_system: boolean | null
+          name: string
+          organization_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_system?: boolean | null
+          name: string
+          organization_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_system?: boolean | null
+          name?: string
+          organization_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_org_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          organization_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_org_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_access_key: { Args: never; Returns: string }
+      generate_org_code: { Args: { org_name: string }; Returns: string }
+      get_current_org_id: { Args: never; Returns: string }
+      has_org_role: {
+        Args: { _role: Database["public"]["Enums"]["org_role"] }
+        Returns: boolean
+      }
+      user_belongs_to_org: { Args: { _org_id: string }; Returns: boolean }
+      validate_org_access: {
+        Args: {
+          _org_access_key: string
+          _org_code: string
+          _user_email: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
-      [_ in never]: never
+      org_role:
+        | "org_owner"
+        | "director_deportivo"
+        | "entrenador"
+        | "administrativo"
+      organization_type:
+        | "profesional"
+        | "recreativa"
+        | "escolar"
+        | "gubernamental"
+        | "universitaria"
+        | "comunitaria"
+        | "privada"
+        | "federativa"
+        | "club_social"
+        | "otro"
+      platform_role: "platform_super_admin"
+      subscription_plan: "freemium" | "starter" | "professional" | "enterprise"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +340,27 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      org_role: [
+        "org_owner",
+        "director_deportivo",
+        "entrenador",
+        "administrativo",
+      ],
+      organization_type: [
+        "profesional",
+        "recreativa",
+        "escolar",
+        "gubernamental",
+        "universitaria",
+        "comunitaria",
+        "privada",
+        "federativa",
+        "club_social",
+        "otro",
+      ],
+      platform_role: ["platform_super_admin"],
+      subscription_plan: ["freemium", "starter", "professional", "enterprise"],
+    },
   },
 } as const
