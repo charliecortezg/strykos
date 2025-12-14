@@ -55,7 +55,8 @@ export interface UserOrgRole {
 export interface AuthState {
   user: UserProfile | null;
   organization: Organization | null;
-  role: OrgRole | null;
+  roles: OrgRole[];
+  activeRole: OrgRole | null;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
@@ -91,7 +92,7 @@ export interface CreateUserData {
 }
 
 export const ORG_ROLE_LABELS: Record<OrgRole, string> = {
-  org_owner: 'Administrador',
+  org_owner: 'Fundador',
   director_deportivo: 'Director Deportivo',
   entrenador: 'Entrenador',
   administrativo: 'Administrativo',

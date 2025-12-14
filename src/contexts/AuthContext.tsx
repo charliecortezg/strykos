@@ -1,21 +1,32 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import type { UserProfile, Organization, OrgRole, AuthState } from '@/types/auth';
 
 interface AuthContextType extends AuthState {
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  setActiveRole: (role: OrgRole) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const ACTIVE_ROLE_KEY = 'stryk_active_role';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
-  const [role, setRole] = useState<OrgRole | null>(null);
+  const [roles, setRoles] = useState<OrgRole[]>([]);
+  const [activeRole, setActiveRoleState] = useState<OrgRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const setActiveRole = useCallback((role: OrgRole) => {
+    if (roles.includes(role)) {
+      setActiveRoleState(role);
+      localStorage.setItem(ACTIVE_ROLE_KEY, role);
+    }
+  }, [roles]);
 
   const fetchUserData = useCallback(async (userId: string) => {
     try {
@@ -47,20 +58,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setOrganization(org as Organization);
 
-      // Fetch role
-      const { data: roleData, error: roleError } = await supabase
+      // Fetch ALL roles for this user in this organization
+      const { data: rolesData, error: rolesError } = await supabase
         .from('user_org_roles')
         .select('role')
         .eq('user_id', userId)
-        .eq('organization_id', profile.organization_id)
-        .maybeSingle();
+        .eq('organization_id', profile.organization_id);
 
-      if (roleError || !roleData) {
-        console.error('Error fetching role:', roleError);
+      if (rolesError) {
+        console.error('Error fetching roles:', rolesError);
         return;
       }
 
-      setRole(roleData.role as OrgRole);
+      const userRoles = (rolesData || []).map(r => r.role as OrgRole);
+      setRoles(userRoles);
+
+      // Set active role from localStorage or default to first role (prioritize org_owner)
+      const savedRole = localStorage.getItem(ACTIVE_ROLE_KEY) as OrgRole | null;
+      if (savedRole && userRoles.includes(savedRole)) {
+        setActiveRoleState(savedRole);
+      } else if (userRoles.includes('org_owner')) {
+        setActiveRoleState('org_owner');
+        localStorage.setItem(ACTIVE_ROLE_KEY, 'org_owner');
+      } else if (userRoles.length > 0) {
+        setActiveRoleState(userRoles[0]);
+        localStorage.setItem(ACTIVE_ROLE_KEY, userRoles[0]);
+      }
     } catch (error) {
       console.error('Error in fetchUserData:', error);
     }
@@ -80,7 +103,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setUser(null);
           setOrganization(null);
-          setRole(null);
+          setRoles([]);
+          setActiveRoleState(null);
+          localStorage.removeItem(ACTIVE_ROLE_KEY);
         }
         
         setIsLoading(false);
@@ -103,8 +128,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setOrganization(null);
-    setRole(null);
+    setRoles([]);
+    setActiveRoleState(null);
     setSession(null);
+    localStorage.removeItem(ACTIVE_ROLE_KEY);
   };
 
   const refreshProfile = async () => {
@@ -116,11 +143,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user,
     organization,
-    role,
+    roles,
+    activeRole,
     isLoading,
     isAuthenticated: !!session && !!user,
     signOut,
     refreshProfile,
+    setActiveRole,
   };
 
   return (

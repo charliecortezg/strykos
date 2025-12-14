@@ -96,7 +96,7 @@ export default function OrgOwnerDashboard() {
       <main className="container px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Panel de control
+            Panel del Fundador
           </h1>
           <p className="text-muted-foreground">
             Gestiona tu academia y equipo de trabajo.
@@ -122,7 +122,7 @@ export default function OrgOwnerDashboard() {
                 <GraduationCap className="w-5 h-5 text-success" />
               </div>
               <div>
-                <p className="text-2xl font-display font-semibold">{organization?.approximate_students || 0}</p>
+                <p className="text-2xl font-display font-semibold">—</p>
                 <p className="text-sm text-muted-foreground">Alumnos</p>
               </div>
             </div>

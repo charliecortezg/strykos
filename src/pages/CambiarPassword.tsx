@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 export default function CambiarPassword() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, role, refreshProfile } = useAuth();
+  const { user, activeRole, refreshProfile } = useAuth();
   
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -62,8 +62,8 @@ export default function CambiarPassword() {
       // Refresh profile and redirect
       await refreshProfile();
       
-      if (role) {
-        const dashboardPath = `/dashboard/${role.replace('_', '-')}`;
+      if (activeRole) {
+        const dashboardPath = `/dashboard/${activeRole.replace('_', '-')}`;
         navigate(dashboardPath);
       } else {
         navigate('/');
