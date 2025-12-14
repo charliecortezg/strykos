@@ -1,9 +1,21 @@
+import { useState } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { Users, ClipboardList, BarChart3, Calendar } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CategoriesTable } from '@/components/categories/CategoriesTable';
+import { PlayersTable } from '@/components/players/PlayersTable';
+import { useCategories } from '@/hooks/useCategories';
+import { usePlayers } from '@/hooks/usePlayers';
 
 export default function DirectorDeportivoDashboard() {
   const { user, organization } = useAuth();
+  const { categories } = useCategories();
+  const { players } = usePlayers();
+  const [activeTab, setActiveTab] = useState('jugadores');
+
+  const activeCategories = categories.filter(c => c.is_active).length;
+  const activePlayers = players.filter(p => p.is_active).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -27,7 +39,7 @@ export default function DirectorDeportivoDashboard() {
                 <Users className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-display font-semibold">0</p>
+                <p className="text-2xl font-display font-semibold">{activePlayers}</p>
                 <p className="text-sm text-muted-foreground">Jugadores</p>
               </div>
             </div>
@@ -38,7 +50,7 @@ export default function DirectorDeportivoDashboard() {
                 <ClipboardList className="w-5 h-5 text-success" />
               </div>
               <div>
-                <p className="text-2xl font-display font-semibold">0</p>
+                <p className="text-2xl font-display font-semibold">{activeCategories}</p>
                 <p className="text-sm text-muted-foreground">Categorías</p>
               </div>
             </div>
@@ -67,15 +79,27 @@ export default function DirectorDeportivoDashboard() {
           </div>
         </div>
 
-        {/* Placeholder content */}
-        <div className="stryk-card p-8 text-center">
-          <h2 className="text-xl font-display font-semibold text-foreground mb-2">
-            Módulo en desarrollo
-          </h2>
-          <p className="text-muted-foreground">
-            Próximamente podrás gestionar jugadores, categorías y ver reportes deportivos.
-          </p>
-        </div>
+        {/* Tabs for Categories and Players */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="jugadores" className="gap-2">
+              <Users className="w-4 h-4" />
+              Jugadores
+            </TabsTrigger>
+            <TabsTrigger value="categorias" className="gap-2">
+              <ClipboardList className="w-4 h-4" />
+              Categorías
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="jugadores">
+            <PlayersTable />
+          </TabsContent>
+
+          <TabsContent value="categorias">
+            <CategoriesTable />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
