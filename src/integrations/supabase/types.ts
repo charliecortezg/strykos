@@ -14,6 +14,148 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance: {
+        Row: {
+          category_id: string
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          organization_id: string
+          player_id: string
+          recorded_by: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          date: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          player_id: string
+          recorded_by?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          player_id?: string
+          recorded_by?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          created_at: string
+          days_of_week: string[] | null
+          end_time: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          sport_id: string | null
+          start_time: string | null
+          trainer_id: string | null
+          updated_at: string
+          venue_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          days_of_week?: string[] | null
+          end_time?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          sport_id?: string | null
+          start_time?: string | null
+          trainer_id?: string | null
+          updated_at?: string
+          venue_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          days_of_week?: string[] | null
+          end_time?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          sport_id?: string | null
+          start_time?: string | null
+          trainer_id?: string | null
+          updated_at?: string
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categories_sport_id_fkey"
+            columns: ["sport_id"]
+            isOneToOne: false
+            referencedRelation: "sports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categories_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categories_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           approximate_students: number
@@ -82,6 +224,72 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      players: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          full_name: string
+          id: string
+          is_active: boolean
+          is_scholarship: boolean
+          monthly_fee: number | null
+          organization_id: string
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          phone: string | null
+          plan: string | null
+          position: string | null
+          tutor_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          is_scholarship?: boolean
+          monthly_fee?: number | null
+          organization_id: string
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          phone?: string | null
+          plan?: string | null
+          position?: string | null
+          tutor_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          is_scholarship?: boolean
+          monthly_fee?: number | null
+          organization_id?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          phone?: string | null
+          plan?: string | null
+          position?: string | null
+          tutor_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "players_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -191,6 +399,44 @@ export type Database = {
           },
         ]
       }
+      venues: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venues_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -203,6 +449,7 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["org_role"] }
         Returns: boolean
       }
+      is_category_trainer: { Args: { _category_id: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
       user_belongs_to_org: { Args: { _org_id: string }; Returns: boolean }
       validate_org_access: {
@@ -215,6 +462,7 @@ export type Database = {
       }
     }
     Enums: {
+      attendance_status: "presente" | "ausente" | "justificado"
       org_role:
         | "org_owner"
         | "director_deportivo"
@@ -231,6 +479,7 @@ export type Database = {
         | "federativa"
         | "club_social"
         | "otro"
+      payment_status: "al_dia" | "pendiente" | "atrasado"
       platform_role: "platform_super_admin"
       subscription_plan: "freemium" | "starter" | "professional" | "enterprise"
     }
@@ -360,6 +609,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      attendance_status: ["presente", "ausente", "justificado"],
       org_role: [
         "org_owner",
         "director_deportivo",
@@ -378,6 +628,7 @@ export const Constants = {
         "club_social",
         "otro",
       ],
+      payment_status: ["al_dia", "pendiente", "atrasado"],
       platform_role: ["platform_super_admin"],
       subscription_plan: ["freemium", "starter", "professional", "enterprise"],
     },
