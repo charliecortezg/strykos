@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, role, user } = useAuth();
+  const { isAuthenticated, isLoading, roles, activeRole, user } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -31,11 +31,22 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/cambiar-password" replace />;
   }
 
-  // Check role permissions
-  if (allowedRoles && role && !allowedRoles.includes(role)) {
-    // Redirect to appropriate dashboard based on role
-    const dashboardPath = `/dashboard/${role.replace('_', '-')}`;
-    return <Navigate to={dashboardPath} replace />;
+  // Check role permissions - user must have at least one of the allowed roles
+  if (allowedRoles && allowedRoles.length > 0) {
+    const hasAllowedRole = allowedRoles.some(allowedRole => roles.includes(allowedRole));
+    
+    if (!hasAllowedRole) {
+      // Redirect to appropriate dashboard based on active role
+      if (activeRole) {
+        const dashboardPath = `/dashboard/${activeRole.replace('_', '-')}`;
+        return <Navigate to={dashboardPath} replace />;
+      }
+      // Fallback to first available role
+      if (roles.length > 0) {
+        const dashboardPath = `/dashboard/${roles[0].replace('_', '-')}`;
+        return <Navigate to={dashboardPath} replace />;
+      }
+    }
   }
 
   return <>{children}</>;

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/brand/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { RoleSwitch } from '@/components/dashboard/RoleSwitch';
 import {
   Sheet,
   SheetContent,
@@ -12,7 +13,7 @@ import {
 } from '@/components/ui/sheet';
 
 export function DashboardHeader() {
-  const { organization, signOut, user, role } = useAuth();
+  const { organization, signOut, user } = useAuth();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
@@ -80,7 +81,9 @@ export function DashboardHeader() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <RoleSwitch />
+          
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg">
             <span className="text-xs text-muted-foreground">ID:</span>
             <code className="text-sm font-mono text-foreground">{orgId}</code>
