@@ -1,21 +1,26 @@
 import { useState } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, ClipboardList, BarChart3, Calendar } from 'lucide-react';
+import { Users, ClipboardList, BarChart3, Calendar, MapPin } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoriesTable } from '@/components/categories/CategoriesTable';
 import { PlayersTable } from '@/components/players/PlayersTable';
+import { VenuesTable } from '@/components/venues/VenuesTable';
+import { OperationalReports } from '@/components/reports/OperationalReports';
 import { useCategories } from '@/hooks/useCategories';
 import { usePlayers } from '@/hooks/usePlayers';
+import { useVenues } from '@/hooks/useVenues';
 
 export default function DirectorDeportivoDashboard() {
   const { user, organization } = useAuth();
   const { categories } = useCategories();
   const { players } = usePlayers();
+  const { venues } = useVenues();
   const [activeTab, setActiveTab] = useState('jugadores');
 
   const activeCategories = categories.filter(c => c.is_active).length;
   const activePlayers = players.filter(p => p.is_active).length;
+  const activeVenues = venues.filter(v => v.is_active).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -58,11 +63,11 @@ export default function DirectorDeportivoDashboard() {
           <div className="stryk-card p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-warning" />
+                <MapPin className="w-5 h-5 text-warning" />
               </div>
               <div>
-                <p className="text-2xl font-display font-semibold">0</p>
-                <p className="text-sm text-muted-foreground">Sesiones hoy</p>
+                <p className="text-2xl font-display font-semibold">{activeVenues}</p>
+                <p className="text-sm text-muted-foreground">Sedes</p>
               </div>
             </div>
           </div>
@@ -72,16 +77,16 @@ export default function DirectorDeportivoDashboard() {
                 <BarChart3 className="w-5 h-5 text-accent" />
               </div>
               <div>
-                <p className="text-2xl font-display font-semibold">0%</p>
-                <p className="text-sm text-muted-foreground">Asistencia</p>
+                <p className="text-2xl font-display font-semibold">—</p>
+                <p className="text-sm text-muted-foreground">Reportes</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Tabs for Categories and Players */}
+        {/* Tabs for management sections */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 flex-wrap h-auto gap-1">
             <TabsTrigger value="jugadores" className="gap-2">
               <Users className="w-4 h-4" />
               Jugadores
@@ -89,6 +94,14 @@ export default function DirectorDeportivoDashboard() {
             <TabsTrigger value="categorias" className="gap-2">
               <ClipboardList className="w-4 h-4" />
               Categorías
+            </TabsTrigger>
+            <TabsTrigger value="sedes" className="gap-2">
+              <MapPin className="w-4 h-4" />
+              Sedes
+            </TabsTrigger>
+            <TabsTrigger value="reportes" className="gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Reportes
             </TabsTrigger>
           </TabsList>
 
@@ -98,6 +111,14 @@ export default function DirectorDeportivoDashboard() {
 
           <TabsContent value="categorias">
             <CategoriesTable />
+          </TabsContent>
+
+          <TabsContent value="sedes">
+            <VenuesTable />
+          </TabsContent>
+
+          <TabsContent value="reportes">
+            <OperationalReports />
           </TabsContent>
         </Tabs>
       </main>
