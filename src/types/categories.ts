@@ -1,7 +1,8 @@
-// STRYK Categories & Players Types
+// STRYK Categories, Players, Payments & Venues Types
 
 export type PaymentStatus = 'al_dia' | 'pendiente' | 'atrasado';
 export type AttendanceStatus = 'presente' | 'ausente' | 'justificado';
+export type PaymentMethod = 'efectivo' | 'transferencia' | 'tarjeta' | 'otro';
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   al_dia: 'Al día',
@@ -13,6 +14,13 @@ export const ATTENDANCE_STATUS_LABELS: Record<AttendanceStatus, string> = {
   presente: 'Presente',
   ausente: 'Ausente',
   justificado: 'Justificado',
+};
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  efectivo: 'Efectivo',
+  transferencia: 'Transferencia',
+  tarjeta: 'Tarjeta',
+  otro: 'Otro',
 };
 
 export const DAYS_OF_WEEK = [
@@ -86,6 +94,23 @@ export interface Attendance {
   updated_at: string;
 }
 
+export interface Payment {
+  id: string;
+  organization_id: string;
+  player_id: string;
+  amount: number;
+  payment_method: PaymentMethod;
+  payment_month: string;
+  concept: string;
+  notes: string | null;
+  evidence_url: string | null;
+  recorded_by: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined data
+  player?: { id: string; full_name: string; category?: { name: string } | null } | null;
+}
+
 export interface CreateCategoryData {
   name: string;
   sport_id?: string;
@@ -105,4 +130,18 @@ export interface CreatePlayerData {
   plan?: string;
   monthly_fee?: number;
   is_scholarship?: boolean;
+}
+
+export interface CreatePaymentData {
+  player_id: string;
+  amount: number;
+  payment_method: PaymentMethod;
+  payment_month: string;
+  concept?: string;
+  notes?: string;
+}
+
+export interface CreateVenueData {
+  name: string;
+  address?: string;
 }

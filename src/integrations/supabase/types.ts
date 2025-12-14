@@ -207,6 +207,73 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          concept: string
+          created_at: string
+          evidence_url: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_month: string
+          player_id: string
+          recorded_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          concept?: string
+          created_at?: string
+          evidence_url?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_month: string
+          player_id: string
+          recorded_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          concept?: string
+          created_at?: string
+          evidence_url?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_month?: string
+          player_id?: string
+          recorded_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_roles: {
         Row: {
           created_at: string | null
@@ -479,6 +546,7 @@ export type Database = {
         | "federativa"
         | "club_social"
         | "otro"
+      payment_method: "efectivo" | "transferencia" | "tarjeta" | "otro"
       payment_status: "al_dia" | "pendiente" | "atrasado"
       platform_role: "platform_super_admin"
       subscription_plan: "freemium" | "starter" | "professional" | "enterprise"
@@ -628,6 +696,7 @@ export const Constants = {
         "club_social",
         "otro",
       ],
+      payment_method: ["efectivo", "transferencia", "tarjeta", "otro"],
       payment_status: ["al_dia", "pendiente", "atrasado"],
       platform_role: ["platform_super_admin"],
       subscription_plan: ["freemium", "starter", "professional", "enterprise"],

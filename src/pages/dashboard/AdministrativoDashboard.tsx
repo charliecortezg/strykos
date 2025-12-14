@@ -1,9 +1,29 @@
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePayments } from '@/hooks/usePayments';
+import { usePlayers } from '@/hooks/usePlayers';
 import { CreditCard, TrendingUp, Users, AlertCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PaymentsTable } from '@/components/payments/PaymentsTable';
+import { AccountStatement } from '@/components/payments/AccountStatement';
 
 export default function AdministrativoDashboard() {
   const { user, organization } = useAuth();
+  const { stats } = usePayments();
+  const { players } = usePlayers({ isActive: true });
+
+  const playersAlDia = players.filter(p => p.payment_status === 'al_dia').length;
+  const collectionRate = players.length > 0 
+    ? Math.round((playersAlDia / players.length) * 100) 
+    : 0;
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -27,7 +47,9 @@ export default function AdministrativoDashboard() {
                 <CreditCard className="w-5 h-5 text-success" />
               </div>
               <div>
-                <p className="text-2xl font-display font-semibold">$0</p>
+                <p className="text-2xl font-display font-semibold">
+                  {formatCurrency(stats.totalMonth)}
+                </p>
                 <p className="text-sm text-muted-foreground">Ingresos mes</p>
               </div>
             </div>
@@ -38,7 +60,7 @@ export default function AdministrativoDashboard() {
                 <Users className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-display font-semibold">0</p>
+                <p className="text-2xl font-display font-semibold">{playersAlDia}</p>
                 <p className="text-sm text-muted-foreground">Pagos al día</p>
               </div>
             </div>
@@ -49,7 +71,7 @@ export default function AdministrativoDashboard() {
                 <AlertCircle className="w-5 h-5 text-destructive" />
               </div>
               <div>
-                <p className="text-2xl font-display font-semibold">0</p>
+                <p className="text-2xl font-display font-semibold">{stats.pendingCount}</p>
                 <p className="text-sm text-muted-foreground">Pendientes</p>
               </div>
             </div>
@@ -60,22 +82,28 @@ export default function AdministrativoDashboard() {
                 <TrendingUp className="w-5 h-5 text-warning" />
               </div>
               <div>
-                <p className="text-2xl font-display font-semibold">0%</p>
+                <p className="text-2xl font-display font-semibold">{collectionRate}%</p>
                 <p className="text-sm text-muted-foreground">Cobranza</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Placeholder content */}
-        <div className="stryk-card p-8 text-center">
-          <h2 className="text-xl font-display font-semibold text-foreground mb-2">
-            Módulo en desarrollo
-          </h2>
-          <p className="text-muted-foreground">
-            Próximamente podrás gestionar pagos, ver reportes financieros y dar seguimiento a cobranza.
-          </p>
-        </div>
+        {/* Tabs */}
+        <Tabs defaultValue="payments" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="payments">Pagos</TabsTrigger>
+            <TabsTrigger value="accounts">Estados de Cuenta</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="payments">
+            <PaymentsTable />
+          </TabsContent>
+
+          <TabsContent value="accounts">
+            <AccountStatement />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
