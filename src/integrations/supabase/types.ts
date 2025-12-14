@@ -65,6 +65,24 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_roles: {
+        Row: {
+          created_at: string | null
+          role: Database["public"]["Enums"]["platform_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          role: Database["public"]["Enums"]["platform_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          role?: Database["public"]["Enums"]["platform_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -185,6 +203,7 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["org_role"] }
         Returns: boolean
       }
+      is_platform_admin: { Args: never; Returns: boolean }
       user_belongs_to_org: { Args: { _org_id: string }; Returns: boolean }
       validate_org_access: {
         Args: {
