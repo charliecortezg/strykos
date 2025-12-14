@@ -28,10 +28,8 @@ export function RoleSwitch() {
     navigate(dashboardPath);
   };
 
-  // For org_owner, show all possible operational roles they can switch to
-  const switchableRoles: OrgRole[] = isOrgOwner 
-    ? ['org_owner', 'director_deportivo', 'entrenador', 'administrativo']
-    : roles;
+  // Show only actually assigned roles (not simulated)
+  const switchableRoles: OrgRole[] = roles;
 
   return (
     <DropdownMenu>

@@ -1,9 +1,13 @@
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, CheckCircle, Calendar } from 'lucide-react';
+import { Users, CheckCircle, Calendar, ClipboardList } from 'lucide-react';
 
 export default function EntrenadorDashboard() {
   const { user, organization } = useAuth();
+  
+  // TODO: Replace with actual categories query when categories table exists
+  const assignedCategories: unknown[] = [];
+  const hasCategories = assignedCategories.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -19,52 +23,69 @@ export default function EntrenadorDashboard() {
           </p>
         </div>
 
-        {/* Quick actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="stryk-card p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-6 h-6 text-success" />
+        {!hasCategories ? (
+          // Empty state when no categories assigned
+          <div className="stryk-card p-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-6">
+              <ClipboardList className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="font-display font-semibold text-foreground mb-2">
-              Registrar asistencia
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Registro rápido de asistencia para tu categoría.
+            <h2 className="text-xl font-display font-semibold text-foreground mb-3">
+              Aún no tienes categorías asignadas.
+            </h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              El Fundador o Director Deportivo de tu academia debe asignarte una categoría para comenzar a operar.
             </p>
           </div>
-          <div className="stryk-card p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <Users className="w-6 h-6 text-primary" />
+        ) : (
+          <>
+            {/* Quick actions */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="stryk-card p-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-6 h-6 text-success" />
+                </div>
+                <h3 className="font-display font-semibold text-foreground mb-2">
+                  Registrar asistencia
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Registro rápido de asistencia para tu categoría.
+                </p>
+              </div>
+              <div className="stryk-card p-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-display font-semibold text-foreground mb-2">
+                  Ver jugadores
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Lista de jugadores de tu categoría asignada.
+                </p>
+              </div>
+              <div className="stryk-card p-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-6 h-6 text-warning" />
+                </div>
+                <h3 className="font-display font-semibold text-foreground mb-2">
+                  Sesiones
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Calendario de entrenamientos programados.
+                </p>
+              </div>
             </div>
-            <h3 className="font-display font-semibold text-foreground mb-2">
-              Ver jugadores
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Lista de jugadores de tu categoría asignada.
-            </p>
-          </div>
-          <div className="stryk-card p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center mx-auto mb-4">
-              <Calendar className="w-6 h-6 text-warning" />
-            </div>
-            <h3 className="font-display font-semibold text-foreground mb-2">
-              Sesiones
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Calendario de entrenamientos programados.
-            </p>
-          </div>
-        </div>
 
-        {/* Placeholder content */}
-        <div className="stryk-card p-8 text-center">
-          <h2 className="text-xl font-display font-semibold text-foreground mb-2">
-            Módulo en desarrollo
-          </h2>
-          <p className="text-muted-foreground">
-            Próximamente podrás registrar asistencia y gestionar tus sesiones de entrenamiento.
-          </p>
-        </div>
+            {/* Placeholder content */}
+            <div className="stryk-card p-8 text-center">
+              <h2 className="text-xl font-display font-semibold text-foreground mb-2">
+                Módulo en desarrollo
+              </h2>
+              <p className="text-muted-foreground">
+                Próximamente podrás registrar asistencia y gestionar tus sesiones de entrenamiento.
+              </p>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

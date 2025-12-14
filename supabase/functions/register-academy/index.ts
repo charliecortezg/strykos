@@ -184,14 +184,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Assign org_owner role
+    // Assign all 4 roles to the founder automatically
+    const founderRoles = ['org_owner', 'director_deportivo', 'entrenador', 'administrativo'];
+    const roleInserts = founderRoles.map(role => ({
+      user_id: newUser.user.id,
+      organization_id: org.id,
+      role,
+    }));
+
     const { error: roleError } = await supabaseAdmin
       .from('user_org_roles')
-      .insert({
-        user_id: newUser.user.id,
-        organization_id: org.id,
-        role: 'org_owner',
-      });
+      .insert(roleInserts);
 
     if (roleError) {
       console.error('Role assignment error:', roleError);
@@ -200,10 +203,12 @@ Deno.serve(async (req) => {
       await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
       await supabaseAdmin.from('organizations').delete().eq('id', org.id);
       return new Response(
-        JSON.stringify({ error: 'Error al asignar rol' }),
+        JSON.stringify({ error: 'Error al asignar roles' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('Assigned roles to founder:', founderRoles);
 
     // Check if sport needs to be added as custom
     const { data: existingSport } = await supabaseAdmin
