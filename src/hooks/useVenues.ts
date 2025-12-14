@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Venue } from '@/types/categories';
+import type { Venue, CreateVenueData } from '@/types/categories';
 
 export function useVenues() {
   const { organization } = useAuth();
@@ -18,7 +18,6 @@ export function useVenues() {
         .from('venues')
         .select('*')
         .eq('organization_id', organization.id)
-        .eq('is_active', true)
         .order('name');
 
       if (error) {
@@ -38,16 +37,16 @@ export function useVenues() {
     fetchVenues();
   }, [fetchVenues]);
 
-  const createVenue = async (name: string, address?: string): Promise<Venue | null> => {
+  const createVenue = async (data: CreateVenueData): Promise<Venue | null> => {
     if (!organization) return null;
 
     try {
-      const { data, error } = await supabase
+      const { data: newVenue, error } = await supabase
         .from('venues')
         .insert({
           organization_id: organization.id,
-          name,
-          address: address || null,
+          name: data.name,
+          address: data.address || null,
         })
         .select()
         .single();
@@ -58,17 +57,69 @@ export function useVenues() {
       }
 
       await fetchVenues();
-      return data as Venue;
+      return newVenue as Venue;
     } catch (err) {
       console.error('Error:', err);
       return null;
     }
   };
 
+  const updateVenue = async (id: string, data: Partial<CreateVenueData>): Promise<boolean> => {
+    if (!organization) return false;
+
+    try {
+      const { error } = await supabase
+        .from('venues')
+        .update({
+          name: data.name,
+          address: data.address,
+        })
+        .eq('id', id)
+        .eq('organization_id', organization.id);
+
+      if (error) {
+        console.error('Error updating venue:', error);
+        return false;
+      }
+
+      await fetchVenues();
+      return true;
+    } catch (err) {
+      console.error('Error:', err);
+      return false;
+    }
+  };
+
+  const toggleVenueActive = async (id: string, isActive: boolean): Promise<boolean> => {
+    if (!organization) return false;
+
+    try {
+      const { error } = await supabase
+        .from('venues')
+        .update({ is_active: isActive })
+        .eq('id', id)
+        .eq('organization_id', organization.id);
+
+      if (error) {
+        console.error('Error toggling venue:', error);
+        return false;
+      }
+
+      await fetchVenues();
+      return true;
+    } catch (err) {
+      console.error('Error:', err);
+      return false;
+    }
+  };
+
   return {
     venues,
+    activeVenues: venues.filter(v => v.is_active),
     isLoading,
     refetch: fetchVenues,
     createVenue,
+    updateVenue,
+    toggleVenueActive,
   };
 }
