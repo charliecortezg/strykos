@@ -3,25 +3,45 @@ import { Users, ClipboardList, Briefcase, GraduationCap, Shield } from 'lucide-r
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { RoleCard } from '@/components/dashboard/RoleCard';
 import { CreateUserModal } from '@/components/dashboard/CreateUserModal';
+import { EditUserModal } from '@/components/dashboard/EditUserModal';
+import { ChangeRoleModal } from '@/components/dashboard/ChangeRoleModal';
+import { ConfirmDeactivateDialog } from '@/components/dashboard/ConfirmDeactivateDialog';
+import { UserActionsMenu } from '@/components/dashboard/UserActionsMenu';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { ORG_ROLE_LABELS, type OrgRole } from '@/types/auth';
+import { useToast } from '@/hooks/use-toast';
 
 interface OrgUser {
   id: string;
   full_name: string;
   email: string;
+  phone: string | null;
   is_active: boolean;
   role: OrgRole;
 }
 
 export default function OrgOwnerDashboard() {
   const { organization, user } = useAuth();
+  const { toast } = useToast();
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Exclude<OrgRole, 'org_owner'>>('director_deportivo');
+
+  // Edit modal state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<OrgUser | null>(null);
+
+  // Change role modal state
+  const [changeRoleModalOpen, setChangeRoleModalOpen] = useState(false);
+  const [changingRoleUser, setChangingRoleUser] = useState<OrgUser | null>(null);
+
+  // Deactivate dialog state
+  const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
+  const [deactivatingUser, setDeactivatingUser] = useState<OrgUser | null>(null);
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   const fetchUsers = async () => {
     if (!organization) return;
@@ -29,7 +49,7 @@ export default function OrgOwnerDashboard() {
     try {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, email, is_active')
+        .select('id, full_name, email, phone, is_active')
         .eq('organization_id', organization.id);
 
       if (profilesError) {
@@ -72,11 +92,73 @@ export default function OrgOwnerDashboard() {
     setCreateModalOpen(true);
   };
 
-  const usersByRole = {
-    org_owner: users.filter(u => u.role === 'org_owner'),
-    director_deportivo: users.filter(u => u.role === 'director_deportivo'),
-    entrenador: users.filter(u => u.role === 'entrenador'),
-    administrativo: users.filter(u => u.role === 'administrativo'),
+  const handleEditUser = (u: OrgUser) => {
+    setEditingUser(u);
+    setEditModalOpen(true);
+  };
+
+  const handleChangeRole = (u: OrgUser) => {
+    setChangingRoleUser(u);
+    setChangeRoleModalOpen(true);
+  };
+
+  const handleToggleActive = (u: OrgUser) => {
+    setDeactivatingUser(u);
+    setDeactivateDialogOpen(true);
+  };
+
+  const confirmToggleActive = async () => {
+    if (!deactivatingUser) return;
+
+    setIsDeactivating(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: 'Error',
+          description: 'Sesión expirada. Inicia sesión de nuevo.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('manage-org-user', {
+        body: {
+          action: 'toggle_active',
+          userId: deactivatingUser.id,
+          data: { isActive: !deactivatingUser.is_active },
+        },
+      });
+
+      if (error || data.error) {
+        toast({
+          title: 'Error',
+          description: error?.message || data.error || 'Error al cambiar estado',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: deactivatingUser.is_active ? 'Usuario desactivado' : 'Usuario activado',
+        description: `${deactivatingUser.full_name} ha sido ${deactivatingUser.is_active ? 'desactivado' : 'activado'}.`,
+      });
+
+      setDeactivateDialogOpen(false);
+      fetchUsers();
+
+    } catch (err) {
+      console.error('Error:', err);
+      toast({
+        title: 'Error',
+        description: 'Error inesperado. Intenta de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeactivating(false);
+    }
   };
 
   const getRoleBadgeVariant = (role: OrgRole) => {
@@ -195,21 +277,27 @@ export default function OrgOwnerDashboard() {
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Nombre</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Correo</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground hidden md:table-cell">Correo</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Rol</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Estado</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground w-12"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {users.map((u) => (
                     <tr key={u.id} className={u.id === user?.id ? 'bg-primary/5' : ''}>
-                      <td className="px-4 py-3 text-sm font-medium text-foreground">
-                        {u.full_name}
-                        {u.id === user?.id && (
-                          <span className="ml-2 text-xs text-muted-foreground">(Tú)</span>
-                        )}
+                      <td className="px-4 py-3">
+                        <div>
+                          <span className="text-sm font-medium text-foreground">
+                            {u.full_name}
+                          </span>
+                          {u.id === user?.id && (
+                            <span className="ml-2 text-xs text-muted-foreground">(Tú)</span>
+                          )}
+                          <p className="text-xs text-muted-foreground md:hidden">{u.email}</p>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{u.email}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground hidden md:table-cell">{u.email}</td>
                       <td className="px-4 py-3">
                         <Badge variant={getRoleBadgeVariant(u.role)}>
                           {ORG_ROLE_LABELS[u.role]}
@@ -219,6 +307,17 @@ export default function OrgOwnerDashboard() {
                         <Badge variant={u.is_active ? 'default' : 'secondary'} className={u.is_active ? 'bg-success text-success-foreground' : ''}>
                           {u.is_active ? 'Activo' : 'Inactivo'}
                         </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <UserActionsMenu
+                          userId={u.id}
+                          userRole={u.role}
+                          isActive={u.is_active}
+                          isCurrentUser={u.id === user?.id}
+                          onEdit={() => handleEditUser(u)}
+                          onChangeRole={() => handleChangeRole(u)}
+                          onToggleActive={() => handleToggleActive(u)}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -234,6 +333,28 @@ export default function OrgOwnerDashboard() {
         onOpenChange={setCreateModalOpen}
         role={selectedRole}
         onUserCreated={fetchUsers}
+      />
+
+      <EditUserModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        user={editingUser}
+        onUserUpdated={fetchUsers}
+      />
+
+      <ChangeRoleModal
+        open={changeRoleModalOpen}
+        onOpenChange={setChangeRoleModalOpen}
+        user={changingRoleUser}
+        onRoleChanged={fetchUsers}
+      />
+
+      <ConfirmDeactivateDialog
+        open={deactivateDialogOpen}
+        onOpenChange={setDeactivateDialogOpen}
+        user={deactivatingUser}
+        isLoading={isDeactivating}
+        onConfirm={confirmToggleActive}
       />
     </div>
   );
