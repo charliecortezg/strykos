@@ -1,9 +1,14 @@
+import { useState } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
+import { CreditCard, UserCheck } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FinanceModule } from '@/components/payments/FinanceModule';
+import { TrainersModule } from '@/components/trainers/TrainersModule';
 
 export default function AdministrativoDashboard() {
   const { user, organization } = useAuth();
+  const [activeTab, setActiveTab] = useState('finanzas');
 
   return (
     <div className="min-h-screen bg-background">
@@ -19,7 +24,26 @@ export default function AdministrativoDashboard() {
           </p>
         </div>
 
-        <FinanceModule />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="finanzas" className="gap-2">
+              <CreditCard className="w-4 h-4" />
+              Finanzas
+            </TabsTrigger>
+            <TabsTrigger value="entrenadores" className="gap-2">
+              <UserCheck className="w-4 h-4" />
+              Entrenadores
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="finanzas">
+            <FinanceModule />
+          </TabsContent>
+
+          <TabsContent value="entrenadores">
+            <TrainersModule readOnly={true} />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
