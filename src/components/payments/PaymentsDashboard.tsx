@@ -148,14 +148,22 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
 
   // Reset dependent filters when parent changes
   const handleSportChange = (value: string) => {
-    setSelectedSportId(value);
+    setSelectedSportId(value === 'all' ? '' : value);
     setSelectedCategoryId('');
     setSelectedPlayerId('');
   };
 
   const handleCategoryChange = (value: string) => {
-    setSelectedCategoryId(value);
+    setSelectedCategoryId(value === 'all' ? '' : value);
     setSelectedPlayerId('');
+  };
+
+  const handlePlayerChange = (value: string) => {
+    setSelectedPlayerId(value === 'all' ? '' : value);
+  };
+
+  const handleMonthChange = (value: string) => {
+    setSelectedMonth(value === 'all' ? '' : value);
   };
 
   const clearFilters = () => {
@@ -250,12 +258,12 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Sport Filter */}
-            <Select value={selectedSportId} onValueChange={handleSportChange}>
+            <Select value={selectedSportId || 'all'} onValueChange={handleSportChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Deporte" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los deportes</SelectItem>
+                <SelectItem value="all">Todos los deportes</SelectItem>
                 {sports.map((sport) => (
                   <SelectItem key={sport.id} value={sport.id}>
                     {sport.name}
@@ -266,14 +274,14 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
 
             {/* Category Filter */}
             <Select 
-              value={selectedCategoryId} 
+              value={selectedCategoryId || 'all'} 
               onValueChange={handleCategoryChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Categoría" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas las categorías</SelectItem>
+                <SelectItem value="all">Todas las categorías</SelectItem>
                 {filteredCategories.filter(c => c.is_active).map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
@@ -284,14 +292,14 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
 
             {/* Player Filter */}
             <Select 
-              value={selectedPlayerId} 
-              onValueChange={setSelectedPlayerId}
+              value={selectedPlayerId || 'all'} 
+              onValueChange={handlePlayerChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Jugador" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los jugadores</SelectItem>
+                <SelectItem value="all">Todos los jugadores</SelectItem>
                 {filteredPlayers.map((player) => (
                   <SelectItem key={player.id} value={player.id}>
                     {player.full_name}
@@ -301,12 +309,12 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
             </Select>
 
             {/* Month Filter */}
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <Select value={selectedMonth || 'all'} onValueChange={handleMonthChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Mes" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los meses</SelectItem>
+                <SelectItem value="all">Todos los meses</SelectItem>
                 {months.map((month) => (
                   <SelectItem key={month.value} value={month.value}>
                     {month.label}
