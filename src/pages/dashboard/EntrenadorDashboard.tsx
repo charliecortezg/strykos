@@ -6,11 +6,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useTrainerCategories } from '@/hooks/useTrainerCategories';
 import { TrainerMatchesModule } from '@/components/matches/TrainerMatchesModule';
+import { TrainingAttendanceModule } from '@/components/attendance/TrainingAttendanceModule';
+import { usePlayers } from '@/hooks/usePlayers';
 
 export default function EntrenadorDashboard() {
   const { user, organization } = useAuth();
   const { categories, hasCategories, isLoading } = useTrainerCategories();
+  const { players } = usePlayers();
   const [activeTab, setActiveTab] = useState('partidos');
+
+  // Filter players to only show those in trainer's categories
+  const trainerCategoryIds = categories.map(c => c.id);
+  const trainerPlayers = players.filter(p => p.category_id && trainerCategoryIds.includes(p.category_id));
 
   if (isLoading) {
     return (
@@ -84,7 +91,7 @@ export default function EntrenadorDashboard() {
                 </TabsTrigger>
                 <TabsTrigger value="jugadores" className="gap-2">
                   <Users className="w-4 h-4" />
-                  Jugadores
+                  Jugadores ({trainerPlayers.length})
                 </TabsTrigger>
               </TabsList>
 
@@ -93,26 +100,48 @@ export default function EntrenadorDashboard() {
               </TabsContent>
 
               <TabsContent value="asistencia">
-                <div className="stryk-card p-8 text-center">
-                  <CheckCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h2 className="text-xl font-display font-semibold text-foreground mb-2">
-                    Registro de Asistencia
-                  </h2>
-                  <p className="text-muted-foreground">
-                    Próximamente podrás registrar la asistencia de tus entrenamientos.
-                  </p>
-                </div>
+                <TrainingAttendanceModule categories={categories} />
               </TabsContent>
 
               <TabsContent value="jugadores">
-                <div className="stryk-card p-8 text-center">
-                  <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h2 className="text-xl font-display font-semibold text-foreground mb-2">
-                    Mis Jugadores
-                  </h2>
-                  <p className="text-muted-foreground">
-                    Próximamente podrás ver el listado de jugadores de tus categorías.
-                  </p>
+                <div className="stryk-card p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Users className="w-6 h-6 text-primary" />
+                    <h2 className="text-xl font-display font-semibold">
+                      Mis Jugadores
+                    </h2>
+                    <Badge variant="secondary">{trainerPlayers.length}</Badge>
+                  </div>
+                  {trainerPlayers.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">
+                      No hay jugadores en tus categorías asignadas.
+                    </p>
+                  ) : (
+                    <div className="grid gap-3">
+                      {trainerPlayers.map((player) => (
+                        <div key={player.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                          <div>
+                            <p className="font-medium">{player.full_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {player.category?.name || 'Sin categoría'}
+                              {player.position && ` • ${player.position}`}
+                            </p>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className={
+                              player.payment_status === 'al_dia' ? 'bg-success/10 text-success border-success/20' :
+                              player.payment_status === 'pendiente' ? 'bg-warning/10 text-warning border-warning/20' :
+                              'bg-destructive/10 text-destructive border-destructive/20'
+                            }
+                          >
+                            {player.payment_status === 'al_dia' ? 'Al día' : 
+                             player.payment_status === 'pendiente' ? 'Pendiente' : 'Atrasado'}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
