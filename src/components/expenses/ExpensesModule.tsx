@@ -7,7 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileDown, Trash2, Calendar, DollarSign, Receipt, Loader2 } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { Plus, FileDown, Trash2, Calendar, DollarSign, Receipt, Loader2, Filter, X, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -28,6 +35,8 @@ export function ExpensesModule() {
   const [filters, setFilters] = useState<ExpenseFilters>({});
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleFilterChange = useCallback((newFilters: Partial<ExpenseFilters>) => {
     const updated = { ...filters, ...newFilters };
@@ -37,7 +46,9 @@ export function ExpensesModule() {
 
   const clearFilters = () => {
     setFilters({});
+    setSearchQuery('');
     fetchExpenses({});
+    setFiltersOpen(false);
   };
 
   const handleDelete = async () => {
@@ -57,7 +68,6 @@ export function ExpensesModule() {
   };
 
   const exportToPDF = () => {
-    // Create a printable HTML document
     const printContent = `
       <!DOCTYPE html>
       <html>
@@ -133,8 +143,16 @@ export function ExpensesModule() {
     }).format(amount);
   };
 
+  const hasActiveFilters = filters.category || filters.startDate || filters.endDate;
+  const activeFilterCount = [filters.category, filters.startDate, filters.endDate].filter(Boolean).length;
+
+  // Filter expenses by search (description)
+  const filteredExpenses = searchQuery
+    ? expenses.filter(e => e.description?.toLowerCase().includes(searchQuery.toLowerCase()) || e.category.toLowerCase().includes(searchQuery.toLowerCase()))
+    : expenses;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
@@ -168,58 +186,148 @@ export function ExpensesModule() {
         </Card>
       </div>
 
-      {/* Filters and Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex flex-wrap gap-3 items-center">
-          <Select
-            value={filters.category || 'all'}
-            onValueChange={(val) => handleFilterChange({ category: val === 'all' ? undefined : val })}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Categoría" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las categorías</SelectItem>
-              {EXPENSE_CATEGORIES.map((cat) => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Input
-            type="date"
-            placeholder="Desde"
-            className="w-[150px]"
-            value={filters.startDate || ''}
-            onChange={(e) => handleFilterChange({ startDate: e.target.value || undefined })}
-          />
-
-          <Input
-            type="date"
-            placeholder="Hasta"
-            className="w-[150px]"
-            value={filters.endDate || ''}
-            onChange={(e) => handleFilterChange({ endDate: e.target.value || undefined })}
-          />
-
-          {(filters.category || filters.startDate || filters.endDate) && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              Limpiar
-            </Button>
-          )}
-        </div>
-
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportToPDF} disabled={expenses.length === 0}>
+      {/* Header with actions */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <h2 className="text-xl font-display font-semibold text-foreground">
+          Gastos
+        </h2>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={exportToPDF} disabled={expenses.length === 0} size="sm" className="hidden sm:inline-flex">
             <FileDown className="w-4 h-4 mr-2" />
-            Exportar PDF
+            Exportar
           </Button>
-          <Button onClick={() => setShowCreateModal(true)}>
+          <Button onClick={() => setShowCreateModal(true)} className="flex-1 sm:flex-none">
             <Plus className="w-4 h-4 mr-2" />
             Registrar Gasto
           </Button>
         </div>
       </div>
+
+      {/* Search + Filters */}
+      <Card className="stryk-card">
+        <CardContent className="p-3">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por descripción o categoría..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-11"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            
+            <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="h-11 w-11 relative shrink-0">
+                  <Filter className="w-4 h-4" />
+                  {activeFilterCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                <SheetHeader>
+                  <SheetTitle className="font-display">Filtros</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Categoría</label>
+                    <Select
+                      value={filters.category || 'all'}
+                      onValueChange={(val) => handleFilterChange({ category: val === 'all' ? undefined : val })}
+                    >
+                      <SelectTrigger className="w-full h-11">
+                        <SelectValue placeholder="Todas las categorías" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas las categorías</SelectItem>
+                        {EXPENSE_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Fecha desde</label>
+                    <Input
+                      type="date"
+                      className="h-11"
+                      value={filters.startDate || ''}
+                      onChange={(e) => handleFilterChange({ startDate: e.target.value || undefined })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Fecha hasta</label>
+                    <Input
+                      type="date"
+                      className="h-11"
+                      value={filters.endDate || ''}
+                      onChange={(e) => handleFilterChange({ endDate: e.target.value || undefined })}
+                    />
+                  </div>
+
+                  <div className="pt-4 border-t flex gap-2">
+                    <Button variant="outline" onClick={clearFilters} className="flex-1">
+                      Limpiar filtros
+                    </Button>
+                    <Button onClick={() => setFiltersOpen(false)} className="flex-1">
+                      Aplicar
+                    </Button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+          
+          {/* Active filters tags */}
+          {hasActiveFilters && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {filters.category && (
+                <Badge variant="secondary" className="text-xs">
+                  {filters.category}
+                  <button onClick={() => handleFilterChange({ category: undefined })} className="ml-1 hover:text-destructive">
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              )}
+              {filters.startDate && (
+                <Badge variant="secondary" className="text-xs">
+                  Desde: {filters.startDate}
+                  <button onClick={() => handleFilterChange({ startDate: undefined })} className="ml-1 hover:text-destructive">
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              )}
+              {filters.endDate && (
+                <Badge variant="secondary" className="text-xs">
+                  Hasta: {filters.endDate}
+                  <button onClick={() => handleFilterChange({ endDate: undefined })} className="ml-1 hover:text-destructive">
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Results count */}
+      <p className="text-sm text-muted-foreground">
+        {filteredExpenses.length} gasto{filteredExpenses.length !== 1 ? 's' : ''}
+      </p>
 
       {/* Table */}
       <Card>
@@ -228,50 +336,85 @@ export function ExpensesModule() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
-          ) : expenses.length === 0 ? (
+          ) : filteredExpenses.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               No hay gastos registrados
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead className="text-right">Monto</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {expenses.map((expense) => (
-                  <TableRow key={expense.id}>
-                    <TableCell>
-                      {format(new Date(expense.expense_date), 'dd/MM/yyyy')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{expense.category}</Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {expense.description || '-'}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(Number(expense.amount))}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => setDeleteId(expense.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+            <>
+              {/* Desktop table */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Categoría</TableHead>
+                      <TableHead>Descripción</TableHead>
+                      <TableHead className="text-right">Monto</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredExpenses.map((expense) => (
+                      <TableRow key={expense.id}>
+                        <TableCell>
+                          {format(new Date(expense.expense_date), 'dd/MM/yyyy')}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{expense.category}</Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {expense.description || '-'}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(Number(expense.amount))}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => setDeleteId(expense.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden divide-y divide-border">
+                {filteredExpenses.map((expense) => (
+                  <div key={expense.id} className="p-4 flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="secondary" className="text-xs">{expense.category}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {format(new Date(expense.expense_date), 'dd/MM/yyyy')}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {expense.description || '-'}
+                      </p>
+                      <p className="text-sm font-semibold mt-1">
+                        {formatCurrency(Number(expense.amount))}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 text-destructive hover:text-destructive shrink-0"
+                      onClick={() => setDeleteId(expense.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
