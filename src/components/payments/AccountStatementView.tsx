@@ -79,8 +79,16 @@ export function AccountStatementView({
 
   // Reset dependent filters
   const handleSportChange = (value: string) => {
-    setSelectedSportId(value);
+    setSelectedSportId(value === 'all' ? '' : value);
     setSelectedCategoryId('');
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategoryId(value === 'all' ? '' : value);
+  };
+
+  const handlePaymentStatusChange = (value: string) => {
+    setSelectedPaymentStatus(value === 'all' ? '' : value);
   };
 
   const clearFilters = () => {
@@ -150,12 +158,12 @@ export function AccountStatementView({
             </div>
 
             {/* Sport Filter */}
-            <Select value={selectedSportId} onValueChange={handleSportChange}>
+            <Select value={selectedSportId || 'all'} onValueChange={handleSportChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Deporte" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los deportes</SelectItem>
+                <SelectItem value="all">Todos los deportes</SelectItem>
                 {sports.map((sport) => (
                   <SelectItem key={sport.id} value={sport.id}>
                     {sport.name}
@@ -165,12 +173,12 @@ export function AccountStatementView({
             </Select>
 
             {/* Category Filter */}
-            <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+            <Select value={selectedCategoryId || 'all'} onValueChange={handleCategoryChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Categoría" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas las categorías</SelectItem>
+                <SelectItem value="all">Todas las categorías</SelectItem>
                 {filteredCategories.filter(c => c.is_active).map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
@@ -180,12 +188,12 @@ export function AccountStatementView({
             </Select>
 
             {/* Payment Status Filter */}
-            <Select value={selectedPaymentStatus} onValueChange={setSelectedPaymentStatus}>
+            <Select value={selectedPaymentStatus || 'all'} onValueChange={handlePaymentStatusChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Estado de pago" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los estados</SelectItem>
+                <SelectItem value="all">Todos los estados</SelectItem>
                 <SelectItem value="al_dia">Al día</SelectItem>
                 <SelectItem value="pendiente">Pendiente</SelectItem>
                 <SelectItem value="atrasado">Atrasado</SelectItem>
