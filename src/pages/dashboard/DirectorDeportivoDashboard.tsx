@@ -1,27 +1,31 @@
 import { useState } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, ClipboardList, BarChart3, MapPin, CreditCard } from 'lucide-react';
+import { Users, ClipboardList, BarChart3, MapPin, CreditCard, UserCheck } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoriesTable } from '@/components/categories/CategoriesTable';
 import { PlayersTable } from '@/components/players/PlayersTable';
 import { VenuesTable } from '@/components/venues/VenuesTable';
 import { OperationalReports } from '@/components/reports/OperationalReports';
 import { FinanceModule } from '@/components/payments/FinanceModule';
+import { TrainersModule } from '@/components/trainers/TrainersModule';
 import { useCategories } from '@/hooks/useCategories';
 import { usePlayers } from '@/hooks/usePlayers';
 import { useVenues } from '@/hooks/useVenues';
+import { useTrainersWithCategories } from '@/hooks/useTrainersWithCategories';
 
 export default function DirectorDeportivoDashboard() {
   const { user, organization } = useAuth();
   const { categories } = useCategories();
   const { players } = usePlayers();
   const { venues } = useVenues();
+  const { trainers } = useTrainersWithCategories();
   const [activeTab, setActiveTab] = useState('jugadores');
 
   const activeCategories = categories.filter(c => c.is_active).length;
   const activePlayers = players.filter(p => p.is_active).length;
   const activeVenues = venues.filter(v => v.is_active).length;
+  const activeTrainers = trainers.filter(t => t.is_active).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,11 +79,11 @@ export default function DirectorDeportivoDashboard() {
           <div className="stryk-card p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-accent-foreground" />
+                <UserCheck className="w-5 h-5 text-accent-foreground" />
               </div>
               <div>
-                <p className="text-2xl font-display font-semibold">—</p>
-                <p className="text-sm text-muted-foreground">Reportes</p>
+                <p className="text-2xl font-display font-semibold">{activeTrainers}</p>
+                <p className="text-sm text-muted-foreground">Entrenadores</p>
               </div>
             </div>
           </div>
@@ -104,6 +108,10 @@ export default function DirectorDeportivoDashboard() {
               <CreditCard className="w-4 h-4" />
               Finanzas
             </TabsTrigger>
+            <TabsTrigger value="entrenadores" className="gap-2">
+              <UserCheck className="w-4 h-4" />
+              Entrenadores
+            </TabsTrigger>
             <TabsTrigger value="reportes" className="gap-2">
               <BarChart3 className="w-4 h-4" />
               Reportes
@@ -124,6 +132,10 @@ export default function DirectorDeportivoDashboard() {
 
           <TabsContent value="finanzas">
             <FinanceModule />
+          </TabsContent>
+
+          <TabsContent value="entrenadores">
+            <TrainersModule readOnly={false} />
           </TabsContent>
 
           <TabsContent value="reportes">
