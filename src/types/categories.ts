@@ -66,6 +66,8 @@ export interface Player {
   id: string;
   organization_id: string;
   category_id: string | null;
+  sport_id: string | null;
+  plan_id: string | null;
   full_name: string;
   phone: string | null;
   tutor_name: string | null;
@@ -80,6 +82,8 @@ export interface Player {
   updated_at: string;
   // Joined data
   category?: { id: string; name: string } | null;
+  sport?: { id: string; name: string } | null;
+  plan_data?: { id: string; name: string; price: number } | null;
 }
 
 export interface Attendance {

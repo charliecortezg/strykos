@@ -28,7 +28,8 @@ export function usePlayers(filters?: PlayersFilters) {
         .select(`
           *,
           category:categories(id, name),
-          sport:sports(id, name)
+          sport:sports(id, name),
+          plan_data:plans(id, name, price)
         `)
         .eq('organization_id', organization.id)
         .order('full_name');
