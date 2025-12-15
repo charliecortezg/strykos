@@ -26,55 +26,47 @@ export function TrainingAttendanceModule({ categories }: TrainingAttendanceModul
   const selectedCategory = categories.find(c => c.id === selectedCategoryId);
 
   const handleTrialSuccess = () => {
-    // Refresh the attendance list
     queryClient.invalidateQueries({ queryKey: ['training-attendance'] });
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Header with Trial Class Button */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <CheckCircle className="w-7 h-7 md:w-8 md:h-8 text-primary" />
-            <h2 className="text-xl md:text-2xl font-display font-semibold text-foreground">
-              Registro de Asistencia
-            </h2>
-          </div>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Registra la asistencia de tus entrenamientos
-          </p>
+    <div className="space-y-4">
+      {/* Header - Compact */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <CheckCircle className="w-5 h-5 text-primary" />
+          <h2 className="text-lg font-display font-semibold">
+            Asistencia
+          </h2>
         </div>
-        
-        {/* Trial Class Button - Always visible */}
         <Button 
           onClick={() => setShowTrialModal(true)}
           variant="outline"
-          className="h-12 gap-2 border-primary/30 text-primary hover:bg-primary/10 sm:self-start"
+          className="h-10 gap-2 text-sm"
         >
-          <UserPlus className="w-5 h-5" />
-          Clase Muestra
+          <UserPlus className="w-4 h-4" />
+          <span className="hidden sm:inline">Clase Muestra</span>
         </Button>
       </div>
 
-      {/* Selection Controls - Mobile optimized */}
-      <Card className="p-3 md:p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-          <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Categoría
-            </Label>
+      {/* Selection Controls - Optimized for quick selection */}
+      <Card className="p-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Category - Full width on mobile */}
+          <div className="flex-1 space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Categoría</Label>
             <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
               <SelectTrigger className="h-12 text-base">
-                <SelectValue placeholder="Selecciona categoría" />
+                <SelectValue placeholder="Selecciona" />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id} className="text-base py-3">
-                    {cat.name}
+                    <span className="font-medium">{cat.name}</span>
                     {cat.sport?.name && (
-                      <span className="ml-2 text-muted-foreground">• {cat.sport.name}</span>
+                      <span className="ml-2 text-muted-foreground text-sm">
+                        {cat.sport.name}
+                      </span>
                     )}
                   </SelectItem>
                 ))}
@@ -82,11 +74,9 @@ export function TrainingAttendanceModule({ categories }: TrainingAttendanceModul
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Fecha
-            </Label>
+          {/* Date - Compact */}
+          <div className="w-full sm:w-44 space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Fecha</Label>
             <Input
               type="date"
               value={selectedDate}
@@ -97,17 +87,20 @@ export function TrainingAttendanceModule({ categories }: TrainingAttendanceModul
           </div>
         </div>
 
+        {/* Context Info */}
         {selectedCategory && (
-          <div className="mt-3 pt-3 border-t border-border">
-            <div className="flex flex-wrap gap-2 text-sm">
-              <Badge variant="outline">{selectedCategory.sport?.name || 'Sin deporte'}</Badge>
-              {selectedCategory.venue?.name && (
-                <Badge variant="secondary">{selectedCategory.venue.name}</Badge>
-              )}
-              <span className="text-muted-foreground">
-                {format(new Date(selectedDate), "EEEE d 'de' MMMM", { locale: es })}
-              </span>
-            </div>
+          <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center gap-2 text-sm">
+            <Badge variant="outline" className="text-xs">
+              {selectedCategory.sport?.name || 'Sin deporte'}
+            </Badge>
+            {selectedCategory.venue?.name && (
+              <Badge variant="secondary" className="text-xs">
+                {selectedCategory.venue.name}
+              </Badge>
+            )}
+            <span className="text-muted-foreground text-xs">
+              {format(new Date(selectedDate), "EEEE d 'de' MMMM", { locale: es })}
+            </span>
           </div>
         )}
       </Card>
@@ -120,9 +113,9 @@ export function TrainingAttendanceModule({ categories }: TrainingAttendanceModul
         />
       ) : (
         <Card className="p-8 text-center">
-          <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">
-            Selecciona una categoría para registrar asistencia
+          <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground text-sm">
+            Selecciona una categoría
           </p>
         </Card>
       )}
