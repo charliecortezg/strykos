@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, ClipboardList, BarChart3, MapPin, CreditCard, UserCheck } from 'lucide-react';
+import { Users, ClipboardList, BarChart3, MapPin, CreditCard, UserCheck, Trophy } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoriesTable } from '@/components/categories/CategoriesTable';
 import { PlayersTable } from '@/components/players/PlayersTable';
@@ -9,6 +9,7 @@ import { VenuesTable } from '@/components/venues/VenuesTable';
 import { OperationalReports } from '@/components/reports/OperationalReports';
 import { FinanceModule } from '@/components/payments/FinanceModule';
 import { TrainersModule } from '@/components/trainers/TrainersModule';
+import { MatchHistoryModule } from '@/components/matches/MatchHistoryModule';
 import { useCategories } from '@/hooks/useCategories';
 import { usePlayers } from '@/hooks/usePlayers';
 import { useVenues } from '@/hooks/useVenues';
@@ -108,6 +109,10 @@ export default function DirectorDeportivoDashboard() {
               <CreditCard className="w-4 h-4" />
               Finanzas
             </TabsTrigger>
+            <TabsTrigger value="partidos" className="gap-2">
+              <Trophy className="w-4 h-4" />
+              Partidos
+            </TabsTrigger>
             <TabsTrigger value="entrenadores" className="gap-2">
               <UserCheck className="w-4 h-4" />
               Entrenadores
@@ -132,6 +137,10 @@ export default function DirectorDeportivoDashboard() {
 
           <TabsContent value="finanzas">
             <FinanceModule />
+          </TabsContent>
+
+          <TabsContent value="partidos">
+            <MatchHistoryModule canEdit={true} />
           </TabsContent>
 
           <TabsContent value="entrenadores">
