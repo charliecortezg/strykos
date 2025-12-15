@@ -8,15 +8,19 @@ export interface Plan {
   name: string;
   price: number;
   periodicity: string;
+  sport_id: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Joined data
+  sport?: { id: string; name: string } | null;
 }
 
 export interface CreatePlanData {
   name: string;
   price: number;
   periodicity: string;
+  sport_id?: string;
 }
 
 export const PERIODICITY_OPTIONS = [
@@ -41,7 +45,10 @@ export function usePlans() {
 
     const { data, error: fetchError } = await supabase
       .from('plans')
-      .select('*')
+      .select(`
+        *,
+        sport:sports(id, name)
+      `)
       .eq('organization_id', organization.id)
       .order('name');
 
@@ -66,6 +73,7 @@ export function usePlans() {
       name: data.name,
       price: data.price,
       periodicity: data.periodicity,
+      sport_id: data.sport_id || null,
     });
 
     if (error) {
@@ -78,12 +86,18 @@ export function usePlans() {
   };
 
   const updatePlan = async (id: string, data: Partial<CreatePlanData>): Promise<boolean> => {
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+    
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.price !== undefined) updateData.price = data.price;
+    if (data.periodicity !== undefined) updateData.periodicity = data.periodicity;
+    if (data.sport_id !== undefined) updateData.sport_id = data.sport_id || null;
+
     const { error } = await supabase
       .from('plans')
-      .update({
-        ...data,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', id);
 
     if (error) {
