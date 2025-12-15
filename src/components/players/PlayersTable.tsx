@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, MoreHorizontal, Power, Edit, Eye, Search, Filter } from 'lucide-react';
+import { Plus, MoreHorizontal, Power, Edit, Eye, Search, Filter, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { CreatePlayerModal } from './CreatePlayerModal';
 import { EditPlayerModal } from './EditPlayerModal';
 import { PlayerProfileModal } from './PlayerProfileModal';
+import { ExcelImportModal } from './ExcelImportModal';
 import { PAYMENT_STATUS_LABELS, type Player, type PaymentStatus } from '@/types/categories';
 import { useToast } from '@/hooks/use-toast';
 
@@ -42,6 +43,7 @@ export function PlayersTable() {
   });
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [viewingPlayer, setViewingPlayer] = useState<Player | null>(null);
 
@@ -85,10 +87,16 @@ export function PlayersTable() {
         <h2 className="text-xl font-display font-semibold text-foreground">
           Jugadores
         </h2>
-        <Button onClick={() => setCreateModalOpen(true)} size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Nuevo jugador
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportModalOpen(true)} size="sm">
+            <Upload className="w-4 h-4 mr-2" />
+            Importar Excel
+          </Button>
+          <Button onClick={() => setCreateModalOpen(true)} size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Nuevo jugador
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -248,6 +256,12 @@ export function PlayersTable() {
         open={createModalOpen}
         onOpenChange={setCreateModalOpen}
         onPlayerCreated={refetch}
+      />
+
+      <ExcelImportModal
+        open={importModalOpen}
+        onOpenChange={setImportModalOpen}
+        onImportComplete={refetch}
       />
 
       <EditPlayerModal
