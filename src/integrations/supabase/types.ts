@@ -492,6 +492,47 @@ export type Database = {
           },
         ]
       }
+      plans: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          periodicity: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          periodicity?: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          periodicity?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plans_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_roles: {
         Row: {
           created_at: string | null
@@ -524,7 +565,9 @@ export type Database = {
           payment_status: Database["public"]["Enums"]["payment_status"]
           phone: string | null
           plan: string | null
+          plan_id: string | null
           position: string | null
+          sport_id: string | null
           tutor_name: string | null
           updated_at: string
         }
@@ -541,7 +584,9 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone?: string | null
           plan?: string | null
+          plan_id?: string | null
           position?: string | null
+          sport_id?: string | null
           tutor_name?: string | null
           updated_at?: string
         }
@@ -558,7 +603,9 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone?: string | null
           plan?: string | null
+          plan_id?: string | null
           position?: string | null
+          sport_id?: string | null
           tutor_name?: string | null
           updated_at?: string
         }
@@ -575,6 +622,20 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "players_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "players_sport_id_fkey"
+            columns: ["sport_id"]
+            isOneToOne: false
+            referencedRelation: "sports"
             referencedColumns: ["id"]
           },
         ]
@@ -739,6 +800,7 @@ export type Database = {
       }
       is_category_trainer: { Args: { _category_id: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
+      reset_monthly_payment_status: { Args: never; Returns: number }
       user_belongs_to_org: { Args: { _org_id: string }; Returns: boolean }
       validate_org_access: {
         Args: {

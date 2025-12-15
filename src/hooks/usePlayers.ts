@@ -109,12 +109,14 @@ export function usePlayers(filters?: PlayersFilters) {
     }
   };
 
-  const updatePlayer = async (id: string, data: Partial<CreatePlayerData & { payment_status?: PaymentStatus }>): Promise<boolean> => {
+  const updatePlayer = async (id: string, data: Partial<CreatePlayerData & { payment_status?: PaymentStatus; sport_id?: string; plan_id?: string }>): Promise<boolean> => {
     try {
       const updateData: Record<string, unknown> = {};
       
       if (data.full_name !== undefined) updateData.full_name = data.full_name;
       if (data.category_id !== undefined) updateData.category_id = data.category_id || null;
+      if (data.sport_id !== undefined) updateData.sport_id = data.sport_id || null;
+      if (data.plan_id !== undefined) updateData.plan_id = data.plan_id || null;
       if (data.phone !== undefined) updateData.phone = data.phone || null;
       if (data.tutor_name !== undefined) updateData.tutor_name = data.tutor_name || null;
       if (data.position !== undefined) updateData.position = data.position || null;

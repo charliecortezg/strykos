@@ -13,6 +13,7 @@ import { CreateCategoryModal } from './CreateCategoryModal';
 import { EditCategoryModal } from './EditCategoryModal';
 import { DAYS_OF_WEEK, type Category } from '@/types/categories';
 import { useToast } from '@/hooks/use-toast';
+import { formatTimeRange12h } from '@/lib/time-utils';
 
 export function CategoriesTable() {
   const { categories, isLoading, toggleCategoryActive, refetch } = useCategories();
@@ -41,11 +42,6 @@ export function CategoriesTable() {
     return days
       .map(d => DAYS_OF_WEEK.find(dw => dw.value === d)?.label || d)
       .join(', ');
-  };
-
-  const formatTime = (start: string | null, end: string | null) => {
-    if (!start || !end) return '—';
-    return `${start.slice(0, 5)} - ${end.slice(0, 5)}`;
   };
 
   return (
@@ -102,7 +98,7 @@ export function CategoriesTable() {
                       {category.venue?.name || '—'}
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground hidden md:table-cell">
-                      {formatTime(category.start_time, category.end_time)}
+                      {formatTimeRange12h(category.start_time, category.end_time)}
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground hidden lg:table-cell">
                       {formatDays(category.days_of_week)}

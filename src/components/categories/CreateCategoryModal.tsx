@@ -32,6 +32,7 @@ import { useVenues } from '@/hooks/useVenues';
 import { useTrainers } from '@/hooks/useTrainers';
 import { useToast } from '@/hooks/use-toast';
 import { DAYS_OF_WEEK } from '@/types/categories';
+import { SmartSportSelector } from '@/components/ui/smart-sport-selector';
 
 const formSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(50),
@@ -53,7 +54,7 @@ interface CreateCategoryModalProps {
 
 export function CreateCategoryModal({ open, onOpenChange, onCategoryCreated }: CreateCategoryModalProps) {
   const { createCategory } = useCategories();
-  const { sports, isLoading: loadingSports } = useSports();
+  const { sports, isLoading: loadingSports, createSport } = useSports();
   const { venues, isLoading: loadingVenues } = useVenues();
   const { trainers, isLoading: loadingTrainers } = useTrainers();
   const { toast } = useToast();
@@ -104,6 +105,17 @@ export function CreateCategoryModal({ open, onOpenChange, onCategoryCreated }: C
     }
   };
 
+  const handleCreateSport = async (name: string): Promise<string | null> => {
+    const newId = await createSport(name);
+    if (newId) {
+      toast({
+        title: 'Deporte agregado',
+        description: `"${name}" ha sido agregado a la lista.`,
+      });
+    }
+    return newId;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -134,24 +146,16 @@ export function CreateCategoryModal({ open, onOpenChange, onCategoryCreated }: C
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Deporte</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {loadingSports ? (
-                          <SelectItem value="_loading" disabled>Cargando...</SelectItem>
-                        ) : (
-                          sports.map(sport => (
-                            <SelectItem key={sport.id} value={sport.id}>
-                              {sport.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <SmartSportSelector
+                        sports={sports}
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        onCreateSport={handleCreateSport}
+                        isLoading={loadingSports}
+                        placeholder="Buscar deporte..."
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

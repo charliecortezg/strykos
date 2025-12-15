@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { CreditCard, Users } from 'lucide-react';
+import { CreditCard, Users, DollarSign } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FinanceModule } from '@/components/payments/FinanceModule';
 import { PlayersTable } from '@/components/players/PlayersTable';
+import { PlansModule } from '@/components/plans/PlansModule';
 
 export default function AdministrativoDashboard() {
   const { user, organization } = useAuth();
@@ -30,6 +31,10 @@ export default function AdministrativoDashboard() {
               <CreditCard className="w-4 h-4" />
               Finanzas
             </TabsTrigger>
+            <TabsTrigger value="planes" className="gap-2">
+              <DollarSign className="w-4 h-4" />
+              Planes
+            </TabsTrigger>
             <TabsTrigger value="jugadores" className="gap-2">
               <Users className="w-4 h-4" />
               Jugadores
@@ -38,6 +43,10 @@ export default function AdministrativoDashboard() {
 
           <TabsContent value="finanzas">
             <FinanceModule />
+          </TabsContent>
+
+          <TabsContent value="planes">
+            <PlansModule />
           </TabsContent>
 
           <TabsContent value="jugadores">
