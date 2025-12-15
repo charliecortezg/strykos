@@ -504,6 +504,7 @@ export type Database = {
           organization_id: string
           periodicity: string
           price: number
+          sport_id: string | null
           updated_at: string
         }
         Insert: {
@@ -514,6 +515,7 @@ export type Database = {
           organization_id: string
           periodicity?: string
           price?: number
+          sport_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -524,6 +526,7 @@ export type Database = {
           organization_id?: string
           periodicity?: string
           price?: number
+          sport_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -532,6 +535,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plans_sport_id_fkey"
+            columns: ["sport_id"]
+            isOneToOne: false
+            referencedRelation: "sports"
             referencedColumns: ["id"]
           },
         ]

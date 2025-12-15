@@ -85,8 +85,8 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
       form.reset({
         full_name: player.full_name,
         category_id: player.category_id || '',
-        sport_id: (player as any).sport_id || '',
-        plan_id: (player as any).plan_id || '',
+        sport_id: player.sport_id || '',
+        plan_id: player.plan_id || '',
         phone: player.phone || '',
         tutor_name: player.tutor_name || '',
         position: player.position || '',
@@ -96,6 +96,20 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
       });
     }
   }, [player, form]);
+
+  // Auto-fill sport_id and monthly_fee when plan changes
+  const selectedPlanId = form.watch('plan_id');
+  useEffect(() => {
+    if (selectedPlanId && selectedPlanId !== player?.plan_id) {
+      const selectedPlan = plans.find(p => p.id === selectedPlanId);
+      if (selectedPlan) {
+        form.setValue('monthly_fee', selectedPlan.price.toString());
+        if (selectedPlan.sport_id) {
+          form.setValue('sport_id', selectedPlan.sport_id);
+        }
+      }
+    }
+  }, [selectedPlanId, plans, form, player?.plan_id]);
 
   const onSubmit = async (values: FormValues) => {
     if (!player) return;

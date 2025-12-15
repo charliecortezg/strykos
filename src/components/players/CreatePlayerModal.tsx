@@ -82,13 +82,17 @@ export function CreatePlayerModal({ open, onOpenChange, onPlayerCreated }: Creat
     }
   }, [sports, form]);
 
-  // Auto-fill monthly_fee when plan changes
+  // Auto-fill monthly_fee and sport_id when plan changes
   const selectedPlanId = form.watch('plan_id');
   useEffect(() => {
     if (selectedPlanId) {
       const selectedPlan = plans.find(p => p.id === selectedPlanId);
       if (selectedPlan) {
         form.setValue('monthly_fee', selectedPlan.price.toString());
+        // Auto-select sport from plan
+        if (selectedPlan.sport_id) {
+          form.setValue('sport_id', selectedPlan.sport_id);
+        }
       }
     }
   }, [selectedPlanId, plans, form]);
