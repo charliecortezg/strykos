@@ -2,3 +2,6 @@ project_id = "ounhzchuuvziyqriyjdb"
 
 [functions.setup-platform-admin]
 verify_jwt = false
+
+[functions.reset-monthly-payments]
+verify_jwt = false
