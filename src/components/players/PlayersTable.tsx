@@ -178,6 +178,7 @@ export function PlayersTable() {
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Nombre</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground hidden md:table-cell">Categoría</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground hidden lg:table-cell">Deporte</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground hidden lg:table-cell">Tutor</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground hidden xl:table-cell">Posición</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Pago</th>
@@ -201,6 +202,9 @@ export function PlayersTable() {
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground hidden md:table-cell">
                       {player.category?.name || '—'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground hidden lg:table-cell">
+                      {(player as any).sport?.name || '—'}
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground hidden lg:table-cell">
                       {player.tutor_name || '—'}
