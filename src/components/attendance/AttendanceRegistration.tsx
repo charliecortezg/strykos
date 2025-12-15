@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, AlertCircle, Save, Users, CreditCard } from 'lucide-react';
+import { Check, X, Save, Users, CheckCheck } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTrainingAttendance, PlayerAttendanceRecord } from '@/hooks/useTrainingAttendance';
 import { AttendanceStatus, PAYMENT_STATUS_LABELS } from '@/types/categories';
 import { cn } from '@/lib/utils';
@@ -16,17 +13,10 @@ interface AttendanceRegistrationProps {
   date: string;
 }
 
-const ATTENDANCE_OPTIONS: { value: AttendanceStatus; label: string; icon: typeof CheckCircle; color: string }[] = [
-  { value: 'presente', label: 'Presente', icon: CheckCircle, color: 'text-success' },
-  { value: 'ausente', label: 'Ausente', icon: XCircle, color: 'text-destructive' },
-  { value: 'justificado', label: 'Justificado', icon: AlertCircle, color: 'text-warning' },
-];
-
 const ABSENCE_REASONS = [
+  { value: 'justificada', label: 'Justificada' },
   { value: 'injustificada', label: 'Injustificada' },
   { value: 'enfermedad', label: 'Enfermedad / Lesión' },
-  { value: 'permiso', label: 'Permiso' },
-  { value: 'otro', label: 'Otro motivo' },
 ];
 
 export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrationProps) {
@@ -41,7 +31,14 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
 
   const updatePlayerStatus = (playerId: string, status: AttendanceStatus) => {
     setLocalPlayers(prev =>
-      prev.map(p => (p.player_id === playerId ? { ...p, status, notes: status === 'presente' ? '' : p.notes } : p))
+      prev.map(p => {
+        if (p.player_id === playerId) {
+          // If marking present, clear notes. If marking absent/justified, keep/set default notes
+          const newNotes = status === 'presente' ? '' : (p.notes || 'injustificada');
+          return { ...p, status, notes: newNotes };
+        }
+        return p;
+      })
     );
     setHasChanges(true);
   };
@@ -67,7 +64,7 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
   const stats = {
     total: localPlayers.length,
     present: localPlayers.filter(p => p.status === 'presente').length,
-    absent: localPlayers.filter(p => p.status === 'ausente').length,
+    absent: localPlayers.filter(p => p.status === 'ausente' || p.status === 'justificado').length,
     justified: localPlayers.filter(p => p.status === 'justificado').length,
   };
 
@@ -95,142 +92,146 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
 
   return (
     <div className="space-y-4">
-      {/* Stats Bar */}
-      <div className="grid grid-cols-4 gap-4">
-        <Card className="p-3 text-center">
-          <p className="text-2xl font-bold">{stats.total}</p>
-          <p className="text-xs text-muted-foreground">Total</p>
-        </Card>
-        <Card className="p-3 text-center bg-success/5 border-success/20">
-          <p className="text-2xl font-bold text-success">{stats.present}</p>
-          <p className="text-xs text-muted-foreground">Presentes</p>
-        </Card>
-        <Card className="p-3 text-center bg-destructive/5 border-destructive/20">
-          <p className="text-2xl font-bold text-destructive">{stats.absent}</p>
-          <p className="text-xs text-muted-foreground">Ausentes</p>
-        </Card>
-        <Card className="p-3 text-center bg-warning/5 border-warning/20">
-          <p className="text-2xl font-bold text-warning">{stats.justified}</p>
-          <p className="text-xs text-muted-foreground">Justificados</p>
-        </Card>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {hasExistingAttendance && (
-            <Badge variant="outline" className="bg-primary/10 text-primary">
-              Editando registro existente
-            </Badge>
-          )}
+      {/* Sticky Stats Bar - Mobile optimized */}
+      <div className="sticky top-0 z-10 bg-background pb-3">
+        <div className="grid grid-cols-4 gap-2 md:gap-4">
+          <Card className="p-2 md:p-3 text-center">
+            <p className="text-xl md:text-2xl font-bold">{stats.total}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">Total</p>
+          </Card>
+          <Card className="p-2 md:p-3 text-center bg-success/10 border-success/30">
+            <p className="text-xl md:text-2xl font-bold text-success">{stats.present}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">Presentes</p>
+          </Card>
+          <Card className="p-2 md:p-3 text-center bg-destructive/10 border-destructive/30">
+            <p className="text-xl md:text-2xl font-bold text-destructive">{stats.absent}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">Ausentes</p>
+          </Card>
+          <Card className="p-2 md:p-3 text-center bg-warning/10 border-warning/30">
+            <p className="text-xl md:text-2xl font-bold text-warning">{stats.justified}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">Justificados</p>
+          </Card>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={markAllPresent}>
-            Marcar todos presente
+
+        {/* Global Actions - Large touch targets */}
+        <div className="flex gap-2 mt-3">
+          <Button 
+            variant="outline" 
+            onClick={markAllPresent}
+            className="flex-1 h-12 text-base gap-2"
+          >
+            <CheckCheck className="w-5 h-5" />
+            Todos presente
           </Button>
           <Button
-            size="sm"
             onClick={handleSave}
             disabled={!hasChanges || saveAttendance.isPending}
-            className="gap-2"
+            className="flex-1 h-12 text-base gap-2"
           >
-            <Save className="w-4 h-4" />
-            {saveAttendance.isPending ? 'Guardando...' : 'Guardar asistencia'}
+            <Save className="w-5 h-5" />
+            {saveAttendance.isPending ? 'Guardando...' : 'Guardar'}
           </Button>
         </div>
+
+        {hasExistingAttendance && (
+          <Badge variant="outline" className="mt-2 bg-primary/10 text-primary w-full justify-center">
+            Editando registro existente
+          </Badge>
+        )}
       </div>
 
-      {/* Players Table */}
-      <Card className="overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead>Jugador</TableHead>
-              <TableHead className="text-center">
-                <div className="flex items-center justify-center gap-1">
-                  <CreditCard className="w-4 h-4" />
-                  Pago
-                </div>
-              </TableHead>
-              <TableHead className="text-center">Asistencia</TableHead>
-              <TableHead>Motivo / Nota</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {localPlayers.map((player) => (
-              <TableRow key={player.player_id}>
-                <TableCell>
-                  <div>
-                    <p className="font-medium">{player.full_name}</p>
+      {/* Players List - Mobile optimized cards */}
+      <div className="space-y-3">
+        {localPlayers.map((player) => {
+          const isPresent = player.status === 'presente';
+          const isAbsent = player.status === 'ausente' || player.status === 'justificado';
+          
+          return (
+            <Card key={player.player_id} className="p-3 md:p-4">
+              {/* Player Info Row */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-base truncate">{player.full_name}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
                     {player.position && (
-                      <p className="text-xs text-muted-foreground">{player.position}</p>
+                      <span className="text-xs text-muted-foreground">{player.position}</span>
                     )}
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        'text-[10px] px-1.5 py-0',
+                        player.payment_status === 'al_dia' && 'bg-success/10 text-success border-success/20',
+                        player.payment_status === 'pendiente' && 'bg-warning/10 text-warning border-warning/20',
+                        player.payment_status === 'atrasado' && 'bg-destructive/10 text-destructive border-destructive/20'
+                      )}
+                    >
+                      {PAYMENT_STATUS_LABELS[player.payment_status as keyof typeof PAYMENT_STATUS_LABELS] || player.payment_status}
+                    </Badge>
                   </div>
-                </TableCell>
-                <TableCell className="text-center">
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      'text-xs',
-                      player.payment_status === 'al_dia' && 'bg-success/10 text-success border-success/20',
-                      player.payment_status === 'pendiente' && 'bg-warning/10 text-warning border-warning/20',
-                      player.payment_status === 'atrasado' && 'bg-destructive/10 text-destructive border-destructive/20'
-                    )}
-                  >
-                    {PAYMENT_STATUS_LABELS[player.payment_status as keyof typeof PAYMENT_STATUS_LABELS] || player.payment_status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-center gap-1">
-                    {ATTENDANCE_OPTIONS.map((option) => {
-                      const Icon = option.icon;
-                      const isSelected = player.status === option.value;
-                      return (
-                        <Button
-                          key={option.value}
-                          variant={isSelected ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => updatePlayerStatus(player.player_id, option.value)}
-                          className={cn(
-                            'w-10 h-10 p-0',
-                            isSelected && option.value === 'presente' && 'bg-success hover:bg-success/90',
-                            isSelected && option.value === 'ausente' && 'bg-destructive hover:bg-destructive/90',
-                            isSelected && option.value === 'justificado' && 'bg-warning hover:bg-warning/90'
-                          )}
-                          title={option.label}
-                        >
-                          <Icon className="w-5 h-5" />
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {player.status !== 'presente' && (
-                    <div className="flex gap-2">
-                      <Select
-                        value={player.notes?.split(':')[0] || ''}
-                        onValueChange={(v) => updatePlayerNotes(player.player_id, v)}
-                      >
-                        <SelectTrigger className="w-36 h-8 text-xs">
-                          <SelectValue placeholder="Motivo..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ABSENCE_REASONS.map((reason) => (
-                            <SelectItem key={reason.value} value={reason.value}>
-                              {reason.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                </div>
+              </div>
+
+              {/* Large Toggle Buttons - Mobile friendly */}
+              <div className="flex gap-2">
+                <Button
+                  variant={isPresent ? 'default' : 'outline'}
+                  onClick={() => updatePlayerStatus(player.player_id, 'presente')}
+                  className={cn(
+                    'flex-1 h-14 text-lg font-semibold gap-2 transition-all',
+                    isPresent 
+                      ? 'bg-success hover:bg-success/90 text-success-foreground shadow-md' 
+                      : 'border-success/30 text-success hover:bg-success/10'
                   )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+                >
+                  <Check className="w-6 h-6" />
+                  Presente
+                </Button>
+                <Button
+                  variant={isAbsent ? 'default' : 'outline'}
+                  onClick={() => updatePlayerStatus(player.player_id, 'ausente')}
+                  className={cn(
+                    'flex-1 h-14 text-lg font-semibold gap-2 transition-all',
+                    isAbsent 
+                      ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-md' 
+                      : 'border-destructive/30 text-destructive hover:bg-destructive/10'
+                  )}
+                >
+                  <X className="w-6 h-6" />
+                  Ausente
+                </Button>
+              </div>
+
+              {/* Absence Reason - Only shown when absent */}
+              {isAbsent && (
+                <div className="mt-3 pt-3 border-t border-border">
+                  <Select
+                    value={player.notes || 'injustificada'}
+                    onValueChange={(v) => {
+                      // If "justificada" or "enfermedad" is selected, mark as justified status
+                      const newStatus = v === 'injustificada' ? 'ausente' : 'justificado';
+                      setLocalPlayers(prev =>
+                        prev.map(p => (p.player_id === player.player_id ? { ...p, status: newStatus as AttendanceStatus, notes: v } : p))
+                      );
+                      setHasChanges(true);
+                    }}
+                  >
+                    <SelectTrigger className="h-12 text-base">
+                      <SelectValue placeholder="Seleccionar motivo..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ABSENCE_REASONS.map((reason) => (
+                        <SelectItem key={reason.value} value={reason.value} className="text-base py-3">
+                          {reason.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
