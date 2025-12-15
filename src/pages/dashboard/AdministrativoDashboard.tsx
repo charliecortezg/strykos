@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { CreditCard, UserCheck, Trophy } from 'lucide-react';
+import { CreditCard, Users } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FinanceModule } from '@/components/payments/FinanceModule';
-import { TrainersModule } from '@/components/trainers/TrainersModule';
-import { MatchHistoryModule } from '@/components/matches/MatchHistoryModule';
+import { PlayersTable } from '@/components/players/PlayersTable';
 
 export default function AdministrativoDashboard() {
   const { user, organization } = useAuth();
@@ -31,13 +30,9 @@ export default function AdministrativoDashboard() {
               <CreditCard className="w-4 h-4" />
               Finanzas
             </TabsTrigger>
-            <TabsTrigger value="partidos" className="gap-2">
-              <Trophy className="w-4 h-4" />
-              Partidos
-            </TabsTrigger>
-            <TabsTrigger value="entrenadores" className="gap-2">
-              <UserCheck className="w-4 h-4" />
-              Entrenadores
+            <TabsTrigger value="jugadores" className="gap-2">
+              <Users className="w-4 h-4" />
+              Jugadores
             </TabsTrigger>
           </TabsList>
 
@@ -45,12 +40,8 @@ export default function AdministrativoDashboard() {
             <FinanceModule />
           </TabsContent>
 
-          <TabsContent value="partidos">
-            <MatchHistoryModule canEdit={false} />
-          </TabsContent>
-
-          <TabsContent value="entrenadores">
-            <TrainersModule readOnly={true} />
+          <TabsContent value="jugadores">
+            <PlayersTable />
           </TabsContent>
         </Tabs>
       </main>
