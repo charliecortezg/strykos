@@ -26,18 +26,19 @@ export default function AdministrativoDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
             <TabsTrigger value="finanzas" className="gap-2">
               <CreditCard className="w-4 h-4" />
-              Finanzas
-            </TabsTrigger>
-            <TabsTrigger value="planes" className="gap-2">
-              <DollarSign className="w-4 h-4" />
-              Planes
+              <span className="hidden sm:inline">Finanzas</span>
+              <span className="sm:hidden">$</span>
             </TabsTrigger>
             <TabsTrigger value="jugadores" className="gap-2">
               <Users className="w-4 h-4" />
-              Jugadores
+              <span className="hidden sm:inline">Jugadores</span>
+            </TabsTrigger>
+            <TabsTrigger value="planes" className="gap-2">
+              <DollarSign className="w-4 h-4" />
+              <span className="hidden sm:inline">Planes</span>
             </TabsTrigger>
           </TabsList>
 
@@ -45,12 +46,12 @@ export default function AdministrativoDashboard() {
             <FinanceModule />
           </TabsContent>
 
-          <TabsContent value="planes">
-            <PlansModule />
-          </TabsContent>
-
           <TabsContent value="jugadores">
             <PlayersTable />
+          </TabsContent>
+
+          <TabsContent value="planes">
+            <PlansModule />
           </TabsContent>
         </Tabs>
       </main>

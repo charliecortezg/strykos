@@ -111,7 +111,11 @@ export function usePlayers(filters?: PlayersFilters) {
     }
   };
 
-  const updatePlayer = async (id: string, data: Partial<CreatePlayerData & { payment_status?: PaymentStatus; sport_id?: string; plan_id?: string }>): Promise<boolean> => {
+  const updatePlayer = async (id: string, data: Partial<CreatePlayerData & { payment_status?: PaymentStatus; sport_id?: string; plan_id?: string; is_active?: boolean }>): Promise<boolean> => {
+    // Optimistic update - update local state immediately
+    const previousPlayers = [...players];
+    setPlayers(prev => prev.map(p => p.id === id ? { ...p, ...data } : p));
+
     try {
       const updateData: Record<string, unknown> = {};
       
@@ -126,6 +130,7 @@ export function usePlayers(filters?: PlayersFilters) {
       if (data.monthly_fee !== undefined) updateData.monthly_fee = data.monthly_fee || null;
       if (data.is_scholarship !== undefined) updateData.is_scholarship = data.is_scholarship;
       if (data.payment_status !== undefined) updateData.payment_status = data.payment_status;
+      if (data.is_active !== undefined) updateData.is_active = data.is_active;
 
       const { error: updateError } = await supabase
         .from('players')
@@ -135,19 +140,26 @@ export function usePlayers(filters?: PlayersFilters) {
       if (updateError) {
         console.error('Error updating player:', updateError);
         setError(updateError.message);
+        // Rollback on error
+        setPlayers(previousPlayers);
         return false;
       }
 
-      await fetchPlayers();
       return true;
     } catch (err) {
       console.error('Error:', err);
       setError('Error al actualizar jugador');
+      // Rollback on error
+      setPlayers(previousPlayers);
       return false;
     }
   };
 
   const togglePlayerActive = async (id: string, isActive: boolean): Promise<boolean> => {
+    // Optimistic update
+    const previousPlayers = [...players];
+    setPlayers(prev => prev.map(p => p.id === id ? { ...p, is_active: isActive } : p));
+
     try {
       const { error: updateError } = await supabase
         .from('players')
@@ -157,14 +169,15 @@ export function usePlayers(filters?: PlayersFilters) {
       if (updateError) {
         console.error('Error toggling player:', updateError);
         setError(updateError.message);
+        setPlayers(previousPlayers);
         return false;
       }
 
-      await fetchPlayers();
       return true;
     } catch (err) {
       console.error('Error:', err);
       setError('Error al cambiar estado');
+      setPlayers(previousPlayers);
       return false;
     }
   };
