@@ -28,9 +28,10 @@ interface AccountData {
 interface PlayerAccountStatementProps {
   player: Player;
   onBack: () => void;
+  backLabel?: string;
 }
 
-export function PlayerAccountStatement({ player, onBack }: PlayerAccountStatementProps) {
+export function PlayerAccountStatement({ player, onBack, backLabel = 'Volver a Pagos' }: PlayerAccountStatementProps) {
   const [accountData, setAccountData] = useState<AccountData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
@@ -164,7 +165,7 @@ export function PlayerAccountStatement({ player, onBack }: PlayerAccountStatemen
       {/* Back button */}
       <Button variant="ghost" onClick={onBack} className="mb-2">
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Volver a Pagos
+        {backLabel}
       </Button>
 
       {/* Header */}
