@@ -156,6 +156,173 @@ export type Database = {
           },
         ]
       }
+      match_players: {
+        Row: {
+          assists: number | null
+          attended: boolean
+          created_at: string
+          goals: number | null
+          id: string
+          match_id: string
+          organization_id: string
+          player_id: string
+          points: number | null
+          updated_at: string
+        }
+        Insert: {
+          assists?: number | null
+          attended?: boolean
+          created_at?: string
+          goals?: number | null
+          id?: string
+          match_id: string
+          organization_id: string
+          player_id: string
+          points?: number | null
+          updated_at?: string
+        }
+        Update: {
+          assists?: number | null
+          attended?: boolean
+          created_at?: string
+          goals?: number | null
+          id?: string
+          match_id?: string
+          organization_id?: string
+          player_id?: string
+          points?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_players_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_players_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          category_id: string
+          created_at: string
+          created_by: string | null
+          goals_against: number
+          goals_for: number
+          id: string
+          last_edited_at: string | null
+          last_edited_by: string | null
+          match_date: string
+          match_type: string
+          notes: string | null
+          organization_id: string
+          rival_name: string
+          status: string
+          technical_notes: string | null
+          trainer_id: string | null
+          updated_at: string
+          venue_id: string | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          goals_against?: number
+          goals_for?: number
+          id?: string
+          last_edited_at?: string | null
+          last_edited_by?: string | null
+          match_date: string
+          match_type?: string
+          notes?: string | null
+          organization_id: string
+          rival_name: string
+          status?: string
+          technical_notes?: string | null
+          trainer_id?: string | null
+          updated_at?: string
+          venue_id?: string | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          goals_against?: number
+          goals_for?: number
+          id?: string
+          last_edited_at?: string | null
+          last_edited_by?: string | null
+          match_date?: string
+          match_type?: string
+          notes?: string | null
+          organization_id?: string
+          rival_name?: string
+          status?: string
+          technical_notes?: string | null
+          trainer_id?: string | null
+          updated_at?: string
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_last_edited_by_fkey"
+            columns: ["last_edited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           approximate_students: number
