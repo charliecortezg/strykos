@@ -2,11 +2,12 @@ import { useState, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PaymentsDashboard } from './PaymentsDashboard';
 import { AccountStatementView } from './AccountStatementView';
+import { ExpensesModule } from '@/components/expenses/ExpensesModule';
 import type { Player } from '@/types/categories';
-import { CreditCard, FileText } from 'lucide-react';
+import { CreditCard, FileText, Receipt } from 'lucide-react';
 
 export function FinanceModule() {
-  const [activeTab, setActiveTab] = useState<'payments' | 'accounts'>('payments');
+  const [activeTab, setActiveTab] = useState<'payments' | 'accounts' | 'expenses'>('payments');
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [returnTab, setReturnTab] = useState<'payments' | 'accounts'>('payments');
 
@@ -35,15 +36,15 @@ export function FinanceModule() {
 
   // Clear selection when switching tabs manually
   const handleTabChange = (value: string) => {
-    setActiveTab(value as 'payments' | 'accounts');
-    if (value === 'payments') {
+    setActiveTab(value as 'payments' | 'accounts' | 'expenses');
+    if (value === 'payments' || value === 'expenses') {
       setSelectedPlayer(null);
     }
   };
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-      <TabsList className="grid grid-cols-2 w-full max-w-md">
+      <TabsList className="grid grid-cols-3 w-full max-w-lg">
         <TabsTrigger value="payments" className="flex items-center gap-2">
           <CreditCard className="w-4 h-4" />
           <span>Pagos</span>
@@ -51,6 +52,10 @@ export function FinanceModule() {
         <TabsTrigger value="accounts" className="flex items-center gap-2">
           <FileText className="w-4 h-4" />
           <span>Estados de Cuenta</span>
+        </TabsTrigger>
+        <TabsTrigger value="expenses" className="flex items-center gap-2">
+          <Receipt className="w-4 h-4" />
+          <span>Gastos</span>
         </TabsTrigger>
       </TabsList>
 
@@ -65,6 +70,10 @@ export function FinanceModule() {
           onBack={handleBack}
           showBackToPayments={returnTab === 'payments'}
         />
+      </TabsContent>
+
+      <TabsContent value="expenses" className="mt-6">
+        <ExpensesModule />
       </TabsContent>
     </Tabs>
   );
