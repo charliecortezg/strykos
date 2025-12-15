@@ -1,28 +1,23 @@
+import { useState } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePayments } from '@/hooks/usePayments';
-import { usePlayers } from '@/hooks/usePlayers';
-import { CreditCard, TrendingUp, Users, AlertCircle } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PaymentsTable } from '@/components/payments/PaymentsTable';
+import { PaymentsDashboard } from '@/components/payments/PaymentsDashboard';
+import { PlayerAccountStatement } from '@/components/payments/PlayerAccountStatement';
 import { AccountStatement } from '@/components/payments/AccountStatement';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { Player } from '@/types/categories';
 
 export default function AdministrativoDashboard() {
   const { user, organization } = useAuth();
-  const { stats } = usePayments();
-  const { players } = usePlayers({ isActive: true });
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [activeTab, setActiveTab] = useState('payments');
 
-  const playersAlDia = players.filter(p => p.payment_status === 'al_dia').length;
-  const collectionRate = players.length > 0 
-    ? Math.round((playersAlDia / players.length) * 100) 
-    : 0;
+  const handleViewAccountStatement = (player: Player) => {
+    setSelectedPlayer(player);
+  };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-      maximumFractionDigits: 0,
-    }).format(amount);
+  const handleBackToPayments = () => {
+    setSelectedPlayer(null);
   };
 
   return (
@@ -39,71 +34,28 @@ export default function AdministrativoDashboard() {
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="stryk-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                <CreditCard className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-display font-semibold">
-                  {formatCurrency(stats.totalMonth)}
-                </p>
-                <p className="text-sm text-muted-foreground">Ingresos mes</p>
-              </div>
-            </div>
-          </div>
-          <div className="stryk-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-display font-semibold">{playersAlDia}</p>
-                <p className="text-sm text-muted-foreground">Pagos al día</p>
-              </div>
-            </div>
-          </div>
-          <div className="stryk-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-                <AlertCircle className="w-5 h-5 text-destructive" />
-              </div>
-              <div>
-                <p className="text-2xl font-display font-semibold">{stats.pendingCount}</p>
-                <p className="text-sm text-muted-foreground">Pendientes</p>
-              </div>
-            </div>
-          </div>
-          <div className="stryk-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-warning" />
-              </div>
-              <div>
-                <p className="text-2xl font-display font-semibold">{collectionRate}%</p>
-                <p className="text-sm text-muted-foreground">Cobranza</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Show individual player statement or main dashboard */}
+        {selectedPlayer ? (
+          <PlayerAccountStatement 
+            player={selectedPlayer} 
+            onBack={handleBackToPayments} 
+          />
+        ) : (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="payments">Pagos</TabsTrigger>
+              <TabsTrigger value="accounts">Estados de Cuenta</TabsTrigger>
+            </TabsList>
 
-        {/* Tabs */}
-        <Tabs defaultValue="payments" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="payments">Pagos</TabsTrigger>
-            <TabsTrigger value="accounts">Estados de Cuenta</TabsTrigger>
-          </TabsList>
+            <TabsContent value="payments">
+              <PaymentsDashboard onViewAccountStatement={handleViewAccountStatement} />
+            </TabsContent>
 
-          <TabsContent value="payments">
-            <PaymentsTable />
-          </TabsContent>
-
-          <TabsContent value="accounts">
-            <AccountStatement />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="accounts">
+              <AccountStatement />
+            </TabsContent>
+          </Tabs>
+        )}
       </main>
     </div>
   );
