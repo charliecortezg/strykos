@@ -467,6 +467,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_scholarship: boolean
+          is_trial: boolean
           monthly_fee: number | null
           organization_id: string
           payment_status: Database["public"]["Enums"]["payment_status"]
@@ -483,6 +484,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_scholarship?: boolean
+          is_trial?: boolean
           monthly_fee?: number | null
           organization_id: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
@@ -499,6 +501,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_scholarship?: boolean
+          is_trial?: boolean
           monthly_fee?: number | null
           organization_id?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]

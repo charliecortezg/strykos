@@ -75,6 +75,7 @@ export interface Player {
   payment_status: PaymentStatus;
   is_scholarship: boolean;
   is_active: boolean;
+  is_trial: boolean;
   created_at: string;
   updated_at: string;
   // Joined data
@@ -92,6 +93,8 @@ export interface Attendance {
   recorded_by: string | null;
   created_at: string;
   updated_at: string;
+  // Joined data
+  category?: { id: string; name: string } | null;
 }
 
 export interface Payment {

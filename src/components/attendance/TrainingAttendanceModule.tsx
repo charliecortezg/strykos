@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { CheckCircle, Calendar, Users, AlertCircle } from 'lucide-react';
+import { CheckCircle, Calendar, Users, AlertCircle, UserPlus } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AttendanceRegistration } from './AttendanceRegistration';
+import { TrialClassModal } from './TrialClassModal';
 import { TrainerCategory } from '@/hooks/useTrainerCategories';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface TrainingAttendanceModuleProps {
   categories: TrainerCategory[];
@@ -17,22 +20,41 @@ interface TrainingAttendanceModuleProps {
 export function TrainingAttendanceModule({ categories }: TrainingAttendanceModuleProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(categories[0]?.id || '');
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [showTrialModal, setShowTrialModal] = useState(false);
+  const queryClient = useQueryClient();
 
   const selectedCategory = categories.find(c => c.id === selectedCategoryId);
 
+  const handleTrialSuccess = () => {
+    // Refresh the attendance list
+    queryClient.invalidateQueries({ queryKey: ['training-attendance'] });
+  };
+
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-3 mb-2">
-          <CheckCircle className="w-7 h-7 md:w-8 md:h-8 text-primary" />
-          <h2 className="text-xl md:text-2xl font-display font-semibold text-foreground">
-            Registro de Asistencia
-          </h2>
+      {/* Header with Trial Class Button */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <CheckCircle className="w-7 h-7 md:w-8 md:h-8 text-primary" />
+            <h2 className="text-xl md:text-2xl font-display font-semibold text-foreground">
+              Registro de Asistencia
+            </h2>
+          </div>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Registra la asistencia de tus entrenamientos
+          </p>
         </div>
-        <p className="text-sm md:text-base text-muted-foreground">
-          Registra la asistencia de tus entrenamientos
-        </p>
+        
+        {/* Trial Class Button - Always visible */}
+        <Button 
+          onClick={() => setShowTrialModal(true)}
+          variant="outline"
+          className="h-12 gap-2 border-primary/30 text-primary hover:bg-primary/10 sm:self-start"
+        >
+          <UserPlus className="w-5 h-5" />
+          Clase Muestra
+        </Button>
       </div>
 
       {/* Selection Controls - Mobile optimized */}
@@ -104,6 +126,16 @@ export function TrainingAttendanceModule({ categories }: TrainingAttendanceModul
           </p>
         </Card>
       )}
+
+      {/* Trial Class Modal */}
+      <TrialClassModal
+        open={showTrialModal}
+        onOpenChange={setShowTrialModal}
+        categories={categories}
+        selectedCategoryId={selectedCategoryId}
+        selectedDate={selectedDate}
+        onSuccess={handleTrialSuccess}
+      />
     </div>
   );
 }

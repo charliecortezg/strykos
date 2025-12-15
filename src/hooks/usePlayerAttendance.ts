@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Attendance, AttendanceStatus } from '@/types/categories';
@@ -35,10 +36,14 @@ export function usePlayerAttendance(playerId: string | null) {
     try {
       const { data, error } = await supabase
         .from('attendance')
-        .select('*')
+        .select(`
+          *,
+          category:categories(id, name)
+        `)
         .eq('player_id', playerId)
         .eq('organization_id', organization.id)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .limit(50);
 
       if (error) {
         console.error('Error fetching attendance:', error);
@@ -108,5 +113,64 @@ export function usePlayerAttendance(playerId: string | null) {
     isLoading,
     refetch: fetchAttendance,
     recordAttendance,
+  };
+}
+
+// Hook for getting player match history
+export function usePlayerMatches(playerId: string | null) {
+  const { organization } = useAuth();
+
+  const { data: matches = [], isLoading } = useQuery({
+    queryKey: ['player-matches', playerId, organization?.id],
+    queryFn: async () => {
+      if (!playerId || !organization?.id) return [];
+
+      const { data, error } = await supabase
+        .from('match_players')
+        .select(`
+          id,
+          attended,
+          goals,
+          assists,
+          points,
+          match:matches(
+            id,
+            match_date,
+            rival_name,
+            goals_for,
+            goals_against,
+            status,
+            match_type,
+            category:categories(id, name, sports:sports(name))
+          )
+        `)
+        .eq('player_id', playerId)
+        .eq('organization_id', organization.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Error fetching player matches:', error);
+        return [];
+      }
+
+      return data || [];
+    },
+    enabled: !!playerId && !!organization?.id,
+  });
+
+  // Calculate match stats
+  const matchStats = {
+    total: matches.length,
+    attended: matches.filter(m => m.attended).length,
+    goals: matches.reduce((sum, m) => sum + (m.goals || 0), 0),
+    assists: matches.reduce((sum, m) => sum + (m.assists || 0), 0),
+    points: matches.reduce((sum, m) => sum + (m.points || 0), 0),
+  };
+
+  return {
+    matches,
+    matchStats,
+    isLoading,
   };
 }
