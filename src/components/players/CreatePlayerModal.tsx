@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,15 +28,18 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePlayers } from '@/hooks/usePlayers';
 import { useCategories } from '@/hooks/useCategories';
+import { useSports } from '@/hooks/useSports';
+import { usePlans } from '@/hooks/usePlans';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   full_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100),
   category_id: z.string().optional(),
+  sport_id: z.string().optional(),
   phone: z.string().optional(),
   tutor_name: z.string().optional(),
   position: z.string().optional(),
-  plan: z.string().optional(),
+  plan_id: z.string().optional(),
   monthly_fee: z.string().optional(),
   is_scholarship: z.boolean().default(false),
 });
@@ -52,6 +55,8 @@ interface CreatePlayerModalProps {
 export function CreatePlayerModal({ open, onOpenChange, onPlayerCreated }: CreatePlayerModalProps) {
   const { createPlayer } = usePlayers();
   const { categories, isLoading: loadingCategories } = useCategories();
+  const { sports, isLoading: loadingSports } = useSports();
+  const { plans, isLoading: loadingPlans } = usePlans();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -60,14 +65,33 @@ export function CreatePlayerModal({ open, onOpenChange, onPlayerCreated }: Creat
     defaultValues: {
       full_name: '',
       category_id: '',
+      sport_id: '',
       phone: '',
       tutor_name: '',
       position: '',
-      plan: '',
+      plan_id: '',
       monthly_fee: '',
       is_scholarship: false,
     },
   });
+
+  // Auto-select sport if only one available
+  useEffect(() => {
+    if (sports.length === 1 && !form.getValues('sport_id')) {
+      form.setValue('sport_id', sports[0].id);
+    }
+  }, [sports, form]);
+
+  // Auto-fill monthly_fee when plan changes
+  const selectedPlanId = form.watch('plan_id');
+  useEffect(() => {
+    if (selectedPlanId) {
+      const selectedPlan = plans.find(p => p.id === selectedPlanId);
+      if (selectedPlan) {
+        form.setValue('monthly_fee', selectedPlan.price.toString());
+      }
+    }
+  }, [selectedPlanId, plans, form]);
 
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
@@ -75,10 +99,11 @@ export function CreatePlayerModal({ open, onOpenChange, onPlayerCreated }: Creat
     const success = await createPlayer({
       full_name: values.full_name,
       category_id: values.category_id || undefined,
+      sport_id: values.sport_id || undefined,
       phone: values.phone || undefined,
       tutor_name: values.tutor_name || undefined,
       position: values.position || undefined,
-      plan: values.plan || undefined,
+      plan_id: values.plan_id || undefined,
       monthly_fee: values.monthly_fee ? parseFloat(values.monthly_fee) : undefined,
       is_scholarship: values.is_scholarship,
     });
@@ -103,6 +128,7 @@ export function CreatePlayerModal({ open, onOpenChange, onPlayerCreated }: Creat
   };
 
   const activeCategories = categories.filter(c => c.is_active);
+  const activePlans = plans.filter(p => p.is_active);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -127,36 +153,69 @@ export function CreatePlayerModal({ open, onOpenChange, onPlayerCreated }: Creat
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="category_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Categoría</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar categoría" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {loadingCategories ? (
-                        <SelectItem value="_loading" disabled>Cargando...</SelectItem>
-                      ) : activeCategories.length === 0 ? (
-                        <SelectItem value="_empty" disabled>Sin categorías activas</SelectItem>
-                      ) : (
-                        activeCategories.map(category => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="category_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Categoría</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar categoría" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {loadingCategories ? (
+                          <SelectItem value="_loading" disabled>Cargando...</SelectItem>
+                        ) : activeCategories.length === 0 ? (
+                          <SelectItem value="_empty" disabled>Sin categorías activas</SelectItem>
+                        ) : (
+                          activeCategories.map(category => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="sport_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Deporte</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar deporte" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {loadingSports ? (
+                          <SelectItem value="_loading" disabled>Cargando...</SelectItem>
+                        ) : sports.length === 0 ? (
+                          <SelectItem value="_empty" disabled>Sin deportes</SelectItem>
+                        ) : (
+                          sports.map(sport => (
+                            <SelectItem key={sport.id} value={sport.id}>
+                              {sport.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -205,13 +264,30 @@ export function CreatePlayerModal({ open, onOpenChange, onPlayerCreated }: Creat
 
               <FormField
                 control={form.control}
-                name="plan"
+                name="plan_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Plan</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: Mensual" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar plan" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {loadingPlans ? (
+                          <SelectItem value="_loading" disabled>Cargando...</SelectItem>
+                        ) : activePlans.length === 0 ? (
+                          <SelectItem value="_empty" disabled>Sin planes activos</SelectItem>
+                        ) : (
+                          activePlans.map(plan => (
+                            <SelectItem key={plan.id} value={plan.id}>
+                              {plan.name} - ${plan.price}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -131,6 +131,8 @@ export interface CreateCategoryData {
 export interface CreatePlayerData {
   full_name: string;
   category_id?: string;
+  sport_id?: string;
+  plan_id?: string;
   phone?: string;
   tutor_name?: string;
   position?: string;

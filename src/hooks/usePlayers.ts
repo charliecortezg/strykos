@@ -88,6 +88,8 @@ export function usePlayers(filters?: PlayersFilters) {
           organization_id: organization.id,
           full_name: data.full_name,
           category_id: data.category_id || null,
+          sport_id: data.sport_id || null,
+          plan_id: data.plan_id || null,
           phone: data.phone || null,
           tutor_name: data.tutor_name || null,
           position: data.position || null,
