@@ -214,56 +214,113 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
                     
                     const result = getMatchResult(match.goals_for, match.goals_against);
                     const isFinished = match.status === 'terminado';
+                    const sportName = match.category?.sports?.name?.toLowerCase() || '';
+                    const isFutbol = sportName.includes('fútbol') || sportName.includes('futbol') || sportName.includes('soccer') || sportName.includes('football');
+                    
+                    // Position labels for football
+                    const positionLabels: Record<string, string> = {
+                      portero: 'POR',
+                      defensa: 'DEF',
+                      medio: 'MED',
+                      delantero: 'DEL',
+                    };
+                    
+                    // Match type labels
+                    const matchTypeLabels: Record<string, string> = {
+                      liga: 'Liga',
+                      torneo: 'Torneo',
+                      amistoso: 'Amistoso',
+                    };
                     
                     return (
                       <div
                         key={mp.id}
-                        className="flex items-center justify-between p-3 bg-muted/20 rounded-lg"
+                        className={cn(
+                          "p-3 bg-muted/20 rounded-lg",
+                          !mp.attended && "opacity-60"
+                        )}
                       >
-                        <div className="flex items-center gap-3">
-                          <Trophy className={cn(
-                            "w-4 h-4",
-                            mp.attended ? "text-success" : "text-muted-foreground"
-                          )} />
-                          <div>
-                            <p className="text-sm font-medium">
-                              vs {match.rival_name}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>{format(new Date(match.match_date), "d MMM yyyy", { locale: es })}</span>
-                              {match.category?.name && (
-                                <span>• {match.category.name}</span>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <Trophy className={cn(
+                              "w-4 h-4 mt-0.5 flex-shrink-0",
+                              mp.attended ? "text-success" : "text-muted-foreground"
+                            )} />
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-sm font-medium">
+                                  vs {match.rival_name}
+                                </p>
+                                {/* Match result badge */}
+                                {isFinished && (
+                                  <Badge className={cn(
+                                    "text-xs px-1.5",
+                                    result === 'victoria' && "bg-success/10 text-success",
+                                    result === 'empate' && "bg-warning/10 text-warning",
+                                    result === 'derrota' && "bg-destructive/10 text-destructive"
+                                  )}>
+                                    {match.goals_for}-{match.goals_against}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                                <span>{format(new Date(match.match_date), "d MMM yyyy", { locale: es })}</span>
+                                {match.category?.name && (
+                                  <span>• {match.category.name}</span>
+                                )}
+                                {match.match_type && (
+                                  <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                    {matchTypeLabels[match.match_type] || match.match_type}
+                                  </Badge>
+                                )}
+                              </div>
+                              {/* Position played for football */}
+                              {mp.attended && isFutbol && mp.position && (
+                                <div className="mt-1">
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                    {positionLabels[mp.position] || mp.position}
+                                  </Badge>
+                                </div>
                               )}
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {/* Player stats */}
-                          {mp.attended && (mp.goals > 0 || mp.assists > 0) && (
-                            <div className="flex items-center gap-1 text-xs">
-                              {mp.goals > 0 && (
-                                <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-                                  {mp.goals} gol{mp.goals > 1 ? 'es' : ''}
-                                </Badge>
-                              )}
-                              {mp.assists > 0 && (
-                                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                                  {mp.assists} asist.
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                          {/* Match result */}
-                          {isFinished && (
-                            <Badge className={cn(
-                              "text-xs",
-                              result === 'victoria' && "bg-success/10 text-success",
-                              result === 'empate' && "bg-warning/10 text-warning",
-                              result === 'derrota' && "bg-destructive/10 text-destructive"
-                            )}>
-                              {match.goals_for}-{match.goals_against}
-                            </Badge>
-                          )}
+                          
+                          {/* Player stats for this match */}
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                            {mp.attended ? (
+                              <div className="flex items-center gap-1">
+                                {isFutbol ? (
+                                  <>
+                                    {mp.goals > 0 && (
+                                      <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-xs px-1.5">
+                                        {mp.goals} ⚽
+                                      </Badge>
+                                    )}
+                                    {mp.assists > 0 && (
+                                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs px-1.5">
+                                        {mp.assists} 🅰️
+                                      </Badge>
+                                    )}
+                                    {mp.goals === 0 && mp.assists === 0 && (
+                                      <span className="text-xs text-muted-foreground">—</span>
+                                    )}
+                                  </>
+                                ) : (
+                                  <>
+                                    {mp.points > 0 && (
+                                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs px-1.5">
+                                        {mp.points} pts
+                                      </Badge>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            ) : (
+                              <Badge variant="outline" className="text-xs text-muted-foreground">
+                                No jugó
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );

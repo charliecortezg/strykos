@@ -19,6 +19,7 @@ interface CreateMatchData {
     goals: number;
     assists: number;
     points: number;
+    position?: string | null;
   }[];
 }
 
@@ -64,6 +65,7 @@ export function useCreateMatch() {
           goals: p.goals,
           assists: p.assists,
           points: p.points,
+          position: p.position || null,
         }));
 
         const { error: playersError } = await supabase

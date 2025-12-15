@@ -114,6 +114,7 @@ export function CreateMatchModal({ isOpen, onClose, categories }: CreateMatchMod
         goals: p.goals,
         assists: p.assists,
         points: p.points,
+        position: p.position,
       })),
     }, {
       onSuccess: () => {

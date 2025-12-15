@@ -133,6 +133,7 @@ export function usePlayerMatches(playerId: string | null) {
           goals,
           assists,
           points,
+          position,
           match:matches(
             id,
             match_date,

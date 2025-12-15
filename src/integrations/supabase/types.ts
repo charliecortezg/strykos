@@ -218,6 +218,7 @@ export type Database = {
           organization_id: string
           player_id: string
           points: number | null
+          position: string | null
           updated_at: string
         }
         Insert: {
@@ -230,6 +231,7 @@ export type Database = {
           organization_id: string
           player_id: string
           points?: number | null
+          position?: string | null
           updated_at?: string
         }
         Update: {
@@ -242,6 +244,7 @@ export type Database = {
           organization_id?: string
           player_id?: string
           points?: number | null
+          position?: string | null
           updated_at?: string
         }
         Relationships: [
