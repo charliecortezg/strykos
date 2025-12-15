@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { X, User, TrendingUp, Calendar, CreditCard, FileText, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { User, TrendingUp, Calendar, CreditCard, FileText, CheckCircle, XCircle, AlertCircle, Trophy, Target } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -9,8 +9,10 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { usePlayerAttendance } from '@/hooks/usePlayerAttendance';
+import { usePlayerAttendance, usePlayerMatches } from '@/hooks/usePlayerAttendance';
 import { PAYMENT_STATUS_LABELS, ATTENDANCE_STATUS_LABELS, type Player } from '@/types/categories';
+import { getMatchResult } from '@/types/matches';
+import { cn } from '@/lib/utils';
 
 interface PlayerProfileModalProps {
   open: boolean;
@@ -19,7 +21,8 @@ interface PlayerProfileModalProps {
 }
 
 export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfileModalProps) {
-  const { attendance, stats, isLoading } = usePlayerAttendance(player?.id || null);
+  const { attendance, stats, isLoading: loadingAttendance } = usePlayerAttendance(player?.id || null);
+  const { matches, matchStats, isLoading: loadingMatches } = usePlayerMatches(player?.id || null);
 
   if (!player) return null;
 
@@ -52,6 +55,11 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
                 <User className="w-6 h-6 text-primary" />
               </div>
               {player.full_name}
+              {player.is_trial && (
+                <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20">
+                  Clase Muestra
+                </Badge>
+              )}
             </DialogTitle>
           </DialogHeader>
 
@@ -79,32 +87,37 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
             <p className="text-xs text-muted-foreground">Asistencia</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-display font-semibold text-foreground">—</p>
+            <p className="text-2xl font-display font-semibold text-foreground">{matchStats.attended}</p>
             <p className="text-xs text-muted-foreground">Partidos</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-display font-semibold text-foreground">—</p>
-            <p className="text-xs text-muted-foreground">Pagos</p>
+            <p className="text-2xl font-display font-semibold text-success">{matchStats.goals}</p>
+            <p className="text-xs text-muted-foreground">Goles</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-display font-semibold text-foreground">—</p>
-            <p className="text-xs text-muted-foreground">Puntos</p>
+            <p className="text-2xl font-display font-semibold text-primary">{matchStats.assists}</p>
+            <p className="text-xs text-muted-foreground">Asistencias</p>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="p-6">
-          <Tabs defaultValue="historial" className="w-full">
+          <Tabs defaultValue="asistencia" className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-4">
-              <TabsTrigger value="historial">Historial</TabsTrigger>
+              <TabsTrigger value="asistencia">Asistencia</TabsTrigger>
               <TabsTrigger value="partidos">Partidos</TabsTrigger>
               <TabsTrigger value="pagos">Pagos</TabsTrigger>
-              <TabsTrigger value="documentos">Documentos</TabsTrigger>
+              <TabsTrigger value="info">Info</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="historial" className="space-y-4">
+            {/* Attendance Tab */}
+            <TabsContent value="asistencia" className="space-y-4">
               {/* Attendance Summary */}
-              <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+              <div className="grid grid-cols-4 gap-3 p-4 bg-muted/30 rounded-lg">
+                <div className="text-center">
+                  <p className="text-lg font-semibold">{stats.total}</p>
+                  <p className="text-xs text-muted-foreground">Total</p>
+                </div>
                 <div className="text-center">
                   <p className="text-lg font-semibold text-success">{stats.present}</p>
                   <p className="text-xs text-muted-foreground">Presentes</p>
@@ -120,7 +133,7 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
               </div>
 
               {/* Attendance List */}
-              {isLoading ? (
+              {loadingAttendance ? (
                 <div className="p-8 text-center">
                   <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
                 </div>
@@ -142,9 +155,14 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
                           <p className="text-sm font-medium">
                             {format(new Date(record.date), "EEEE d 'de' MMMM", { locale: es })}
                           </p>
-                          {record.notes && (
-                            <p className="text-xs text-muted-foreground">{record.notes}</p>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {record.category && (
+                              <span className="text-xs text-muted-foreground">{record.category.name}</span>
+                            )}
+                            {record.notes && (
+                              <span className="text-xs text-muted-foreground">• {record.notes}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <Badge variant="outline" className="text-xs">
@@ -156,11 +174,102 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
               )}
             </TabsContent>
 
-            <TabsContent value="partidos">
-              <div className="p-8 text-center text-muted-foreground">
-                <TrendingUp className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                <p>Módulo de partidos próximamente.</p>
+            {/* Matches Tab */}
+            <TabsContent value="partidos" className="space-y-4">
+              {/* Match Stats Summary */}
+              <div className="grid grid-cols-4 gap-3 p-4 bg-muted/30 rounded-lg">
+                <div className="text-center">
+                  <p className="text-lg font-semibold">{matchStats.total}</p>
+                  <p className="text-xs text-muted-foreground">Convocado</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-success">{matchStats.attended}</p>
+                  <p className="text-xs text-muted-foreground">Jugados</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-primary">{matchStats.goals}</p>
+                  <p className="text-xs text-muted-foreground">Goles</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-warning">{matchStats.assists}</p>
+                  <p className="text-xs text-muted-foreground">Asistencias</p>
+                </div>
               </div>
+
+              {/* Match List */}
+              {loadingMatches ? (
+                <div className="p-8 text-center">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              ) : matches.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <Trophy className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                  <p>No hay registros de partidos.</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {matches.map((mp) => {
+                    const match = mp.match as any;
+                    if (!match) return null;
+                    
+                    const result = getMatchResult(match.goals_for, match.goals_against);
+                    const isFinished = match.status === 'terminado';
+                    
+                    return (
+                      <div
+                        key={mp.id}
+                        className="flex items-center justify-between p-3 bg-muted/20 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Trophy className={cn(
+                            "w-4 h-4",
+                            mp.attended ? "text-success" : "text-muted-foreground"
+                          )} />
+                          <div>
+                            <p className="text-sm font-medium">
+                              vs {match.rival_name}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{format(new Date(match.match_date), "d MMM yyyy", { locale: es })}</span>
+                              {match.category?.name && (
+                                <span>• {match.category.name}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {/* Player stats */}
+                          {mp.attended && (mp.goals > 0 || mp.assists > 0) && (
+                            <div className="flex items-center gap-1 text-xs">
+                              {mp.goals > 0 && (
+                                <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                                  {mp.goals} gol{mp.goals > 1 ? 'es' : ''}
+                                </Badge>
+                              )}
+                              {mp.assists > 0 && (
+                                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                                  {mp.assists} asist.
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                          {/* Match result */}
+                          {isFinished && (
+                            <Badge className={cn(
+                              "text-xs",
+                              result === 'victoria' && "bg-success/10 text-success",
+                              result === 'empate' && "bg-warning/10 text-warning",
+                              result === 'derrota' && "bg-destructive/10 text-destructive"
+                            )}>
+                              {match.goals_for}-{match.goals_against}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="pagos">
@@ -175,10 +284,37 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
               </div>
             </TabsContent>
 
-            <TabsContent value="documentos">
-              <div className="p-8 text-center text-muted-foreground">
-                <FileText className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                <p>Documentos próximamente.</p>
+            <TabsContent value="info">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Teléfono</p>
+                    <p className="font-medium">{player.phone || '—'}</p>
+                  </div>
+                  <div className="p-4 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Tutor</p>
+                    <p className="font-medium">{player.tutor_name || '—'}</p>
+                  </div>
+                  <div className="p-4 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Plan</p>
+                    <p className="font-medium">{player.plan || '—'}</p>
+                  </div>
+                  <div className="p-4 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Posición</p>
+                    <p className="font-medium">{player.position || '—'}</p>
+                  </div>
+                </div>
+                {player.is_trial && (
+                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Target className="w-5 h-5 text-primary" />
+                      <p className="font-medium text-primary">Jugador en Clase Muestra</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Este jugador asistió a una clase de prueba. Puedes convertirlo en jugador regular editando su perfil.
+                    </p>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
