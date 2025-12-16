@@ -386,6 +386,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          onboarding_completed: boolean | null
           org_access_key: string
           org_code: string
           organization_type: Database["public"]["Enums"]["organization_type"]
@@ -402,6 +403,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          onboarding_completed?: boolean | null
           org_access_key: string
           org_code: string
           organization_type: Database["public"]["Enums"]["organization_type"]
@@ -418,6 +420,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          onboarding_completed?: boolean | null
           org_access_key?: string
           org_code?: string
           organization_type?: Database["public"]["Enums"]["organization_type"]

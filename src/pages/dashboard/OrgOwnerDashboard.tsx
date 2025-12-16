@@ -7,6 +7,7 @@ import { EditUserModal } from '@/components/dashboard/EditUserModal';
 import { ChangeRoleModal } from '@/components/dashboard/ChangeRoleModal';
 import { ConfirmDeactivateDialog } from '@/components/dashboard/ConfirmDeactivateDialog';
 import { UserActionsMenu } from '@/components/dashboard/UserActionsMenu';
+import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
@@ -211,6 +212,9 @@ export default function OrgOwnerDashboard() {
             Gestiona tu academia y equipo de trabajo.
           </p>
         </div>
+
+        {/* Onboarding Checklist */}
+        <OnboardingChecklist />
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

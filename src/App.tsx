@@ -11,6 +11,7 @@ import RegistroAcademia from "./pages/RegistroAcademia";
 import Login from "./pages/Login";
 import CambiarPassword from "./pages/CambiarPassword";
 import RecuperarPassword from "./pages/RecuperarPassword";
+import Onboarding from "./pages/Onboarding";
 import OrgOwnerDashboard from "./pages/dashboard/OrgOwnerDashboard";
 import DirectorDeportivoDashboard from "./pages/dashboard/DirectorDeportivoDashboard";
 import EntrenadorDashboard from "./pages/dashboard/EntrenadorDashboard";
@@ -30,6 +31,11 @@ const App = () => (
             <Route path="/registro-academia" element={<RegistroAcademia />} />
             <Route path="/login" element={<Login />} />
             <Route path="/recuperar-password" element={<RecuperarPassword />} />
+            <Route path="/onboarding" element={
+              <ProtectedRoute allowedRoles={['org_owner']}>
+                <Onboarding />
+              </ProtectedRoute>
+            } />
             <Route path="/cambiar-password" element={
               <ProtectedRoute>
                 <CambiarPassword />
