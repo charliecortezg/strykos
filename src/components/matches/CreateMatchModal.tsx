@@ -163,8 +163,8 @@ export function CreateMatchModal({ isOpen, onClose, categories }: CreateMatchMod
         </DialogHeader>
 
         {step === 'info' ? (
-          <div className="space-y-4 mt-3">
-            {/* Category Selection - Large touch target */}
+          <div className="space-y-5 mt-4">
+            {/* Category Selection */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Categoría *</Label>
               <Select value={categoryId} onValueChange={setCategoryId}>
@@ -188,12 +188,9 @@ export function CreateMatchModal({ isOpen, onClose, categories }: CreateMatchMod
               </Select>
             </div>
 
-            {/* Rival - Most important field */}
+            {/* Rival */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <Shield className="w-4 h-4 text-muted-foreground" />
-                Rival *
-              </Label>
+              <Label className="text-sm font-medium">Rival *</Label>
               <Input
                 value={rivalName}
                 onChange={(e) => setRivalName(e.target.value)}
@@ -203,22 +200,7 @@ export function CreateMatchModal({ isOpen, onClose, categories }: CreateMatchMod
               />
             </div>
 
-            {/* Field/Campo Selection - Search + Create */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-muted-foreground" />
-                Campo de Juego
-              </Label>
-              <FieldSelector
-                value={fieldName}
-                onChange={setFieldName}
-                fields={fields}
-                onAddField={addField}
-                placeholder="Ej: Juventud 2000, Cancha Norte..."
-              />
-            </div>
-
-            {/* Match Type & Date */}
+            {/* Match Type & Date - Side by side */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Tipo</Label>
@@ -234,10 +216,7 @@ export function CreateMatchModal({ isOpen, onClose, categories }: CreateMatchMod
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium flex items-center gap-1">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  Fecha
-                </Label>
+                <Label className="text-sm font-medium">Fecha y hora</Label>
                 <Input
                   type="datetime-local"
                   value={matchDate}
@@ -247,68 +226,17 @@ export function CreateMatchModal({ isOpen, onClose, categories }: CreateMatchMod
               </div>
             </div>
 
-            {/* Score Section - Large buttons for field use */}
-            <Card className="p-4 bg-muted/30">
-              <Label className="flex items-center gap-2 mb-4 text-sm font-medium">
-                <Target className="w-4 h-4 text-primary" />
-                Marcador Final
-              </Label>
-              <div className="flex items-center justify-center gap-4 sm:gap-6">
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground mb-2">Nosotros</p>
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-12 w-12"
-                      onClick={() => setGoalsFor(Math.max(0, goalsFor - 1))}
-                    >
-                      <Minus className="w-5 h-5" />
-                    </Button>
-                    <span className="text-4xl font-display font-bold w-14 text-center text-primary">
-                      {goalsFor}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-12 w-12"
-                      onClick={() => setGoalsFor(goalsFor + 1)}
-                    >
-                      <Plus className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </div>
-                <span className="text-3xl text-muted-foreground font-light">—</span>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground mb-2">Rival</p>
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-12 w-12"
-                      onClick={() => setGoalsAgainst(Math.max(0, goalsAgainst - 1))}
-                    >
-                      <Minus className="w-5 h-5" />
-                    </Button>
-                    <span className="text-4xl font-display font-bold w-14 text-center">
-                      {goalsAgainst}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-12 w-12"
-                      onClick={() => setGoalsAgainst(goalsAgainst + 1)}
-                    >
-                      <Plus className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
+            {/* Field/Campo - Simplified */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Campo de Juego</Label>
+              <FieldSelector
+                value={fieldName}
+                onChange={setFieldName}
+                fields={fields}
+                onAddField={addField}
+                placeholder="Ej: Juventud 2000, Cancha Norte..."
+              />
+            </div>
 
             {/* Notes */}
             <div className="space-y-2">
@@ -323,7 +251,7 @@ export function CreateMatchModal({ isOpen, onClose, categories }: CreateMatchMod
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 pt-3 border-t border-border">
+            <div className="flex gap-2 pt-4 border-t border-border">
               <Button variant="outline" onClick={handleClose} className="flex-1 h-12">
                 Cancelar
               </Button>
@@ -333,24 +261,82 @@ export function CreateMatchModal({ isOpen, onClose, categories }: CreateMatchMod
                 className="flex-1 h-12 gap-2"
               >
                 <Users className="w-4 h-4" />
-                Asistencia
+                Continuar
               </Button>
             </div>
           </div>
         ) : (
           <div className="space-y-4 mt-3">
-            {/* Match Summary */}
-            <div className="flex items-center justify-between text-sm">
-              <div>
-                <p className="font-medium">{selectedCategory?.name} vs {rivalName}</p>
-                {fieldName && <p className="text-xs text-muted-foreground">{fieldName}</p>}
-              </div>
-              <Badge variant={goalsFor > goalsAgainst ? 'default' : goalsFor < goalsAgainst ? 'destructive' : 'secondary'}>
-                {goalsFor} - {goalsAgainst}
-              </Badge>
+            {/* Match Summary Header */}
+            <div className="text-center pb-2 border-b border-border">
+              <p className="font-medium text-base">{selectedCategory?.name} vs {rivalName}</p>
+              {fieldName && <p className="text-xs text-muted-foreground mt-0.5">{fieldName}</p>}
             </div>
 
-            {/* Quick Actions */}
+            {/* Score Section - Prominent */}
+            <Card className="p-4 bg-primary/5 border-primary/20">
+              <Label className="flex items-center justify-center gap-2 mb-3 text-sm font-medium">
+                <Target className="w-4 h-4 text-primary" />
+                Marcador Final
+              </Label>
+              <div className="flex items-center justify-center gap-6">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground mb-1.5">Nosotros</p>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={() => setGoalsFor(Math.max(0, goalsFor - 1))}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </Button>
+                    <span className="text-3xl font-display font-bold w-12 text-center text-primary">
+                      {goalsFor}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={() => setGoalsFor(goalsFor + 1)}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <span className="text-2xl text-muted-foreground font-light">—</span>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground mb-1.5">Rival</p>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={() => setGoalsAgainst(Math.max(0, goalsAgainst - 1))}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </Button>
+                    <span className="text-3xl font-display font-bold w-12 text-center">
+                      {goalsAgainst}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={() => setGoalsAgainst(goalsAgainst + 1)}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Quick Actions for Attendance */}
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
@@ -375,8 +361,8 @@ export function CreateMatchModal({ isOpen, onClose, categories }: CreateMatchMod
               </Badge>
             </div>
 
-            {/* Players List - Mobile optimized cards */}
-            <div className="space-y-2 max-h-[45vh] overflow-y-auto">
+            {/* Players List */}
+            <div className="space-y-2 max-h-[35vh] overflow-y-auto">
               {playerStats.map((player) => (
                 <Card 
                   key={player.player_id} 

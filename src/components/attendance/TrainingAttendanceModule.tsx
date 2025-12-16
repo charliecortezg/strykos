@@ -74,16 +74,12 @@ export function TrainingAttendanceModule({ categories }: TrainingAttendanceModul
             </Select>
           </div>
 
-          {/* Date - Compact */}
+          {/* Date - Locked to today */}
           <div className="w-full sm:w-44 space-y-1.5">
             <Label className="text-xs text-muted-foreground">Fecha</Label>
-            <Input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              max={format(new Date(), 'yyyy-MM-dd')}
-              className="h-12 text-base"
-            />
+            <div className="h-12 flex items-center px-3 bg-muted/50 border border-input rounded-md text-base">
+              {format(new Date(selectedDate), "dd/MM/yyyy")}
+            </div>
           </div>
         </div>
 
