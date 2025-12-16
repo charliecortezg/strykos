@@ -26,6 +26,8 @@ export default function OrgOwnerDashboard() {
   const { organization, user } = useAuth();
   const { toast } = useToast();
   const [users, setUsers] = useState<OrgUser[]>([]);
+  const [categoriesCount, setCategoriesCount] = useState<number>(0);
+  const [playersCount, setPlayersCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Exclude<OrgRole, 'org_owner'>>('director_deportivo');
@@ -83,8 +85,33 @@ export default function OrgOwnerDashboard() {
     }
   };
 
+  const fetchCounts = async () => {
+    if (!organization) return;
+
+    try {
+      const [categoriesResult, playersResult] = await Promise.all([
+        supabase
+          .from('categories')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organization.id)
+          .eq('is_active', true),
+        supabase
+          .from('players')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organization.id)
+          .eq('is_active', true),
+      ]);
+
+      setCategoriesCount(categoriesResult.count || 0);
+      setPlayersCount(playersResult.count || 0);
+    } catch (err) {
+      console.error('Error fetching counts:', err);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchCounts();
   }, [organization]);
 
   const handleCreateUser = (role: Exclude<OrgRole, 'org_owner'>) => {
@@ -204,7 +231,7 @@ export default function OrgOwnerDashboard() {
                 <GraduationCap className="w-5 h-5 text-success" />
               </div>
               <div>
-                <p className="text-2xl font-display font-semibold">—</p>
+                <p className="text-2xl font-display font-semibold">{playersCount}</p>
                 <p className="text-sm text-muted-foreground">Alumnos</p>
               </div>
             </div>
@@ -215,7 +242,7 @@ export default function OrgOwnerDashboard() {
                 <ClipboardList className="w-5 h-5 text-warning" />
               </div>
               <div>
-                <p className="text-2xl font-display font-semibold">0</p>
+                <p className="text-2xl font-display font-semibold">{categoriesCount}</p>
                 <p className="text-sm text-muted-foreground">Categorías</p>
               </div>
             </div>

@@ -76,9 +76,6 @@ export function Hero() {
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
-            <Button variant="outline" size="lg">
-              Ver demostración
-            </Button>
           </motion.div>
         </div>
 
