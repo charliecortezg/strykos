@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,10 +8,13 @@ import { ActivationStep } from './ActivationStep';
 import { ConfirmationStep } from './ConfirmationStep';
 import { Logo } from '@/components/brand/Logo';
 import { motion } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
 
 export function OnboardingWizard() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { activeRole, isLoading: authLoading } = useAuth();
+  const [isCompleting, setIsCompleting] = useState(false);
   const {
     currentStep,
     isCompleted,
@@ -24,25 +27,59 @@ export function OnboardingWizard() {
     refetch,
   } = useOnboarding();
 
-  // Redirect if already completed
+  // Only redirect if user arrives at /onboarding but already completed it previously
+  // Do NOT redirect if we're in the process of completing
   useEffect(() => {
-    if (!isLoading && !authLoading && isCompleted) {
+    if (!isLoading && !authLoading && isCompleted && !isCompleting) {
       const dashboardPath = activeRole 
         ? `/dashboard/${activeRole.replace('_', '-')}`
         : '/dashboard/org-owner';
       navigate(dashboardPath, { replace: true });
     }
-  }, [isCompleted, isLoading, authLoading, activeRole, navigate]);
+  }, [isCompleted, isLoading, authLoading, activeRole, navigate, isCompleting]);
 
   const handleComplete = async () => {
-    const success = await completeOnboarding();
-    if (success) {
-      const dashboardPath = activeRole 
-        ? `/dashboard/${activeRole.replace('_', '-')}`
-        : '/dashboard/org-owner';
-      navigate(dashboardPath, { replace: true });
+    setIsCompleting(true);
+    try {
+      const success = await completeOnboarding();
+      if (success) {
+        const dashboardPath = activeRole 
+          ? `/dashboard/${activeRole.replace('_', '-')}`
+          : '/dashboard/org-owner';
+        // Small delay to allow state to stabilize
+        setTimeout(() => {
+          navigate(dashboardPath, { replace: true });
+        }, 100);
+      } else {
+        setIsCompleting(false);
+        toast({
+          title: "Error",
+          description: "No se pudo completar la configuración. Intenta de nuevo.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      setIsCompleting(false);
+      toast({
+        title: "Error",
+        description: "Ocurrió un error inesperado. Intenta de nuevo.",
+        variant: "destructive",
+      });
     }
   };
+
+  // Show completing state with specific message
+  if (isCompleting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground font-body">Preparando tu academia...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading || authLoading) {
     return (
