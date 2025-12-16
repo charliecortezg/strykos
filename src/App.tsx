@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import RegistroAcademia from "./pages/RegistroAcademia";
 import Login from "./pages/Login";
 import CambiarPassword from "./pages/CambiarPassword";
+import RecuperarPassword from "./pages/RecuperarPassword";
 import OrgOwnerDashboard from "./pages/dashboard/OrgOwnerDashboard";
 import DirectorDeportivoDashboard from "./pages/dashboard/DirectorDeportivoDashboard";
 import EntrenadorDashboard from "./pages/dashboard/EntrenadorDashboard";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/registro-academia" element={<RegistroAcademia />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/recuperar-password" element={<RecuperarPassword />} />
             <Route path="/cambiar-password" element={
               <ProtectedRoute>
                 <CambiarPassword />
