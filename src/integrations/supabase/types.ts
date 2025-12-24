@@ -774,6 +774,56 @@ export type Database = {
           },
         ]
       }
+      upgrade_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          current_plan: string
+          id: string
+          organization_id: string
+          processed_at: string | null
+          processed_by: string | null
+          requested_by: string
+          requested_plan: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          current_plan: string
+          id?: string
+          organization_id: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_by: string
+          requested_plan: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          current_plan?: string
+          id?: string
+          organization_id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_by?: string
+          requested_plan?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upgrade_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_org_roles: {
         Row: {
           created_at: string | null
