@@ -498,6 +498,48 @@ export type Database = {
           },
         ]
       }
+      plan_limits: {
+        Row: {
+          created_at: string
+          custom_branding: boolean
+          data_export: boolean
+          excel_import: boolean
+          id: string
+          max_categories: number
+          max_players: number
+          max_users: number
+          plan_name: string
+          priority_support: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_branding?: boolean
+          data_export?: boolean
+          excel_import?: boolean
+          id?: string
+          max_categories?: number
+          max_players?: number
+          max_users?: number
+          plan_name: string
+          priority_support?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_branding?: boolean
+          data_export?: boolean
+          excel_import?: boolean
+          id?: string
+          max_categories?: number
+          max_players?: number
+          max_users?: number
+          plan_name?: string
+          priority_support?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plans: {
         Row: {
           created_at: string
