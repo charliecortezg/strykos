@@ -7,6 +7,8 @@ import { usePlayers } from '@/hooks/usePlayers';
 import { useSports } from '@/hooks/useSports';
 import { useToast } from '@/hooks/use-toast';
 import { SmartSportSelector } from '@/components/ui/smart-sport-selector';
+import { ExcelImportModal } from '@/components/players/ExcelImportModal';
+import { downloadPlayerTemplate } from '@/lib/excel-template';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronLeft, 
@@ -15,7 +17,9 @@ import {
   Check,
   AlertCircle,
   Layers,
-  Users
+  Users,
+  FileSpreadsheet,
+  Download
 } from 'lucide-react';
 
 interface ActivationStepProps {
@@ -42,14 +46,32 @@ export function ActivationStep({
   const [playerPhone, setPlayerPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showBlockWarning, setShowBlockWarning] = useState(false);
+  const [excelModalOpen, setExcelModalOpen] = useState(false);
 
-  const { createCategory } = useCategories();
+  const { categories, createCategory } = useCategories();
   const { createPlayer } = usePlayers();
   const { sports, isLoading: loadingSports, createSport } = useSports();
   const { toast } = useToast();
 
   const canProceedToPlayers = categoriesCreated >= 1;
   const canComplete = categoriesCreated >= 1 && playersCreated >= 1;
+
+  const handleDownloadTemplate = () => {
+    const categoryNames = categories.map(c => c.name);
+    downloadPlayerTemplate(categoryNames);
+    toast({
+      title: 'Plantilla descargada',
+      description: 'Abre el archivo y sigue las instrucciones.',
+    });
+  };
+
+  const handleExcelImportComplete = () => {
+    onRefetch();
+    toast({
+      title: 'Importación exitosa',
+      description: 'Los jugadores han sido agregados.',
+    });
+  };
 
   const handleCreateCategory = async () => {
     if (!categoryName.trim()) {
@@ -271,7 +293,7 @@ export function ActivationStep({
                   </div>
                   <div>
                     <h3 className="font-display text-lg font-semibold">
-                      Registrar jugador
+                      Registrar jugadores
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       Datos reales, no de prueba
@@ -284,7 +306,45 @@ export function ActivationStep({
                   de tu academia para comenzar a operar.
                 </p>
 
-                <div className="space-y-4">
+                {/* Excel Import Option */}
+                <div className="bg-muted/50 rounded-lg p-4 mb-4 border border-border">
+                  <div className="flex items-center gap-3 mb-3">
+                    <FileSpreadsheet className="w-5 h-5 text-primary" />
+                    <span className="font-medium text-sm">¿Tienes muchos jugadores?</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Importa tu lista desde Excel. La categoría debe coincidir <strong>exactamente</strong> con las que creaste.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleDownloadTemplate}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Descargar plantilla
+                    </Button>
+                    <Button 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={() => setExcelModalOpen(true)}
+                    >
+                      <FileSpreadsheet className="w-4 h-4 mr-2" />
+                      Importar Excel
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">O registra uno a uno</span>
+                  </div>
+                </div>
+
+                <div className="space-y-4 mt-4">
                   <div>
                     <Label htmlFor="playerName">Nombre completo *</Label>
                     <Input
@@ -372,6 +432,13 @@ export function ActivationStep({
           </Button>
         )}
       </div>
+
+      {/* Excel Import Modal */}
+      <ExcelImportModal
+        open={excelModalOpen}
+        onOpenChange={setExcelModalOpen}
+        onImportComplete={handleExcelImportComplete}
+      />
     </div>
   );
 }

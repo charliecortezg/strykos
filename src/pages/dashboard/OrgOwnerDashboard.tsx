@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, ClipboardList, Briefcase, GraduationCap, Shield } from 'lucide-react';
+import { Users, ClipboardList, Briefcase } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { RoleCard } from '@/components/dashboard/RoleCard';
 import { CreateUserModal } from '@/components/dashboard/CreateUserModal';
@@ -8,6 +8,8 @@ import { ChangeRoleModal } from '@/components/dashboard/ChangeRoleModal';
 import { ConfirmDeactivateDialog } from '@/components/dashboard/ConfirmDeactivateDialog';
 import { UserActionsMenu } from '@/components/dashboard/UserActionsMenu';
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
+import { FounderKPISection } from '@/components/dashboard/FounderKPISection';
+import { PlanLimitBanner } from '@/components/dashboard/PlanLimitBanner';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
@@ -216,53 +218,13 @@ export default function OrgOwnerDashboard() {
         {/* Onboarding Checklist */}
         <OnboardingChecklist />
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="stryk-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-display font-semibold">{users.length}</p>
-                <p className="text-sm text-muted-foreground">Usuarios</p>
-              </div>
-            </div>
-          </div>
-          <div className="stryk-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                <GraduationCap className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-display font-semibold">{playersCount}</p>
-                <p className="text-sm text-muted-foreground">Alumnos</p>
-              </div>
-            </div>
-          </div>
-          <div className="stryk-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-                <ClipboardList className="w-5 h-5 text-warning" />
-              </div>
-              <div>
-                <p className="text-2xl font-display font-semibold">{categoriesCount}</p>
-                <p className="text-sm text-muted-foreground">Categorías</p>
-              </div>
-            </div>
-          </div>
-          <div className="stryk-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-accent" />
-              </div>
-              <div>
-                <p className="text-2xl font-display font-semibold capitalize">{organization?.plan}</p>
-                <p className="text-sm text-muted-foreground">Plan</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Plan Limit Warnings */}
+        <PlanLimitBanner type="players" className="mb-4" />
+        <PlanLimitBanner type="categories" className="mb-4" />
+        <PlanLimitBanner type="users" className="mb-4" />
+
+        {/* Founder KPIs Section */}
+        <FounderKPISection />
 
         {/* Role Cards */}
         <h2 className="text-xl font-display font-semibold text-foreground mb-4">
