@@ -6,7 +6,6 @@ export type OnboardingStep = 'welcome' | 'model' | 'activation' | 'confirmation'
 
 interface OnboardingState {
   currentStep: OnboardingStep;
-  isCompleted: boolean;
   categoriesCreated: number;
   playersCreated: number;
   isLoading: boolean;
@@ -16,7 +15,6 @@ export function useOnboarding() {
   const { organization } = useAuth();
   const [state, setState] = useState<OnboardingState>({
     currentStep: 'welcome',
-    isCompleted: false,
     categoriesCreated: 0,
     playersCreated: 0,
     isLoading: true,
@@ -41,18 +39,10 @@ export function useOnboarding() {
         .eq('is_active', true)
         .eq('is_trial', false);
 
-      // Fetch organization onboarding status
-      const { data: orgData } = await supabase
-        .from('organizations')
-        .select('onboarding_completed')
-        .eq('id', organization.id)
-        .single();
-
       setState(prev => ({
         ...prev,
         categoriesCreated: categoriesCount || 0,
         playersCreated: playersCount || 0,
-        isCompleted: orgData?.onboarding_completed || false,
         isLoading: false,
       }));
     } catch (error) {
@@ -85,7 +75,7 @@ export function useOnboarding() {
     }
   };
 
-  const completeOnboarding = async () => {
+  const completeOnboarding = async (): Promise<boolean> => {
     if (!organization?.id) return false;
 
     try {
@@ -96,7 +86,6 @@ export function useOnboarding() {
 
       if (error) throw error;
 
-      setState(prev => ({ ...prev, isCompleted: true }));
       return true;
     } catch (error) {
       console.error('Error completing onboarding:', error);

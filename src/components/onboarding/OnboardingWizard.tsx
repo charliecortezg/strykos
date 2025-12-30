@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,15 +9,15 @@ import { ConfirmationStep } from './ConfirmationStep';
 import { Logo } from '@/components/brand/Logo';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import { getDashboardPath } from '@/lib/auth-routing';
 
 export function OnboardingWizard() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { activeRole, isLoading: authLoading } = useAuth();
+  const { activeRole, roles, refreshProfile, status } = useAuth();
   const [isCompleting, setIsCompleting] = useState(false);
   const {
     currentStep,
-    isCompleted,
     isLoading,
     categoriesCreated,
     playersCreated,
@@ -27,29 +27,16 @@ export function OnboardingWizard() {
     refetch,
   } = useOnboarding();
 
-  // Only redirect if user arrives at /onboarding but already completed it previously
-  // Do NOT redirect if we're in the process of completing
-  useEffect(() => {
-    if (!isLoading && !authLoading && isCompleted && !isCompleting) {
-      const dashboardPath = activeRole 
-        ? `/dashboard/${activeRole.replace('_', '-')}`
-        : '/dashboard/org-owner';
-      navigate(dashboardPath, { replace: true });
-    }
-  }, [isCompleted, isLoading, authLoading, activeRole, navigate, isCompleting]);
-
   const handleComplete = async () => {
     setIsCompleting(true);
     try {
       const success = await completeOnboarding();
       if (success) {
-        const dashboardPath = activeRole 
-          ? `/dashboard/${activeRole.replace('_', '-')}`
-          : '/dashboard/org-owner';
-        // Small delay to allow state to stabilize
-        setTimeout(() => {
-          navigate(dashboardPath, { replace: true });
-        }, 100);
+        // Refresh AuthContext to update onboardingCompleted
+        await refreshProfile();
+        // Navigate to dashboard
+        const dashboardPath = getDashboardPath(activeRole, roles);
+        navigate(dashboardPath, { replace: true });
       } else {
         setIsCompleting(false);
         toast({
@@ -81,7 +68,7 @@ export function OnboardingWizard() {
     );
   }
 
-  if (isLoading || authLoading) {
+  if (isLoading || status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
@@ -8,11 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/brand/Logo';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { getTargetRoute, getDashboardPath } from '@/lib/auth-routing';
 import type { OrgRole } from '@/types/auth';
 
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { status, isAuthenticated, roles, activeRole, user, onboardingCompleted } = useAuth();
   
   const [orgCode, setOrgCode] = useState('');
   const [orgAccessKey, setOrgAccessKey] = useState('');
@@ -20,6 +23,27 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (status === 'authenticated' && isAuthenticated) {
+      const target = getTargetRoute({
+        isAuthenticated,
+        mustChangePassword: user?.must_change_password ?? false,
+        roles,
+        activeRole,
+        onboardingCompleted,
+        currentPath: '/login',
+      });
+      
+      if (target) {
+        navigate(target, { replace: true });
+      } else {
+        // Default: go to dashboard
+        navigate(getDashboardPath(activeRole, roles), { replace: true });
+      }
+    }
+  }, [status, isAuthenticated, roles, activeRole, onboardingCompleted, user, navigate]);
 
   const isValid = 
     orgCode.trim() !== '' &&
@@ -93,16 +117,8 @@ export default function Login() {
         return;
       }
 
-      // Check if must change password
-      if (validation.must_change_password) {
-        navigate('/cambiar-password');
-        return;
-      }
-
-      // Redirect based on role
-      const role = validation.role as OrgRole;
-      const dashboardPath = `/dashboard/${role.replace('_', '-')}`;
-      navigate(dashboardPath);
+      // Don't navigate here - let AuthContext handle it via useEffect above
+      // The onAuthStateChange will trigger, update context, and useEffect will redirect
 
     } catch (err) {
       console.error('Login error:', err);
@@ -115,6 +131,18 @@ export default function Login() {
       setIsLoading(false);
     }
   };
+
+  // Show loading if auth is still initializing
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground font-body">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

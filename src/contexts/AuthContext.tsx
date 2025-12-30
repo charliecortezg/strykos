@@ -1,9 +1,20 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import type { UserProfile, Organization, OrgRole, AuthState } from '@/types/auth';
+import type { UserProfile, Organization, OrgRole } from '@/types/auth';
 
-interface AuthContextType extends AuthState {
+type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
+
+interface AuthContextType {
+  status: AuthStatus;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  session: Session | null;
+  user: UserProfile | null;
+  organization: Organization | null;
+  roles: OrgRole[];
+  activeRole: OrgRole | null;
+  onboardingCompleted: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   setActiveRole: (role: OrgRole) => void;
@@ -14,12 +25,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const ACTIVE_ROLE_KEY = 'stryk_active_role';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [status, setStatus] = useState<AuthStatus>('loading');
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [roles, setRoles] = useState<OrgRole[]>([]);
   const [activeRole, setActiveRoleState] = useState<OrgRole | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  
+  // Prevent race conditions
+  const initializingRef = useRef(false);
+  const hasInitializedRef = useRef(false);
 
   const setActiveRole = useCallback((role: OrgRole) => {
     if (roles.includes(role)) {
@@ -28,7 +44,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [roles]);
 
-  const fetchUserData = useCallback(async (userId: string) => {
+  const clearState = useCallback(() => {
+    setUser(null);
+    setOrganization(null);
+    setRoles([]);
+    setActiveRoleState(null);
+    setOnboardingCompleted(false);
+    localStorage.removeItem(ACTIVE_ROLE_KEY);
+  }, []);
+
+  const fetchUserData = useCallback(async (userId: string): Promise<boolean> => {
     try {
       // Fetch profile
       const { data: profile, error: profileError } = await supabase
@@ -39,12 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (profileError || !profile) {
         console.error('Error fetching profile:', profileError);
-        return;
+        return false;
       }
 
       setUser(profile as UserProfile);
 
-      // Fetch organization
+      // Fetch organization with onboarding status
       const { data: org, error: orgError } = await supabase
         .from('organizations')
         .select('*')
@@ -53,10 +78,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (orgError || !org) {
         console.error('Error fetching organization:', orgError);
-        return;
+        return false;
       }
 
       setOrganization(org as Organization);
+      setOnboardingCompleted(org.onboarding_completed ?? false);
 
       // Fetch ALL roles for this user in this organization
       const { data: rolesData, error: rolesError } = await supabase
@@ -67,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (rolesError) {
         console.error('Error fetching roles:', rolesError);
-        return;
+        return false;
       }
 
       const userRoles = (rolesData || []).map(r => r.role as OrgRole);
@@ -84,54 +110,87 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setActiveRoleState(userRoles[0]);
         localStorage.setItem(ACTIVE_ROLE_KEY, userRoles[0]);
       }
+
+      return true;
     } catch (error) {
       console.error('Error in fetchUserData:', error);
+      return false;
     }
   }, []);
 
+  // Initialize auth state
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        
-        if (session?.user) {
-          // Defer Supabase calls with setTimeout
-          setTimeout(() => {
-            fetchUserData(session.user.id);
-          }, 0);
-        } else {
-          setUser(null);
-          setOrganization(null);
-          setRoles([]);
-          setActiveRoleState(null);
-          localStorage.removeItem(ACTIVE_ROLE_KEY);
+    // Prevent multiple initializations
+    if (initializingRef.current || hasInitializedRef.current) return;
+    initializingRef.current = true;
+
+    const initializeAuth = async () => {
+      // Set up auth state listener FIRST
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, newSession) => {
+          // Handle sign out
+          if (event === 'SIGNED_OUT' || !newSession) {
+            setSession(null);
+            clearState();
+            setStatus('unauthenticated');
+            return;
+          }
+
+          // Handle sign in or token refresh
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+            setSession(newSession);
+            
+            if (newSession?.user) {
+              // Use setTimeout to avoid Supabase deadlock
+              setTimeout(async () => {
+                const success = await fetchUserData(newSession.user.id);
+                setStatus(success ? 'authenticated' : 'unauthenticated');
+              }, 0);
+            }
+          }
         }
-        
-        setIsLoading(false);
-      }
-    );
+      );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchUserData(session.user.id);
+      // THEN check for existing session
+      const { data: { session: existingSession } } = await supabase.auth.getSession();
+      
+      if (existingSession?.user) {
+        setSession(existingSession);
+        const success = await fetchUserData(existingSession.user.id);
+        setStatus(success ? 'authenticated' : 'unauthenticated');
+      } else {
+        setStatus('unauthenticated');
       }
-      setIsLoading(false);
-    });
 
-    return () => subscription.unsubscribe();
-  }, [fetchUserData]);
+      hasInitializedRef.current = true;
+      initializingRef.current = false;
+
+      // Listen for storage events (multi-tab sync)
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'sb-ounhzchuuvziyqriyjdb-auth-token' && !e.newValue) {
+          // Token was removed in another tab - sign out here too
+          clearState();
+          setSession(null);
+          setStatus('unauthenticated');
+        }
+      };
+
+      window.addEventListener('storage', handleStorageChange);
+
+      return () => {
+        subscription.unsubscribe();
+        window.removeEventListener('storage', handleStorageChange);
+      };
+    };
+
+    initializeAuth();
+  }, [fetchUserData, clearState]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setUser(null);
-    setOrganization(null);
-    setRoles([]);
-    setActiveRoleState(null);
+    clearState();
     setSession(null);
-    localStorage.removeItem(ACTIVE_ROLE_KEY);
+    setStatus('unauthenticated');
   };
 
   const refreshProfile = async () => {
@@ -141,12 +200,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const value: AuthContextType = {
+    status,
+    isLoading: status === 'loading',
+    isAuthenticated: status === 'authenticated' && !!user,
+    session,
     user,
     organization,
     roles,
     activeRole,
-    isLoading,
-    isAuthenticated: !!session && !!user,
+    onboardingCompleted,
     signOut,
     refreshProfile,
     setActiveRole,
