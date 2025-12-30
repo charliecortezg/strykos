@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { getTargetRoute } from '@/lib/auth-routing';
 import type { OrgRole } from '@/types/auth';
 
 interface ProtectedRouteProps {
@@ -10,38 +10,19 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, roles, activeRole, user, organization } = useAuth();
+  const { 
+    status, 
+    isAuthenticated, 
+    roles, 
+    activeRole, 
+    user, 
+    onboardingCompleted 
+  } = useAuth();
   const location = useLocation();
-  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
-  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const hasRedirectedRef = useRef(false);
 
-  // Check onboarding status for org_owner
-  useEffect(() => {
-    const checkOnboarding = async () => {
-      if (!organization?.id || !roles.includes('org_owner')) {
-        setOnboardingCompleted(true);
-        setCheckingOnboarding(false);
-        return;
-      }
-
-      const { data } = await supabase
-        .from('organizations')
-        .select('onboarding_completed')
-        .eq('id', organization.id)
-        .single();
-
-      setOnboardingCompleted(data?.onboarding_completed ?? false);
-      setCheckingOnboarding(false);
-    };
-
-    if (!isLoading && isAuthenticated && organization?.id) {
-      checkOnboarding();
-    } else if (!isLoading) {
-      setCheckingOnboarding(false);
-    }
-  }, [organization?.id, isLoading, isAuthenticated, roles]);
-
-  if (isLoading || checkingOnboarding) {
+  // Show loader while checking auth
+  if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -52,24 +33,20 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
+  // Get target route from centralized function
+  const targetRoute = getTargetRoute({
+    isAuthenticated,
+    mustChangePassword: user?.must_change_password ?? false,
+    roles,
+    activeRole,
+    onboardingCompleted,
+    currentPath: location.pathname,
+  });
 
-  // Check if user must change password
-  if (user?.must_change_password && location.pathname !== '/cambiar-password') {
-    return <Navigate to="/cambiar-password" replace />;
-  }
-
-  // Check if org_owner needs onboarding (only redirect from dashboard pages)
-  const isDashboardPage = location.pathname.startsWith('/dashboard');
-  if (
-    roles.includes('org_owner') && 
-    onboardingCompleted === false && 
-    isDashboardPage &&
-    location.pathname !== '/onboarding'
-  ) {
-    return <Navigate to="/onboarding" replace />;
+  // Need to redirect - do it only once
+  if (targetRoute && !hasRedirectedRef.current) {
+    hasRedirectedRef.current = true;
+    return <Navigate to={targetRoute} state={{ from: location }} replace />;
   }
 
   // Check role permissions - user must have at least one of the allowed roles
