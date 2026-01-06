@@ -1,21 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/brand/Logo';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { getTargetRoute, getDashboardPath } from '@/lib/auth-routing';
 import type { OrgRole } from '@/types/auth';
 
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { status, isAuthenticated, roles, activeRole, user, onboardingCompleted } = useAuth();
   
   const [orgCode, setOrgCode] = useState('');
   const [orgAccessKey, setOrgAccessKey] = useState('');
@@ -23,33 +20,11 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPlatformLogin, setIsPlatformLogin] = useState(false);
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (status === 'authenticated' && isAuthenticated) {
-      const target = getTargetRoute({
-        isAuthenticated,
-        mustChangePassword: user?.must_change_password ?? false,
-        roles,
-        activeRole,
-        onboardingCompleted,
-        currentPath: '/login',
-      });
-      
-      if (target) {
-        navigate(target, { replace: true });
-      } else {
-        // Default: go to dashboard
-        navigate(getDashboardPath(activeRole, roles), { replace: true });
-      }
-    }
-  }, [status, isAuthenticated, roles, activeRole, onboardingCompleted, user, navigate]);
-
-  const isValid = 
-    orgCode.trim() !== '' &&
-    orgAccessKey.trim() !== '' &&
-    email.trim() !== '' &&
-    password !== '';
+  const isValid = isPlatformLogin 
+    ? email.trim() !== '' && password !== ''
+    : orgCode.trim() !== '' && orgAccessKey.trim() !== '' && email.trim() !== '' && password !== '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +33,45 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // First validate org access
+      // Platform Admin Login - direct auth without org validation
+      if (isPlatformLogin) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+
+        if (signInError) {
+          toast({
+            title: 'Error',
+            description: 'Credenciales incorrectas.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        // Check if user is a platform admin
+        const { data: platformRole } = await supabase
+          .from('platform_roles')
+          .select('role')
+          .eq('user_id', signInData.user.id)
+          .eq('role', 'platform_super_admin')
+          .maybeSingle();
+
+        if (!platformRole) {
+          await supabase.auth.signOut();
+          toast({
+            title: 'Acceso denegado',
+            description: 'No tienes permisos de Platform Admin.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        navigate('/platform-admin', { replace: true });
+        return;
+      }
+
+      // Academy Login - with org validation
       const { data: validationResult, error: validationError } = await supabase.rpc(
         'validate_org_access',
         {
@@ -101,14 +114,12 @@ export default function Login() {
         return;
       }
 
-      // Now sign in with Supabase Auth
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
       });
 
       if (signInError) {
-        console.error('Sign in error:', signInError);
         toast({
           title: 'Error',
           description: 'Contraseña incorrecta.',
@@ -117,8 +128,26 @@ export default function Login() {
         return;
       }
 
-      // Don't navigate here - let AuthContext handle it via useEffect above
-      // The onAuthStateChange will trigger, update context, and useEffect will redirect
+      // Determine redirect based on role and onboarding status
+      if (validation.must_change_password) {
+        navigate('/cambiar-password', { replace: true });
+      } else if (validation.role === 'org_owner') {
+        // Check onboarding status
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('onboarding_completed')
+          .limit(1)
+          .maybeSingle();
+
+        if (org && !org.onboarding_completed) {
+          navigate('/onboarding', { replace: true });
+        } else {
+          navigate('/dashboard/org-owner', { replace: true });
+        }
+      } else {
+        const rolePath = validation.role?.replace('_', '-') || 'org-owner';
+        navigate(`/dashboard/${rolePath}`, { replace: true });
+      }
 
     } catch (err) {
       console.error('Login error:', err);
@@ -131,18 +160,6 @@ export default function Login() {
       setIsLoading(false);
     }
   };
-
-  // Show loading if auth is still initializing
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground font-body">Cargando...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -167,48 +184,54 @@ export default function Login() {
         >
           <div className="stryk-card p-6 sm:p-8">
             <div className="text-center mb-8">
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <LogIn className="w-7 h-7 text-primary" />
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 ${isPlatformLogin ? 'bg-amber-500/10' : 'bg-primary/10'}`}>
+                {isPlatformLogin ? (
+                  <Shield className="w-7 h-7 text-amber-500" />
+                ) : (
+                  <LogIn className="w-7 h-7 text-primary" />
+                )}
               </div>
               <h1 className="text-2xl font-display font-semibold text-foreground">
-                Iniciar sesión
+                {isPlatformLogin ? 'Platform Admin' : 'Iniciar sesión'}
               </h1>
               <p className="text-muted-foreground mt-2">
-                Accede a tu academia deportiva
+                {isPlatformLogin ? 'Acceso de administrador de plataforma' : 'Accede a tu academia deportiva'}
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm font-medium text-foreground">Organization ID</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="orgCode" className="text-xs text-muted-foreground">
-                      Código
-                    </Label>
-                    <Input
-                      id="orgCode"
-                      placeholder="white-lions"
-                      value={orgCode}
-                      onChange={(e) => setOrgCode(e.target.value)}
-                      className="lowercase"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="orgAccessKey" className="text-xs text-muted-foreground">
-                      Clave de acceso
-                    </Label>
-                    <Input
-                      id="orgAccessKey"
-                      placeholder="ABC-123"
-                      value={orgAccessKey}
-                      onChange={(e) => setOrgAccessKey(e.target.value.toUpperCase())}
-                      className="uppercase font-mono"
-                      maxLength={7}
-                    />
+              {!isPlatformLogin && (
+                <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm font-medium text-foreground">Organization ID</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="orgCode" className="text-xs text-muted-foreground">
+                        Código
+                      </Label>
+                      <Input
+                        id="orgCode"
+                        placeholder="white-lions"
+                        value={orgCode}
+                        onChange={(e) => setOrgCode(e.target.value)}
+                        className="lowercase"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="orgAccessKey" className="text-xs text-muted-foreground">
+                        Clave de acceso
+                      </Label>
+                      <Input
+                        id="orgAccessKey"
+                        placeholder="ABC-123"
+                        value={orgAccessKey}
+                        onChange={(e) => setOrgAccessKey(e.target.value.toUpperCase())}
+                        className="uppercase font-mono"
+                        maxLength={7}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="email">Correo electrónico</Label>
@@ -244,17 +267,19 @@ export default function Login() {
                     )}
                   </button>
                 </div>
-                <Link 
-                  to="/recuperar-password" 
-                  className="text-sm text-primary hover:underline"
-                >
-                  ¿Olvidaste tu contraseña?
-                </Link>
+                {!isPlatformLogin && (
+                  <Link 
+                    to="/recuperar-password" 
+                    className="text-sm text-primary hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                )}
               </div>
 
               <Button
                 type="submit"
-                className="w-full"
+                className={`w-full ${isPlatformLogin ? 'bg-amber-500 hover:bg-amber-600' : ''}`}
                 size="lg"
                 disabled={!isValid || isLoading}
               >
@@ -269,12 +294,23 @@ export default function Login() {
               </Button>
             </form>
 
-            <p className="text-center text-sm text-muted-foreground mt-6">
-              ¿No tienes una academia?{' '}
-              <Link to="/registro-academia" className="text-primary hover:underline font-medium">
-                Créala aquí
-              </Link>
-            </p>
+            {!isPlatformLogin && (
+              <p className="text-center text-sm text-muted-foreground mt-6">
+                ¿No tienes una academia?{' '}
+                <Link to="/registro-academia" className="text-primary hover:underline font-medium">
+                  Créala aquí
+                </Link>
+              </p>
+            )}
+
+            {/* Hidden Platform Admin toggle - only visible to those who know */}
+            <button
+              type="button"
+              onClick={() => setIsPlatformLogin(!isPlatformLogin)}
+              className="w-full mt-4 py-2 text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            >
+              {isPlatformLogin ? '← Volver a login de academia' : ''}
+            </button>
           </div>
         </motion.div>
       </main>
