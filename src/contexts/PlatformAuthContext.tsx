@@ -26,30 +26,45 @@ export function PlatformAuthProvider({ children }: { children: React.ReactNode }
   
   const initializingRef = useRef(false);
 
-  const checkPlatformAdmin = async (userId: string): Promise<boolean> => {
-    const { data, error } = await supabase
-      .from('platform_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'platform_super_admin')
-      .maybeSingle();
-
-    return !error && !!data;
+  const checkPlatformAdmin = async (): Promise<boolean> => {
+    console.log('[PlatformAuth] Checking admin status via RPC...');
+    
+    const { data, error } = await supabase.rpc('is_platform_admin');
+    
+    console.log('[PlatformAuth] Admin check result:', { data, error });
+    
+    if (error) {
+      console.error('[PlatformAuth] Error checking admin status:', error);
+      return false;
+    }
+    
+    return data === true;
   };
 
   const initialize = async () => {
     if (initializingRef.current) return;
     initializingRef.current = true;
 
+    console.log('[PlatformAuth] Starting initialization...');
+
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log('[PlatformAuth] Session check:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id,
+        email: session?.user?.email,
+        error: sessionError 
+      });
       
       if (!session?.user) {
+        console.log('[PlatformAuth] No session - setting unauthorized');
         setState({ user: null, status: 'unauthorized', isPlatformAdmin: false });
         return;
       }
 
-      const isPlatformAdmin = await checkPlatformAdmin(session.user.id);
+      const isPlatformAdmin = await checkPlatformAdmin();
+      console.log('[PlatformAuth] Final admin status:', isPlatformAdmin);
 
       setState({
         user: session.user,
@@ -57,7 +72,7 @@ export function PlatformAuthProvider({ children }: { children: React.ReactNode }
         isPlatformAdmin,
       });
     } catch (error) {
-      console.error('Platform auth initialization error:', error);
+      console.error('[PlatformAuth] Initialization error:', error);
       setState({ user: null, status: 'unauthorized', isPlatformAdmin: false });
     } finally {
       initializingRef.current = false;
@@ -76,7 +91,7 @@ export function PlatformAuthProvider({ children }: { children: React.ReactNode }
       if (event === 'SIGNED_OUT') {
         setState({ user: null, status: 'unauthorized', isPlatformAdmin: false });
       } else if (event === 'SIGNED_IN' && session?.user) {
-        const isPlatformAdmin = await checkPlatformAdmin(session.user.id);
+        const isPlatformAdmin = await checkPlatformAdmin();
         setState({
           user: session.user,
           status: isPlatformAdmin ? 'authenticated' : 'unauthorized',
