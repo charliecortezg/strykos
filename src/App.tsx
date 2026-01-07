@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PlatformAuthProvider } from "@/contexts/PlatformAuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -19,6 +19,7 @@ import DirectorDeportivoDashboard from "./pages/dashboard/DirectorDeportivoDashb
 import EntrenadorDashboard from "./pages/dashboard/EntrenadorDashboard";
 import AdministrativoDashboard from "./pages/dashboard/AdministrativoDashboard";
 // Platform Admin Pages
+import PlatformLogin from "./pages/platform/PlatformLogin";
 import PlatformDashboard from "./pages/platform/PlatformDashboard";
 import OrganizationsPage from "./pages/platform/OrganizationsPage";
 import UpgradeRequestsPage from "./pages/platform/UpgradeRequestsPage";
@@ -26,92 +27,81 @@ import AuditLogPage from "./pages/platform/AuditLogPage";
 
 const queryClient = new QueryClient();
 
-// Conditional provider component to isolate platform-admin from regular auth
-function ConditionalAuthProvider({ children }: { children: React.ReactNode }) {
-  const location = useLocation();
-  const isPlatformRoute = location.pathname.startsWith('/platform-admin');
-
-  // For platform routes, only use PlatformAuthProvider (no AuthProvider interference)
-  if (isPlatformRoute) {
-    return (
-      <PlatformAuthProvider>
-        {children}
-      </PlatformAuthProvider>
-    );
-  }
-
-  // For all other routes, use AuthProvider (no PlatformAuthProvider interference)
+// Platform Admin Routes - Completely isolated with its own provider
+function PlatformRoutes() {
   return (
-    <AuthProvider>
-      {children}
-    </AuthProvider>
+    <PlatformAuthProvider>
+      <Routes>
+        <Route path="login" element={<PlatformLogin />} />
+        <Route path="" element={
+          <PlatformAuthGuard>
+            <PlatformDashboard />
+          </PlatformAuthGuard>
+        } />
+        <Route path="organizations" element={
+          <PlatformAuthGuard>
+            <OrganizationsPage />
+          </PlatformAuthGuard>
+        } />
+        <Route path="upgrade-requests" element={
+          <PlatformAuthGuard>
+            <UpgradeRequestsPage />
+          </PlatformAuthGuard>
+        } />
+        <Route path="audit-log" element={
+          <PlatformAuthGuard>
+            <AuditLogPage />
+          </PlatformAuthGuard>
+        } />
+      </Routes>
+    </PlatformAuthProvider>
   );
 }
 
-const AppRoutes = () => (
-  <ConditionalAuthProvider>
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/registro-academia" element={<RegistroAcademia />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/recuperar-password" element={<RecuperarPassword />} />
-      <Route path="/onboarding" element={
-        <ProtectedRoute allowedRoles={['org_owner']}>
-          <Onboarding />
-        </ProtectedRoute>
-      } />
-      <Route path="/cambiar-password" element={
-        <ProtectedRoute>
-          <CambiarPassword />
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/org-owner" element={
-        <ProtectedRoute allowedRoles={['org_owner']}>
-          <OrgOwnerDashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/director-deportivo" element={
-        <ProtectedRoute allowedRoles={['director_deportivo']}>
-          <DirectorDeportivoDashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/entrenador" element={
-        <ProtectedRoute allowedRoles={['entrenador']}>
-          <EntrenadorDashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/administrativo" element={
-        <ProtectedRoute allowedRoles={['administrativo']}>
-          <AdministrativoDashboard />
-        </ProtectedRoute>
-      } />
-      
-      {/* Platform Admin Routes - Completely isolated */}
-      <Route path="/platform-admin" element={
-        <PlatformAuthGuard>
-          <PlatformDashboard />
-        </PlatformAuthGuard>
-      } />
-      <Route path="/platform-admin/organizations" element={
-        <PlatformAuthGuard>
-          <OrganizationsPage />
-        </PlatformAuthGuard>
-      } />
-      <Route path="/platform-admin/upgrade-requests" element={
-        <PlatformAuthGuard>
-          <UpgradeRequestsPage />
-        </PlatformAuthGuard>
-      } />
-      <Route path="/platform-admin/audit-log" element={
-        <PlatformAuthGuard>
-          <AuditLogPage />
-        </PlatformAuthGuard>
-      } />
-      
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  </ConditionalAuthProvider>
-);
+// Academy Routes - Regular auth provider
+function AcademyRoutes() {
+  return (
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/registro-academia" element={<RegistroAcademia />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/recuperar-password" element={<RecuperarPassword />} />
+        <Route path="/onboarding" element={
+          <ProtectedRoute allowedRoles={['org_owner']}>
+            <Onboarding />
+          </ProtectedRoute>
+        } />
+        <Route path="/cambiar-password" element={
+          <ProtectedRoute>
+            <CambiarPassword />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/org-owner" element={
+          <ProtectedRoute allowedRoles={['org_owner']}>
+            <OrgOwnerDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/director-deportivo" element={
+          <ProtectedRoute allowedRoles={['director_deportivo']}>
+            <DirectorDeportivoDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/entrenador" element={
+          <ProtectedRoute allowedRoles={['entrenador']}>
+            <EntrenadorDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/administrativo" element={
+          <ProtectedRoute allowedRoles={['administrativo']}>
+            <AdministrativoDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AuthProvider>
+  );
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -119,7 +109,13 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppRoutes />
+        <Routes>
+          {/* Platform Admin - Completely isolated routing tree */}
+          <Route path="/platform-admin/*" element={<PlatformRoutes />} />
+          
+          {/* Academy routes - Everything else */}
+          <Route path="/*" element={<AcademyRoutes />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, LogIn, Shield } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,11 +20,8 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isPlatformLogin, setIsPlatformLogin] = useState(false);
 
-  const isValid = isPlatformLogin 
-    ? email.trim() !== '' && password !== ''
-    : orgCode.trim() !== '' && orgAccessKey.trim() !== '' && email.trim() !== '' && password !== '';
+  const isValid = orgCode.trim() !== '' && orgAccessKey.trim() !== '' && email.trim() !== '' && password !== '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,44 +30,6 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // Platform Admin Login - direct auth without org validation
-      if (isPlatformLogin) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password,
-        });
-
-        if (signInError) {
-          toast({
-            title: 'Error',
-            description: 'Credenciales incorrectas.',
-            variant: 'destructive',
-          });
-          return;
-        }
-
-        // Check if user is a platform admin
-        const { data: platformRole } = await supabase
-          .from('platform_roles')
-          .select('role')
-          .eq('user_id', signInData.user.id)
-          .eq('role', 'platform_super_admin')
-          .maybeSingle();
-
-        if (!platformRole) {
-          await supabase.auth.signOut();
-          toast({
-            title: 'Acceso denegado',
-            description: 'No tienes permisos de Platform Admin.',
-            variant: 'destructive',
-          });
-          return;
-        }
-
-        navigate('/platform-admin', { replace: true });
-        return;
-      }
-
       // Academy Login - with org validation
       const { data: validationResult, error: validationError } = await supabase.rpc(
         'validate_org_access',
@@ -184,54 +143,48 @@ export default function Login() {
         >
           <div className="stryk-card p-6 sm:p-8">
             <div className="text-center mb-8">
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 ${isPlatformLogin ? 'bg-amber-500/10' : 'bg-primary/10'}`}>
-                {isPlatformLogin ? (
-                  <Shield className="w-7 h-7 text-amber-500" />
-                ) : (
-                  <LogIn className="w-7 h-7 text-primary" />
-                )}
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <LogIn className="w-7 h-7 text-primary" />
               </div>
               <h1 className="text-2xl font-display font-semibold text-foreground">
-                {isPlatformLogin ? 'Platform Admin' : 'Iniciar sesión'}
+                Iniciar sesión
               </h1>
               <p className="text-muted-foreground mt-2">
-                {isPlatformLogin ? 'Acceso de administrador de plataforma' : 'Accede a tu academia deportiva'}
+                Accede a tu academia deportiva
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {!isPlatformLogin && (
-                <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm font-medium text-foreground">Organization ID</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="orgCode" className="text-xs text-muted-foreground">
-                        Código
-                      </Label>
-                      <Input
-                        id="orgCode"
-                        placeholder="white-lions"
-                        value={orgCode}
-                        onChange={(e) => setOrgCode(e.target.value)}
-                        className="lowercase"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="orgAccessKey" className="text-xs text-muted-foreground">
-                        Clave de acceso
-                      </Label>
-                      <Input
-                        id="orgAccessKey"
-                        placeholder="ABC-123"
-                        value={orgAccessKey}
-                        onChange={(e) => setOrgAccessKey(e.target.value.toUpperCase())}
-                        className="uppercase font-mono"
-                        maxLength={7}
-                      />
-                    </div>
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm font-medium text-foreground">Organization ID</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="orgCode" className="text-xs text-muted-foreground">
+                      Código
+                    </Label>
+                    <Input
+                      id="orgCode"
+                      placeholder="white-lions"
+                      value={orgCode}
+                      onChange={(e) => setOrgCode(e.target.value)}
+                      className="lowercase"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="orgAccessKey" className="text-xs text-muted-foreground">
+                      Clave de acceso
+                    </Label>
+                    <Input
+                      id="orgAccessKey"
+                      placeholder="ABC-123"
+                      value={orgAccessKey}
+                      onChange={(e) => setOrgAccessKey(e.target.value.toUpperCase())}
+                      className="uppercase font-mono"
+                      maxLength={7}
+                    />
                   </div>
                 </div>
-              )}
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Correo electrónico</Label>
@@ -267,19 +220,17 @@ export default function Login() {
                     )}
                   </button>
                 </div>
-                {!isPlatformLogin && (
-                  <Link 
-                    to="/recuperar-password" 
-                    className="text-sm text-primary hover:underline"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </Link>
-                )}
+                <Link 
+                  to="/recuperar-password" 
+                  className="text-sm text-primary hover:underline"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
               </div>
 
               <Button
                 type="submit"
-                className={`w-full ${isPlatformLogin ? 'bg-amber-500 hover:bg-amber-600' : ''}`}
+                className="w-full"
                 size="lg"
                 disabled={!isValid || isLoading}
               >
@@ -294,23 +245,12 @@ export default function Login() {
               </Button>
             </form>
 
-            {!isPlatformLogin && (
-              <p className="text-center text-sm text-muted-foreground mt-6">
-                ¿No tienes una academia?{' '}
-                <Link to="/registro-academia" className="text-primary hover:underline font-medium">
-                  Créala aquí
-                </Link>
-              </p>
-            )}
-
-            {/* Hidden Platform Admin toggle - only visible to those who know */}
-            <button
-              type="button"
-              onClick={() => setIsPlatformLogin(!isPlatformLogin)}
-              className="w-full mt-4 py-2 text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-            >
-              {isPlatformLogin ? '← Volver a login de academia' : ''}
-            </button>
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              ¿No tienes una academia?{' '}
+              <Link to="/registro-academia" className="text-primary hover:underline font-medium">
+                Créala aquí
+              </Link>
+            </p>
           </div>
         </motion.div>
       </main>
