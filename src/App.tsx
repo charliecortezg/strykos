@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PlatformAuthProvider } from "@/contexts/PlatformAuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -26,76 +26,100 @@ import AuditLogPage from "./pages/platform/AuditLogPage";
 
 const queryClient = new QueryClient();
 
+// Conditional provider component to isolate platform-admin from regular auth
+function ConditionalAuthProvider({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const isPlatformRoute = location.pathname.startsWith('/platform-admin');
+
+  // For platform routes, only use PlatformAuthProvider (no AuthProvider interference)
+  if (isPlatformRoute) {
+    return (
+      <PlatformAuthProvider>
+        {children}
+      </PlatformAuthProvider>
+    );
+  }
+
+  // For all other routes, use AuthProvider (no PlatformAuthProvider interference)
+  return (
+    <AuthProvider>
+      {children}
+    </AuthProvider>
+  );
+}
+
+const AppRoutes = () => (
+  <ConditionalAuthProvider>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/registro-academia" element={<RegistroAcademia />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/recuperar-password" element={<RecuperarPassword />} />
+      <Route path="/onboarding" element={
+        <ProtectedRoute allowedRoles={['org_owner']}>
+          <Onboarding />
+        </ProtectedRoute>
+      } />
+      <Route path="/cambiar-password" element={
+        <ProtectedRoute>
+          <CambiarPassword />
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/org-owner" element={
+        <ProtectedRoute allowedRoles={['org_owner']}>
+          <OrgOwnerDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/director-deportivo" element={
+        <ProtectedRoute allowedRoles={['director_deportivo']}>
+          <DirectorDeportivoDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/entrenador" element={
+        <ProtectedRoute allowedRoles={['entrenador']}>
+          <EntrenadorDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/administrativo" element={
+        <ProtectedRoute allowedRoles={['administrativo']}>
+          <AdministrativoDashboard />
+        </ProtectedRoute>
+      } />
+      
+      {/* Platform Admin Routes - Completely isolated */}
+      <Route path="/platform-admin" element={
+        <PlatformAuthGuard>
+          <PlatformDashboard />
+        </PlatformAuthGuard>
+      } />
+      <Route path="/platform-admin/organizations" element={
+        <PlatformAuthGuard>
+          <OrganizationsPage />
+        </PlatformAuthGuard>
+      } />
+      <Route path="/platform-admin/upgrade-requests" element={
+        <PlatformAuthGuard>
+          <UpgradeRequestsPage />
+        </PlatformAuthGuard>
+      } />
+      <Route path="/platform-admin/audit-log" element={
+        <PlatformAuthGuard>
+          <AuditLogPage />
+        </PlatformAuthGuard>
+      } />
+      
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  </ConditionalAuthProvider>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <PlatformAuthProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/registro-academia" element={<RegistroAcademia />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/recuperar-password" element={<RecuperarPassword />} />
-              <Route path="/onboarding" element={
-                <ProtectedRoute allowedRoles={['org_owner']}>
-                  <Onboarding />
-                </ProtectedRoute>
-              } />
-              <Route path="/cambiar-password" element={
-                <ProtectedRoute>
-                  <CambiarPassword />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/org-owner" element={
-                <ProtectedRoute allowedRoles={['org_owner']}>
-                  <OrgOwnerDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/director-deportivo" element={
-                <ProtectedRoute allowedRoles={['director_deportivo']}>
-                  <DirectorDeportivoDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/entrenador" element={
-                <ProtectedRoute allowedRoles={['entrenador']}>
-                  <EntrenadorDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/administrativo" element={
-                <ProtectedRoute allowedRoles={['administrativo']}>
-                  <AdministrativoDashboard />
-                </ProtectedRoute>
-              } />
-              
-              {/* Platform Admin Routes - Completely isolated */}
-              <Route path="/platform-admin" element={
-                <PlatformAuthGuard>
-                  <PlatformDashboard />
-                </PlatformAuthGuard>
-              } />
-              <Route path="/platform-admin/organizations" element={
-                <PlatformAuthGuard>
-                  <OrganizationsPage />
-                </PlatformAuthGuard>
-              } />
-              <Route path="/platform-admin/upgrade-requests" element={
-                <PlatformAuthGuard>
-                  <UpgradeRequestsPage />
-                </PlatformAuthGuard>
-              } />
-              <Route path="/platform-admin/audit-log" element={
-                <PlatformAuthGuard>
-                  <AuditLogPage />
-                </PlatformAuthGuard>
-              } />
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </PlatformAuthProvider>
-        </AuthProvider>
+        <AppRoutes />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
