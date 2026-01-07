@@ -93,9 +93,9 @@ export function PlatformAuthGuard({ children }: PlatformAuthGuardProps) {
     );
   }
 
-  // If not a platform admin, show 404 (not redirect to login)
+  // If not a platform admin, redirect to platform login
   if (status === 'unauthorized' || !isPlatformAdmin) {
-    return <Navigate to="/404" replace />;
+    return <Navigate to="/platform-admin/login" replace />;
   }
 
   return <>{children}</>;
