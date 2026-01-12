@@ -20,6 +20,7 @@ interface CreateMatchData {
     assists: number;
     points: number;
     position?: string | null;
+    is_guest?: boolean;
   }[];
 }
 
@@ -66,6 +67,7 @@ export function useCreateMatch() {
           assists: p.assists,
           points: p.points,
           position: p.position || null,
+          is_guest: p.is_guest || false,
         }));
 
         const { error: playersError } = await supabase

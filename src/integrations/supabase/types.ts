@@ -207,6 +207,64 @@ export type Database = {
           },
         ]
       }
+      match_media: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          file_name: string
+          file_size: number | null
+          id: string
+          match_id: string
+          mime_type: string | null
+          organization_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          file_size?: number | null
+          id?: string
+          match_id: string
+          mime_type?: string | null
+          organization_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          match_id?: string
+          mime_type?: string | null
+          organization_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_media_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_media_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_media_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       match_players: {
         Row: {
           assists: number | null
@@ -214,6 +272,7 @@ export type Database = {
           created_at: string
           goals: number | null
           id: string
+          is_guest: boolean | null
           match_id: string
           organization_id: string
           player_id: string
@@ -227,6 +286,7 @@ export type Database = {
           created_at?: string
           goals?: number | null
           id?: string
+          is_guest?: boolean | null
           match_id: string
           organization_id: string
           player_id: string
@@ -240,6 +300,7 @@ export type Database = {
           created_at?: string
           goals?: number | null
           id?: string
+          is_guest?: boolean | null
           match_id?: string
           organization_id?: string
           player_id?: string
