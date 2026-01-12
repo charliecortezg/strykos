@@ -100,8 +100,12 @@ export function MatchDetailModal({
     );
   };
 
-  // Calculate KPIs from match
-  const goalsFor = isEditing ? (editedMatch.goals_for ?? 0) : match.goals_for;
+  // Calculate KPIs from player stats (fixes bug where KPIs showed 0)
+  const totalPlayerGoals = matchPlayers.reduce((sum, p) => sum + (p.goals || 0), 0);
+  const totalPlayerAssists = matchPlayers.reduce((sum, p) => sum + (p.assists || 0), 0);
+  
+  // Use player stats if available, otherwise use match scoreboard
+  const goalsFor = isEditing ? (editedMatch.goals_for ?? 0) : (totalPlayerGoals > 0 ? totalPlayerGoals : match.goals_for);
   const goalsAgainst = isEditing ? (editedMatch.goals_against ?? 0) : match.goals_against;
   const difference = goalsFor - goalsAgainst;
   const currentResult = getMatchResult(goalsFor, goalsAgainst);

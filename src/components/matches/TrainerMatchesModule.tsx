@@ -1,16 +1,15 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { Trophy, Plus, Eye, Calendar, MapPin } from 'lucide-react';
+import { Trophy, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { TrainerCategory } from '@/hooks/useTrainerCategories';
-import { useMatches } from '@/hooks/useMatches';
-import { CreateMatchModal } from './CreateMatchModal';
+import { useMatches, useMatchPlayers } from '@/hooks/useMatches';
+import { CreateMatchFlow } from './CreateMatchFlow';
+import { LoadResultsModal } from './LoadResultsModal';
 import { MatchDetailModal } from './MatchDetailModal';
-import { Match, getMatchResult } from '@/types/matches';
-import { cn } from '@/lib/utils';
+import { MatchCard } from './MatchCard';
+import { Match } from '@/types/matches';
 
 interface TrainerMatchesModuleProps {
   categories: TrainerCategory[];
@@ -19,19 +18,26 @@ interface TrainerMatchesModuleProps {
 export function TrainerMatchesModule({ categories }: TrainerMatchesModuleProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [matchForResults, setMatchForResults] = useState<Match | null>(null);
   
   // Get matches for this trainer's categories
   const categoryIds = categories.map(c => c.id);
-  const { matches, isLoading } = useMatches();
+  const { matches, isLoading, updateMatch } = useMatches();
+  const { updateMatchPlayers } = useMatchPlayers(matchForResults?.id || selectedMatch?.id || null);
   
   // Filter to only show matches from trainer's categories
   const trainerMatches = matches.filter(m => categoryIds.includes(m.category_id));
 
-  // Extract field name from notes
-  const getFieldName = (notes: string | null) => {
-    if (!notes) return null;
-    const match = notes.match(/^Campo: (.+?)(\n|$)/);
-    return match ? match[1] : null;
+  // Separate scheduled vs finished
+  const scheduledMatches = trainerMatches.filter(m => m.status === 'programado');
+  const finishedMatches = trainerMatches.filter(m => m.status === 'terminado');
+
+  const handleUpdateMatch = (matchId: string, updates: Partial<Match>, userId: string) => {
+    updateMatch.mutate({ matchId, updates, userId });
+  };
+
+  const handleUpdatePlayers = (players: any[]) => {
+    updateMatchPlayers.mutate(players);
   };
 
   return (
@@ -73,94 +79,62 @@ export function TrainerMatchesModule({ categories }: TrainerMatchesModuleProps) 
           </Button>
         </Card>
       ) : (
-        <div className="space-y-2">
-          {trainerMatches.map((match) => {
-            const result = getMatchResult(match.goals_for, match.goals_against);
-            const isFinished = match.status === 'terminado';
-            const fieldName = getFieldName(match.notes);
+        <div className="space-y-6">
+          {/* Scheduled Matches - Show prominently */}
+          {scheduledMatches.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                Próximos ({scheduledMatches.length})
+              </h3>
+              <div className="space-y-2">
+                {scheduledMatches.map((match) => (
+                  <MatchCard
+                    key={match.id}
+                    match={match}
+                    onView={() => setSelectedMatch(match)}
+                    onLoadResults={() => setMatchForResults(match)}
+                    canLoadResults={true}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
-            return (
-              <Card 
-                key={match.id}
-                className="p-3 cursor-pointer hover:bg-muted/30 transition-colors active:scale-[0.99]"
-                onClick={() => setSelectedMatch(match)}
-              >
-                <div className="flex items-center gap-3">
-                  {/* Date Column */}
-                  <div className="flex flex-col items-center justify-center w-14 shrink-0">
-                    <span className="text-xs text-muted-foreground uppercase">
-                      {format(new Date(match.match_date), 'MMM', { locale: es })}
-                    </span>
-                    <span className="text-2xl font-display font-bold">
-                      {format(new Date(match.match_date), 'd')}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(match.match_date), 'HH:mm')}
-                    </span>
-                  </div>
-
-                  {/* Match Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-sm truncate">vs {match.rival_name}</span>
-                      <Badge 
-                        variant="secondary" 
-                        className="text-[10px] px-1.5 shrink-0"
-                      >
-                        {match.match_type === 'liga' ? 'Liga' : match.match_type === 'torneo' ? 'Torneo' : 'Amistoso'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className="truncate">{match.category?.name}</span>
-                      {fieldName && (
-                        <>
-                          <span>•</span>
-                          <span className="flex items-center gap-1 truncate">
-                            <MapPin className="w-3 h-3 shrink-0" />
-                            {fieldName}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Score/Status */}
-                  <div className="shrink-0">
-                    {isFinished ? (
-                      <div className={cn(
-                        "text-center px-3 py-1.5 rounded-lg font-display font-bold",
-                        result === 'victoria' && "bg-success/10 text-success",
-                        result === 'empate' && "bg-warning/10 text-warning",
-                        result === 'derrota' && "bg-destructive/10 text-destructive"
-                      )}>
-                        <span className="text-xl">{match.goals_for}</span>
-                        <span className="mx-1 text-muted-foreground">-</span>
-                        <span className="text-xl">{match.goals_against}</span>
-                      </div>
-                    ) : (
-                      <Badge 
-                        variant="outline"
-                        className="bg-primary/10 text-primary border-primary/20"
-                      >
-                        Programado
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* View Icon */}
-                  <Eye className="w-4 h-4 text-muted-foreground shrink-0" />
-                </div>
-              </Card>
-            );
-          })}
+          {/* Finished Matches */}
+          {finishedMatches.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Terminados ({finishedMatches.length})
+              </h3>
+              <div className="space-y-2">
+                {finishedMatches.map((match) => (
+                  <MatchCard
+                    key={match.id}
+                    match={match}
+                    onView={() => setSelectedMatch(match)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Create Modal */}
-      <CreateMatchModal
+      {/* Create Match Flow (Drawer) */}
+      <CreateMatchFlow
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         categories={categories}
+      />
+
+      {/* Load Results Modal (Drawer) */}
+      <LoadResultsModal
+        match={matchForResults}
+        isOpen={!!matchForResults}
+        onClose={() => setMatchForResults(null)}
+        onUpdate={handleUpdateMatch}
+        onUpdatePlayers={handleUpdatePlayers}
       />
 
       {/* Detail Modal (read-only for trainer) */}
@@ -168,8 +142,8 @@ export function TrainerMatchesModule({ categories }: TrainerMatchesModuleProps) 
         match={selectedMatch}
         isOpen={!!selectedMatch}
         onClose={() => setSelectedMatch(null)}
-        onUpdate={() => {}}
-        onUpdatePlayers={() => {}}
+        onUpdate={handleUpdateMatch}
+        onUpdatePlayers={handleUpdatePlayers}
         canEdit={false}
       />
     </div>
