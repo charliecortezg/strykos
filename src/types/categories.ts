@@ -69,6 +69,7 @@ export interface Player {
   sport_id: string | null;
   plan_id: string | null;
   full_name: string;
+  email: string | null;
   phone: string | null;
   tutor_name: string | null;
   position: string | null;
@@ -130,6 +131,7 @@ export interface CreateCategoryData {
 
 export interface CreatePlayerData {
   full_name: string;
+  email?: string;
   category_id?: string;
   sport_id?: string;
   plan_id?: string;

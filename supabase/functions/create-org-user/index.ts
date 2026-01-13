@@ -10,6 +10,7 @@ interface CreateUserRequest {
   email: string;
   password: string;
   role: 'director_deportivo' | 'entrenador' | 'administrativo';
+  sendInviteEmail?: boolean;
 }
 
 Deno.serve(async (req) => {
@@ -81,7 +82,7 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body: CreateUserRequest = await req.json();
-    const { fullName, email, password, role } = body;
+    const { fullName, email, password, role, sendInviteEmail = true } = body;
 
     // Validate required fields
     if (!fullName || !email || !password || !role) {
@@ -175,6 +176,48 @@ Deno.serve(async (req) => {
 
     console.log('User created successfully:', newUser.user.id);
 
+    // Get organization details for invite email
+    let inviteEmailSent = false;
+    if (sendInviteEmail && role === 'entrenador') {
+      try {
+        const { data: org } = await supabaseAdmin
+          .from('organizations')
+          .select('name, org_code, org_access_key')
+          .eq('id', callingProfile.organization_id)
+          .single();
+
+        if (org) {
+          // Call the send-coach-invite function
+          const inviteResponse = await fetch(`${supabaseUrl}/functions/v1/send-coach-invite`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': authHeader,
+            },
+            body: JSON.stringify({
+              userId: newUser.user.id,
+              email: email.toLowerCase(),
+              fullName,
+              organizationName: org.name,
+              tempPassword: password,
+              orgCode: org.org_code,
+              orgAccessKey: org.org_access_key,
+            }),
+          });
+
+          if (inviteResponse.ok) {
+            inviteEmailSent = true;
+            console.log('Invite email sent to coach');
+          } else {
+            console.error('Failed to send invite email:', await inviteResponse.text());
+          }
+        }
+      } catch (emailError) {
+        console.error('Error sending invite email:', emailError);
+        // Don't fail the user creation if email fails
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -183,7 +226,8 @@ Deno.serve(async (req) => {
           email: newUser.user.email,
           fullName,
           role 
-        } 
+        },
+        inviteEmailSent
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

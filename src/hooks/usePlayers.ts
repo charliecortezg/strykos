@@ -87,6 +87,7 @@ export function usePlayers(filters?: PlayersFilters) {
         .insert({
           organization_id: organization.id,
           full_name: data.full_name,
+          email: data.email || null,
           category_id: data.category_id || null,
           sport_id: data.sport_id || null,
           plan_id: data.plan_id || null,
@@ -122,6 +123,7 @@ export function usePlayers(filters?: PlayersFilters) {
       const updateData: Record<string, unknown> = {};
       
       if (data.full_name !== undefined) updateData.full_name = data.full_name;
+      if (data.email !== undefined) updateData.email = data.email || null;
       if (data.category_id !== undefined) updateData.category_id = data.category_id || null;
       if (data.sport_id !== undefined) updateData.sport_id = data.sport_id || null;
       if (data.plan_id !== undefined) updateData.plan_id = data.plan_id || null;

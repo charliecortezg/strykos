@@ -34,6 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   full_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100),
+  email: z.string().email('Correo electrónico inválido').optional().or(z.literal('')),
   category_id: z.string().optional(),
   sport_id: z.string().optional(),
   phone: z.string().optional(),
@@ -64,6 +65,7 @@ export function CreatePlayerModal({ open, onOpenChange, onPlayerCreated }: Creat
     resolver: zodResolver(formSchema),
     defaultValues: {
       full_name: '',
+      email: '',
       category_id: '',
       sport_id: '',
       phone: '',
@@ -102,6 +104,7 @@ export function CreatePlayerModal({ open, onOpenChange, onPlayerCreated }: Creat
 
     const success = await createPlayer({
       full_name: values.full_name,
+      email: values.email || undefined,
       category_id: values.category_id || undefined,
       sport_id: values.sport_id || undefined,
       phone: values.phone || undefined,
@@ -151,6 +154,24 @@ export function CreatePlayerModal({ open, onOpenChange, onPlayerCreated }: Creat
                   <FormLabel>Nombre completo *</FormLabel>
                   <FormControl>
                     <Input placeholder="Ej: Juan Pérez García" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Correo electrónico (opcional)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="email" 
+                      placeholder="correo@ejemplo.com" 
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
