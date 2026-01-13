@@ -36,6 +36,7 @@ import { SmartSportSelector } from '@/components/ui/smart-sport-selector';
 
 const formSchema = z.object({
   full_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100),
+  email: z.string().email('Correo electrónico inválido').optional().or(z.literal('')),
   category_id: z.string().optional(),
   sport_id: z.string().optional(),
   plan_id: z.string().optional(),
@@ -68,6 +69,7 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
     resolver: zodResolver(formSchema),
     defaultValues: {
       full_name: '',
+      email: '',
       category_id: '',
       sport_id: '',
       plan_id: '',
@@ -84,6 +86,7 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
     if (player) {
       form.reset({
         full_name: player.full_name,
+        email: player.email || '',
         category_id: player.category_id || '',
         sport_id: player.sport_id || '',
         plan_id: player.plan_id || '',
@@ -118,6 +121,7 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
 
     const success = await updatePlayer(player.id, {
       full_name: values.full_name,
+      email: values.email || undefined,
       category_id: values.category_id || undefined,
       sport_id: values.sport_id || undefined,
       plan_id: values.plan_id || undefined,
@@ -178,6 +182,24 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
                   <FormLabel>Nombre completo *</FormLabel>
                   <FormControl>
                     <Input placeholder="Ej: Juan Pérez García" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Correo electrónico (opcional)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="email" 
+                      placeholder="correo@ejemplo.com" 
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

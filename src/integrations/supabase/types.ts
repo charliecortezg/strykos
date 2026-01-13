@@ -504,6 +504,10 @@ export type Database = {
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_month: string
           player_id: string
+          receipt_email: string | null
+          receipt_error: string | null
+          receipt_sent_at: string | null
+          receipt_status: string | null
           recorded_by: string | null
           updated_at: string
         }
@@ -518,6 +522,10 @@ export type Database = {
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_month: string
           player_id: string
+          receipt_email?: string | null
+          receipt_error?: string | null
+          receipt_sent_at?: string | null
+          receipt_status?: string | null
           recorded_by?: string | null
           updated_at?: string
         }
@@ -532,6 +540,10 @@ export type Database = {
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_month?: string
           player_id?: string
+          receipt_email?: string | null
+          receipt_error?: string | null
+          receipt_sent_at?: string | null
+          receipt_status?: string | null
           recorded_by?: string | null
           updated_at?: string
         }
@@ -709,6 +721,7 @@ export type Database = {
         Row: {
           category_id: string | null
           created_at: string
+          email: string | null
           full_name: string
           id: string
           is_active: boolean
@@ -728,6 +741,7 @@ export type Database = {
         Insert: {
           category_id?: string | null
           created_at?: string
+          email?: string | null
           full_name: string
           id?: string
           is_active?: boolean
@@ -747,6 +761,7 @@ export type Database = {
         Update: {
           category_id?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string
           id?: string
           is_active?: boolean
@@ -1004,7 +1019,38 @@ export type Database = {
       }
       is_category_trainer: { Args: { _category_id: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
+      normalize_text: { Args: { input_text: string }; Returns: string }
       reset_monthly_payment_status: { Args: never; Returns: number }
+      search_players: {
+        Args: {
+          p_category_id?: string
+          p_is_active?: boolean
+          p_organization_id: string
+          p_payment_status?: string
+          p_search_term?: string
+        }
+        Returns: {
+          player_category_id: string
+          player_created_at: string
+          player_email: string
+          player_full_name: string
+          player_id: string
+          player_is_active: boolean
+          player_is_scholarship: boolean
+          player_is_trial: boolean
+          player_monthly_fee: number
+          player_organization_id: string
+          player_payment_status: Database["public"]["Enums"]["payment_status"]
+          player_phone: string
+          player_plan: string
+          player_plan_id: string
+          player_position: string
+          player_sport_id: string
+          player_tutor_name: string
+          player_updated_at: string
+        }[]
+      }
+      unaccent: { Args: { "": string }; Returns: string }
       user_belongs_to_org: { Args: { _org_id: string }; Returns: boolean }
       validate_org_access: {
         Args: {
