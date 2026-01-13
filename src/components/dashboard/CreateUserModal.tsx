@@ -78,10 +78,29 @@ export function CreateUserModal({ open, onOpenChange, role, onUserCreated }: Cre
         return;
       }
 
-      toast({
-        title: `${ORG_ROLE_LABELS[role]} creado`,
-        description: 'Usuario creado. Cambio de contraseña requerido en el primer inicio.',
-      });
+      // Show appropriate message based on invite email status
+      if (data.inviteEmailSent) {
+        toast({
+          title: `${ORG_ROLE_LABELS[role]} creado`,
+          description: 'Usuario creado y correo de invitación enviado.',
+        });
+      } else if (data.inviteEmailError) {
+        toast({
+          title: `${ORG_ROLE_LABELS[role]} creado`,
+          description: `Usuario creado, pero no se pudo enviar el correo: ${data.inviteEmailError}`,
+          variant: 'default',
+        });
+      } else if (data.isExisting) {
+        toast({
+          title: 'Usuario existente',
+          description: 'El usuario ya tenía acceso con este rol.',
+        });
+      } else {
+        toast({
+          title: `${ORG_ROLE_LABELS[role]} creado`,
+          description: 'Usuario creado. Comparte las credenciales manualmente.',
+        });
+      }
 
       // Reset form and close
       setFullName('');
