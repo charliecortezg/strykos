@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { CreditCard, Users, DollarSign } from 'lucide-react';
+import { CreditCard, Users, DollarSign, Settings } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FinanceModule } from '@/components/payments/FinanceModule';
 import { PlayersTable } from '@/components/players/PlayersTable';
 import { PlansModule } from '@/components/plans/PlansModule';
+import { BillingConfigurationPanel } from '@/components/billing/BillingConfigurationPanel';
 
 export default function AdministrativoDashboard() {
   const { user, organization } = useAuth();
@@ -26,7 +27,7 @@ export default function AdministrativoDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6 w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
+          <TabsList className="mb-6 w-full sm:w-auto grid grid-cols-4 sm:inline-flex">
             <TabsTrigger value="finanzas" className="gap-2">
               <CreditCard className="w-4 h-4" />
               <span className="hidden sm:inline">Finanzas</span>
@@ -40,6 +41,10 @@ export default function AdministrativoDashboard() {
               <DollarSign className="w-4 h-4" />
               <span className="hidden sm:inline">Planes</span>
             </TabsTrigger>
+            <TabsTrigger value="configuracion" className="gap-2">
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Cobranza</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="finanzas">
@@ -52,6 +57,10 @@ export default function AdministrativoDashboard() {
 
           <TabsContent value="planes">
             <PlansModule />
+          </TabsContent>
+
+          <TabsContent value="configuracion">
+            <BillingConfigurationPanel />
           </TabsContent>
         </Tabs>
       </main>
