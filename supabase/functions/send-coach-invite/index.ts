@@ -95,8 +95,9 @@ Deno.serve(async (req) => {
     const loginUrl = `${appUrl}/login`;
 
     // Send welcome email
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'notificaciones@roarid.com';
     const emailResponse = await resend.emails.send({
-      from: 'STRYK <onboarding@resend.dev>',
+      from: `STRYK <${fromEmail}>`,
       to: [email],
       subject: `¡Bienvenido a ${organizationName} en STRYK!`,
       html: `
