@@ -33,7 +33,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { formatMonthYearShort } from '@/lib/time-utils';
 
-type ReceiptStatus = 'queued' | 'pending' | 'sent' | 'sent_both' | 'sent_player' | 'sent_admin' | 'failed' | 'no_email' | null;
+type ReceiptStatus = 'queued' | 'pending' | 'sent' | 'sent_admin_only' | 'sent_both' | 'sent_player' | 'sent_admin' | 'failed' | 'no_email' | null;
 
 function getReceiptStatusInfo(status: ReceiptStatus, receiptError?: string | null): {
   icon: React.ReactNode;
@@ -52,10 +52,11 @@ function getReceiptStatusInfo(status: ReceiptStatus, receiptError?: string | nul
         variant: 'default',
         canResend: false,
       };
+    case 'sent_admin_only':
     case 'sent_admin':
       return {
         icon: <Mail className="w-4 h-4 text-amber-500" />,
-        label: 'Enviado solo a responsable (jugador sin correo)',
+        label: 'Enviado a Admin (jugador sin email)',
         variant: 'secondary',
         canResend: false,
       };
@@ -70,7 +71,7 @@ function getReceiptStatusInfo(status: ReceiptStatus, receiptError?: string | nul
     case 'no_email':
       return {
         icon: <Mail className="w-4 h-4 text-muted-foreground" />,
-        label: 'Sin correo configurado',
+        label: 'Sin emails válidos',
         variant: 'outline',
         canResend: false,
       };
@@ -148,13 +149,17 @@ export function PaymentsTable() {
 
       const result = await response.json();
       
-      if (result.ok && (result.status === 'sent' || result.status === 'already_sent')) {
-        toast.success(result.status === 'already_sent' 
-          ? 'El recibo ya había sido enviado anteriormente' 
-          : 'Recibo enviado correctamente');
+      if (result.ok) {
+        if (result.status === 'already_sent') {
+          toast.success('El recibo ya había sido enviado anteriormente');
+        } else if (result.status === 'sent_admin_only') {
+          toast.success('Recibo enviado a administración (jugador sin email)');
+        } else {
+          toast.success('Recibo enviado correctamente');
+        }
         await refetch();
       } else if (result.status === 'no_email') {
-        toast.warning('El jugador no tiene email registrado');
+        toast.warning('No hay emails válidos para envío');
         await refetch();
       } else {
         toast.error(result.message || 'No se pudo enviar el recibo');
