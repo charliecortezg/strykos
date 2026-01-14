@@ -524,6 +524,7 @@ export type Database = {
           player_id: string
           receipt_email: string | null
           receipt_error: string | null
+          receipt_message_id: string | null
           receipt_sent_at: string | null
           receipt_sent_to: Json | null
           receipt_status: string | null
@@ -543,6 +544,7 @@ export type Database = {
           player_id: string
           receipt_email?: string | null
           receipt_error?: string | null
+          receipt_message_id?: string | null
           receipt_sent_at?: string | null
           receipt_sent_to?: Json | null
           receipt_status?: string | null
@@ -562,6 +564,7 @@ export type Database = {
           player_id?: string
           receipt_email?: string | null
           receipt_error?: string | null
+          receipt_message_id?: string | null
           receipt_sent_at?: string | null
           receipt_sent_to?: Json | null
           receipt_status?: string | null
