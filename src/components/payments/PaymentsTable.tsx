@@ -33,26 +33,22 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { formatMonthYearShort } from '@/lib/time-utils';
 
-type ReceiptStatus = 'queued' | 'pending' | 'sent_both' | 'sent_player' | 'sent_admin' | 'failed' | 'no_email' | null;
+type ReceiptStatus = 'queued' | 'pending' | 'sent' | 'sent_both' | 'sent_player' | 'sent_admin' | 'failed' | 'no_email' | null;
 
-function getReceiptStatusInfo(status: ReceiptStatus): {
+function getReceiptStatusInfo(status: ReceiptStatus, receiptError?: string | null): {
   icon: React.ReactNode;
   label: string;
   variant: 'default' | 'secondary' | 'destructive' | 'outline';
   canResend: boolean;
+  errorDetail?: string;
 } {
   switch (status) {
+    case 'sent':
     case 'sent_both':
-      return {
-        icon: <Check className="w-4 h-4 text-emerald-500" />,
-        label: 'Enviado a jugador y responsable',
-        variant: 'default',
-        canResend: false,
-      };
     case 'sent_player':
       return {
         icon: <Check className="w-4 h-4 text-emerald-500" />,
-        label: 'Enviado a jugador',
+        label: 'Recibo enviado',
         variant: 'default',
         canResend: false,
       };
@@ -66,9 +62,10 @@ function getReceiptStatusInfo(status: ReceiptStatus): {
     case 'failed':
       return {
         icon: <AlertCircle className="w-4 h-4 text-destructive" />,
-        label: 'Falló el envío. Puedes reintentar.',
+        label: 'Error al enviar',
         variant: 'destructive',
         canResend: true,
+        errorDetail: receiptError || 'Error desconocido',
       };
     case 'no_email':
       return {
@@ -81,7 +78,7 @@ function getReceiptStatusInfo(status: ReceiptStatus): {
     case 'pending':
       return {
         icon: <Clock className="w-4 h-4 text-muted-foreground" />,
-        label: 'En cola de envío',
+        label: 'Pendiente de envío',
         variant: 'outline',
         canResend: true,
       };
@@ -128,7 +125,7 @@ export function PaymentsTable() {
     if (resendingId) return;
     
     setResendingId(paymentId);
-    toast.info('Reenviando recibo...');
+    toast.info('Enviando recibo...');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -151,15 +148,21 @@ export function PaymentsTable() {
 
       const result = await response.json();
       
-      if (result.sent) {
-        toast.success('Recibo reenviado correctamente');
+      if (result.ok && (result.status === 'sent' || result.status === 'already_sent')) {
+        toast.success(result.status === 'already_sent' 
+          ? 'El recibo ya había sido enviado anteriormente' 
+          : 'Recibo enviado correctamente');
+        await refetch();
+      } else if (result.status === 'no_email') {
+        toast.warning('El jugador no tiene email registrado');
         await refetch();
       } else {
-        toast.error(result.error || 'No se pudo reenviar el recibo');
+        toast.error(result.message || 'No se pudo enviar el recibo');
+        await refetch();
       }
     } catch (error) {
-      console.error('Error resending receipt:', error);
-      toast.error('Error al reenviar el recibo');
+      console.error('Error sending receipt:', error);
+      toast.error('Error de conexión al enviar el recibo');
     } finally {
       setResendingId(null);
     }
@@ -228,9 +231,10 @@ export function PaymentsTable() {
                 </TableCell>
               </TableRow>
             ) : (
-              payments.map((payment) => {
+            payments.map((payment) => {
                 const receiptStatus = (payment as any).receipt_status as ReceiptStatus;
-                const statusInfo = getReceiptStatusInfo(receiptStatus);
+                const receiptError = (payment as any).receipt_error as string | null;
+                const statusInfo = getReceiptStatusInfo(receiptStatus, receiptError);
                 const isResending = resendingId === payment.id;
 
                 return (
@@ -282,8 +286,13 @@ export function PaymentsTable() {
                                 )}
                               </div>
                             </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{statusInfo.label}</p>
+                            <TooltipContent className="max-w-xs">
+                              <p className="font-medium">{statusInfo.label}</p>
+                              {statusInfo.errorDetail && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {statusInfo.errorDetail}
+                                </p>
+                              )}
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
