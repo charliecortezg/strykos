@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, ClipboardList, Briefcase } from 'lucide-react';
+import { Users, ClipboardList, Briefcase, Settings, ChevronDown, ChevronUp } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { RoleCard } from '@/components/dashboard/RoleCard';
 import { CreateUserModal } from '@/components/dashboard/CreateUserModal';
@@ -10,9 +10,11 @@ import { UserActionsMenu } from '@/components/dashboard/UserActionsMenu';
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
 import { FounderKPISection } from '@/components/dashboard/FounderKPISection';
 import { PlanLimitBanner } from '@/components/dashboard/PlanLimitBanner';
+import { BillingConfigurationPanel } from '@/components/billing/BillingConfigurationPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ORG_ROLE_LABELS, type OrgRole } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -318,6 +320,14 @@ export default function OrgOwnerDashboard() {
               </table>
             </div>
           )}
+        </div>
+
+        {/* Billing Configuration Section */}
+        <div className="mt-8">
+          <h2 className="text-xl font-display font-semibold text-foreground mb-4">
+            Configuración de Cobranza
+          </h2>
+          <BillingConfigurationPanel />
         </div>
       </main>
 

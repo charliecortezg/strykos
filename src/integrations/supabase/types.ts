@@ -441,6 +441,12 @@ export type Database = {
       organizations: {
         Row: {
           approximate_students: number
+          billing_admin_user_id: string | null
+          billing_auto_overdue: boolean
+          billing_due_day: number | null
+          billing_grace_days: number
+          billing_period_type: string
+          billing_receipts_email: string | null
           city: string
           country: string
           created_at: string | null
@@ -458,6 +464,12 @@ export type Database = {
         }
         Insert: {
           approximate_students: number
+          billing_admin_user_id?: string | null
+          billing_auto_overdue?: boolean
+          billing_due_day?: number | null
+          billing_grace_days?: number
+          billing_period_type?: string
+          billing_receipts_email?: string | null
           city: string
           country: string
           created_at?: string | null
@@ -475,6 +487,12 @@ export type Database = {
         }
         Update: {
           approximate_students?: number
+          billing_admin_user_id?: string | null
+          billing_auto_overdue?: boolean
+          billing_due_day?: number | null
+          billing_grace_days?: number
+          billing_period_type?: string
+          billing_receipts_email?: string | null
           city?: string
           country?: string
           created_at?: string | null
@@ -507,6 +525,7 @@ export type Database = {
           receipt_email: string | null
           receipt_error: string | null
           receipt_sent_at: string | null
+          receipt_sent_to: Json | null
           receipt_status: string | null
           recorded_by: string | null
           updated_at: string
@@ -525,6 +544,7 @@ export type Database = {
           receipt_email?: string | null
           receipt_error?: string | null
           receipt_sent_at?: string | null
+          receipt_sent_to?: Json | null
           receipt_status?: string | null
           recorded_by?: string | null
           updated_at?: string
@@ -543,6 +563,7 @@ export type Database = {
           receipt_email?: string | null
           receipt_error?: string | null
           receipt_sent_at?: string | null
+          receipt_sent_to?: Json | null
           receipt_status?: string | null
           recorded_by?: string | null
           updated_at?: string
