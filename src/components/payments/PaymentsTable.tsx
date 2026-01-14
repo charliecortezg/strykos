@@ -31,6 +31,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { formatMonthYearShort } from '@/lib/time-utils';
 
 type ReceiptStatus = 'queued' | 'pending' | 'sent_both' | 'sent_player' | 'sent_admin' | 'failed' | 'no_email' | null;
 
@@ -253,7 +254,7 @@ export function PaymentsTable() {
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {format(new Date(payment.payment_month), 'MMM yyyy', { locale: es })}
+                      {formatMonthYearShort(payment.payment_month)}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {payment.concept}
