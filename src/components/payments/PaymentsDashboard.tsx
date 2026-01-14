@@ -149,15 +149,17 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
     return result;
   }, [payments, selectedSportId, selectedCategoryId, selectedPlayerId, categories, players, searchQuery]);
 
-  // Generate last 12 months for filter
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - i);
-    return {
-      value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
-      label: format(date, 'MMMM yyyy', { locale: es }),
-    };
-  });
+  // Generate last 12 months for filter (using local dates to avoid timezone issues)
+  const months = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 12 }, (_, i) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      return {
+        value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+        label: format(date, 'MMMM yyyy', { locale: es }),
+      };
+    });
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-MX', {

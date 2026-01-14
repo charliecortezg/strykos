@@ -14,9 +14,9 @@ import {
 import { ArrowLeft, FileDown, CreditCard, TrendingUp, Receipt, Plus } from 'lucide-react';
 import { PAYMENT_STATUS_LABELS, PAYMENT_METHOD_LABELS, type Player, type Payment } from '@/types/categories';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { CreatePaymentModal } from './CreatePaymentModal';
 import { toast } from 'sonner';
+import { formatMonthYearShort, formatMonthYear } from '@/lib/time-utils';
 
 interface AccountData {
   player: Player;
@@ -103,7 +103,7 @@ export function PlayerAccountStatement({ player, onBack, backLabel = 'Volver a P
               ${accountData.payments.map(p => `
                 <tr>
                   <td>${format(new Date(p.created_at), 'dd/MM/yyyy')}</td>
-                  <td>${format(new Date(p.payment_month), 'MMMM yyyy', { locale: es })}</td>
+                  <td>${formatMonthYear(p.payment_month)}</td>
                   <td>${p.concept}</td>
                   <td>${PAYMENT_METHOD_LABELS[p.payment_method]}</td>
                   <td>${formatCurrency(p.amount)}</td>
@@ -265,7 +265,7 @@ export function PlayerAccountStatement({ player, onBack, backLabel = 'Volver a P
                       {format(new Date(payment.created_at), 'dd/MM/yyyy')}
                     </TableCell>
                     <TableCell>
-                      {format(new Date(payment.payment_month), 'MMM yyyy', { locale: es })}
+                      {formatMonthYearShort(payment.payment_month)}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {payment.concept}

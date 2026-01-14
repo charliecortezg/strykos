@@ -1,3 +1,45 @@
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+/**
+ * Parse a date-only string "YYYY-MM-DD" as a LOCAL date
+ * avoiding timezone conversion issues (fixes the "previous day" bug)
+ */
+export function parseDateOnly(dateString: string | null | undefined): Date {
+  if (!dateString) return new Date();
+  
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day || 1);
+}
+
+/**
+ * Format a "YYYY-MM-DD" string to month/year without timezone bug
+ */
+export function formatMonthYear(dateString: string | null | undefined): string {
+  if (!dateString) return '—';
+  const date = parseDateOnly(dateString);
+  return format(date, 'MMMM yyyy', { locale: es });
+}
+
+/**
+ * Format a "YYYY-MM-DD" string to short month/year (e.g., "Ene 2026")
+ */
+export function formatMonthYearShort(dateString: string | null | undefined): string {
+  if (!dateString) return '—';
+  const date = parseDateOnly(dateString);
+  return format(date, 'MMM yyyy', { locale: es });
+}
+
+/**
+ * Get the current month as YYYY-MM-01 format for payment_month default
+ */
+export function getCurrentMonthValue(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}-01`;
+}
+
 /**
  * Convert 24h time string to 12h format with AM/PM
  * @param time24 - Time in HH:MM or HH:MM:SS format

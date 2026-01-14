@@ -31,6 +31,9 @@ import { usePlayers } from '@/hooks/usePlayers';
 import { toast } from 'sonner';
 import { Upload, X, Search } from 'lucide-react';
 import type { PaymentMethod } from '@/types/categories';
+import { getCurrentMonthValue, parseDateOnly } from '@/lib/time-utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const formSchema = z.object({
   player_id: z.string().min(1, 'Selecciona un jugador'),
@@ -68,7 +71,7 @@ export function CreatePaymentModal({
       player_id: defaultPlayerId || '',
       amount: 0,
       payment_method: 'efectivo',
-      payment_month: new Date().toISOString().slice(0, 7) + '-01',
+      payment_month: getCurrentMonthValue(),
       concept: 'Mensualidad',
       notes: '',
     },
@@ -85,14 +88,18 @@ export function CreatePaymentModal({
     );
   }, [players, searchQuery]);
 
-  // Generate months for selector
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - i + 1);
-    const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
-    const label = date.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
-    return { value, label };
-  });
+  // Generate months for selector (using local dates to avoid timezone issues)
+  const months = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 12 }, (_, i) => {
+      const year = now.getFullYear();
+      const month = now.getMonth() - i + 1;
+      const date = new Date(year, month, 1);
+      const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
+      const label = format(date, 'MMMM yyyy', { locale: es });
+      return { value, label };
+    });
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
