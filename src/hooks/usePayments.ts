@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Payment, CreatePaymentData, PaymentMethod } from '@/types/categories';
+import type { Payment, CreatePaymentData, PaymentMethod, ReceiptStatus } from '@/types/categories';
 
 interface PaymentsFilters {
   playerId?: string;
@@ -32,7 +32,10 @@ export function usePayments(filters?: PaymentsFilters) {
       let query = supabase
         .from('payments')
         .select(`
-          *,
+          id, organization_id, player_id, amount, payment_method, payment_month, 
+          concept, notes, evidence_url, recorded_by, created_at, updated_at,
+          receipt_folio, receipt_sequence_number, receipt_template_version,
+          receipt_status, receipt_sent_at, receipt_error, receipt_message_id,
           player:players(id, full_name, category:categories(name))
         `)
         .eq('organization_id', organization.id)
@@ -279,6 +282,7 @@ export function usePayments(filters?: PaymentsFilters) {
     error,
     refetch: fetchPayments,
     createPayment,
+    sendPaymentReceipt,
     getPlayerPayments,
     getPlayerAccountStatement,
   };

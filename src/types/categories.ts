@@ -102,6 +102,16 @@ export interface Attendance {
   category?: { id: string; name: string } | null;
 }
 
+export type ReceiptStatus = 'pending' | 'sent' | 'sent_admin_only' | 'failed' | 'no_email';
+
+export const RECEIPT_STATUS_LABELS: Record<ReceiptStatus, string> = {
+  pending: 'Pendiente',
+  sent: 'Enviado',
+  sent_admin_only: 'Solo Admin',
+  failed: 'Error',
+  no_email: 'Sin Email',
+};
+
 export interface Payment {
   id: string;
   organization_id: string;
@@ -115,6 +125,14 @@ export interface Payment {
   recorded_by: string | null;
   created_at: string;
   updated_at: string;
+  // Receipt fields
+  receipt_folio: string | null;
+  receipt_sequence_number: number | null;
+  receipt_template_version: string;
+  receipt_status: ReceiptStatus | null;
+  receipt_sent_at: string | null;
+  receipt_error: string | null;
+  receipt_message_id: string | null;
   // Joined data
   player?: { id: string; full_name: string; category?: { name: string } | null } | null;
 }

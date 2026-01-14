@@ -3,6 +3,7 @@ import { usePayments } from '@/hooks/usePayments';
 import { usePlayers } from '@/hooks/usePlayers';
 import { useCategories } from '@/hooks/useCategories';
 import { useSports } from '@/hooks/useSports';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
   Plus, 
@@ -40,18 +47,27 @@ import {
   ChevronRight,
   Filter,
   Search,
-  X
+  X,
+  Send,
+  RotateCcw,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  MailX,
+  Loader2,
 } from 'lucide-react';
 import { CreatePaymentModal } from './CreatePaymentModal';
-import { PAYMENT_METHOD_LABELS, type Player } from '@/types/categories';
+import { PAYMENT_METHOD_LABELS, RECEIPT_STATUS_LABELS, type Player, type ReceiptStatus } from '@/types/categories';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 interface PaymentsDashboardProps {
   onViewAccountStatement: (player: Player) => void;
 }
 
 export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardProps) {
+  const { roles } = useAuth();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedSportId, setSelectedSportId] = useState<string>('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
@@ -59,8 +75,9 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
-  const { payments, stats, isLoading, refetch } = usePayments({
+  const { payments, stats, isLoading, refetch, sendPaymentReceipt } = usePayments({
     month: selectedMonth || undefined,
     playerId: selectedPlayerId || undefined,
   });
@@ -68,6 +85,46 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
   const { players } = usePlayers({ isActive: true });
   const { categories } = useCategories();
   const { sports } = useSports();
+
+  // Check if user can manage receipts
+  const canManageReceipts = roles.some(r => 
+    ['org_owner', 'director_deportivo', 'administrativo'].includes(r)
+  );
+
+  // Handle resend receipt
+  const handleResendReceipt = async (paymentId: string) => {
+    setResendingId(paymentId);
+    try {
+      const result = await sendPaymentReceipt(paymentId);
+      if (result.ok) {
+        toast.success(result.message || 'Recibo enviado');
+        refetch();
+      } else {
+        toast.error(result.message || 'Error al enviar recibo');
+      }
+    } catch (error) {
+      toast.error('Error inesperado al enviar recibo');
+    } finally {
+      setResendingId(null);
+    }
+  };
+
+  // Get receipt status badge info
+  const getReceiptStatusInfo = (status: ReceiptStatus | null) => {
+    switch (status) {
+      case 'sent':
+        return { icon: CheckCircle2, label: 'Enviado', variant: 'default' as const, color: 'text-success' };
+      case 'sent_admin_only':
+        return { icon: Send, label: 'Solo Admin', variant: 'secondary' as const, color: 'text-warning' };
+      case 'failed':
+        return { icon: XCircle, label: 'Error', variant: 'destructive' as const, color: 'text-destructive' };
+      case 'no_email':
+        return { icon: MailX, label: 'Sin Email', variant: 'outline' as const, color: 'text-muted-foreground' };
+      case 'pending':
+      default:
+        return { icon: Clock, label: 'Pendiente', variant: 'outline' as const, color: 'text-muted-foreground' };
+    }
+  };
 
   // Filter categories by selected sport
   const filteredCategories = useMemo(() => {
@@ -450,19 +507,19 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Folio</TableHead>
                 <TableHead>Jugador</TableHead>
                 <TableHead>Monto</TableHead>
-                <TableHead>Método</TableHead>
-                <TableHead>Mes</TableHead>
-                <TableHead>Concepto</TableHead>
+                <TableHead className="hidden md:table-cell">Mes</TableHead>
                 <TableHead className="hidden lg:table-cell">Fecha</TableHead>
-                <TableHead className="w-[100px]">Acciones</TableHead>
+                {canManageReceipts && <TableHead>Recibo</TableHead>}
+                <TableHead className="w-[80px]">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={canManageReceipts ? 7 : 6} className="text-center py-8">
                     <div className="flex items-center justify-center gap-2 text-muted-foreground">
                       <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                       Cargando...
@@ -471,7 +528,7 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
                 </TableRow>
               ) : filteredPayments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={canManageReceipts ? 7 : 6} className="text-center py-8">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Receipt className="w-8 h-8" />
                       <p>No hay pagos registrados</p>
@@ -481,9 +538,17 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
               ) : (
                 filteredPayments.map((payment) => {
                   const player = players.find(p => p.id === payment.player_id);
+                  const statusInfo = getReceiptStatusInfo(payment.receipt_status);
+                  const StatusIcon = statusInfo.icon;
+                  const canResend = payment.receipt_status === 'failed' || payment.receipt_status === 'pending' || !payment.receipt_status;
                   
                   return (
                     <TableRow key={payment.id}>
+                      <TableCell>
+                        <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
+                          {payment.receipt_folio || '—'}
+                        </code>
+                      </TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{payment.player?.full_name}</p>
@@ -497,44 +562,57 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
                           {formatCurrency(payment.amount)}
                         </span>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {PAYMENT_METHOD_LABELS[payment.payment_method]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {format(new Date(payment.payment_month), 'MMM yyyy', { locale: es })}
                       </TableCell>
-                      <TableCell>
-                        {payment.concept}
-                      </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">
-                        {format(new Date(payment.created_at), 'dd/MM/yyyy HH:mm')}
+                        {format(new Date(payment.created_at), 'dd/MM/yyyy')}
                       </TableCell>
+                      {canManageReceipts && (
+                        <TableCell>
+                          <TooltipProvider>
+                            <div className="flex items-center gap-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant={statusInfo.variant} className="gap-1">
+                                    <StatusIcon className={`w-3 h-3 ${statusInfo.color}`} />
+                                    <span className="hidden sm:inline">{statusInfo.label}</span>
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {payment.receipt_error || statusInfo.label}
+                                </TooltipContent>
+                              </Tooltip>
+                              {canResend && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => handleResendReceipt(payment.id)}
+                                  disabled={resendingId === payment.id}
+                                >
+                                  {resendingId === payment.id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <RotateCcw className="w-3 h-3" />
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          </TooltipProvider>
+                        </TableCell>
+                      )}
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          {payment.evidence_url && (
-                            <a
-                              href={payment.evidence_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:text-primary/80 p-1"
-                            >
-                              <ExternalLink className="w-4 h-4" />
-                            </a>
-                          )}
-                          {player && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onViewAccountStatement(player)}
-                              className="h-7 px-2 text-xs"
-                            >
-                              Ver cuenta
-                              <ChevronRight className="w-3 h-3 ml-1" />
-                            </Button>
-                          )}
-                        </div>
+                        {player && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onViewAccountStatement(player)}
+                            className="h-7 px-2"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
