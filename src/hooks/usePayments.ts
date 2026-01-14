@@ -110,6 +110,40 @@ export function usePayments(filters?: PaymentsFilters) {
     fetchStats();
   }, [fetchPayments, fetchStats]);
 
+  const sendPaymentReceipt = async (paymentId: string): Promise<{ sent: boolean; reason?: string }> => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        return { sent: false, reason: 'no_session' };
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-payment-receipt`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ paymentId }),
+        }
+      );
+
+      const result = await response.json();
+      
+      if (result.sent) {
+        console.log('Recibo enviado exitosamente:', result.folio);
+        return { sent: true };
+      } else {
+        console.log('Recibo no enviado:', result.reason || result.message);
+        return { sent: false, reason: result.reason || result.message };
+      }
+    } catch (error) {
+      console.error('Error al enviar recibo:', error);
+      return { sent: false, reason: 'network_error' };
+    }
+  };
+
   const createPayment = async (data: CreatePaymentData, evidenceFile?: File): Promise<boolean> => {
     if (!organization || !user) return false;
 
@@ -135,7 +169,7 @@ export function usePayments(filters?: PaymentsFilters) {
         }
       }
 
-      const { error } = await supabase.from('payments').insert({
+      const { data: newPayment, error } = await supabase.from('payments').insert({
         organization_id: organization.id,
         player_id: data.player_id,
         amount: data.amount,
@@ -145,7 +179,7 @@ export function usePayments(filters?: PaymentsFilters) {
         notes: data.notes || null,
         evidence_url: evidenceUrl,
         recorded_by: user.id,
-      });
+      }).select('id').single();
 
       if (error) {
         console.error('Error creating payment:', error);
@@ -157,6 +191,10 @@ export function usePayments(filters?: PaymentsFilters) {
         .from('players')
         .update({ payment_status: 'al_dia' as const })
         .eq('id', data.player_id);
+
+      // Send receipt automatically (best-effort, non-blocking)
+      // Only for Enterprise orgs with players that have email
+      sendPaymentReceipt(newPayment.id);
 
       await fetchPayments();
       await fetchStats();
