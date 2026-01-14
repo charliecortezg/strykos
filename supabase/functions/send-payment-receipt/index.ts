@@ -1,356 +1,124 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Resend } from 'https://esm.sh/resend@2.0.0';
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "npm:resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+// CONSTANTES HARDCODED (FALLBACK A PRUEBA DE ERRORES)
+const DEFAULT_FROM_NAME = 'White Lions Academies via STRYK';
+const DEFAULT_FROM_EMAIL = 'notificacion@roarid.com';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface SendReceiptRequest {
-  paymentId: string;
+function isValidEmail(email: string | null | undefined): boolean {
+  if (!email || typeof email !== 'string') return false;
+  return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim());
 }
 
-Deno.serve(async (req) => {
+function buildFromField(orgName: string | null | undefined): string {
+  const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || DEFAULT_FROM_EMAIL;
+  const fromName = orgName ? `${orgName} via STRYK` : DEFAULT_FROM_NAME;
+  
+  // Validación: asegurar que no sea un token/API key
+  if (fromEmail.startsWith('re_') || !fromEmail.includes('@')) {
+    console.error(`[send-payment-receipt] fromEmail inválido: "${fromEmail}"`);
+    return `${DEFAULT_FROM_NAME} <${DEFAULT_FROM_EMAIL}>`;
+  }
+  
+  return `${fromName} <${fromEmail}>`;
+}
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+}
+
+function formatPaymentMonth(monthString: string): string {
+  const date = new Date(monthString + '-01');
+  return date.toLocaleDateString('es-MX', { year: 'numeric', month: 'long' });
+}
+
+function generateReceiptFolio(paymentId: string): string {
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  return `REC-${dateStr}-${paymentId.substring(0, 8).toUpperCase()}`;
+}
+
+serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const resendKey = Deno.env.get('RESEND_API_KEY');
-    if (!resendKey) {
-      console.error('RESEND_API_KEY not configured');
-      return new Response(
-        JSON.stringify({ error: 'Email service not configured', sent: false }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const resend = new Resend(resendKey);
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
+  const respond = (ok: boolean, status: string, message: string, messageId?: string) => 
+    new Response(JSON.stringify({ ok, status, message, messageId }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
 
-    // Verify authorization
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'No autorizado', sent: false }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user: callingUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+  try {
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    if (authError || !callingUser) {
-      return new Response(
-        JSON.stringify({ error: 'Token inválido', sent: false }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    if (!resendApiKey) return respond(false, 'failed', 'RESEND_API_KEY no configurada');
+    if (!supabaseUrl || !supabaseServiceKey) return respond(false, 'failed', 'Configuración incompleta');
 
-    // Get caller's profile
-    const { data: callingProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('organization_id')
-      .eq('id', callingUser.id)
-      .single();
+    const { paymentId } = await req.json();
+    if (!paymentId) return respond(false, 'failed', 'paymentId es requerido');
 
-    if (!callingProfile) {
-      return new Response(
-        JSON.stringify({ error: 'Perfil no encontrado', sent: false }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const resend = new Resend(resendApiKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Parse request
-    const body: SendReceiptRequest = await req.json();
-    const { paymentId } = body;
-
-    if (!paymentId) {
-      return new Response(
-        JSON.stringify({ error: 'Payment ID requerido', sent: false }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Fetch payment with player and organization data
     const { data: payment, error: paymentError } = await supabaseAdmin
       .from('payments')
-      .select(`
-        *,
-        player:players(id, full_name, email),
-        organization:organizations(id, name, plan)
-      `)
+      .select(`*, players!inner(id, full_name, email), organizations!inner(id, name, city)`)
       .eq('id', paymentId)
       .single();
 
-    if (paymentError || !payment) {
-      console.error('Payment not found:', paymentError);
-      return new Response(
-        JSON.stringify({ error: 'Pago no encontrado', sent: false }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (paymentError || !payment) return respond(false, 'failed', 'Pago no encontrado');
+    if (payment.receipt_status === 'sent') return respond(true, 'already_sent', 'Recibo ya enviado');
+
+    const playerEmail = payment.players?.email;
+    const playerName = payment.players?.full_name || 'Jugador';
+
+    if (!isValidEmail(playerEmail)) {
+      await supabaseAdmin.from('payments').update({ 
+        receipt_status: 'no_email', 
+        receipt_error: 'Sin email válido' 
+      }).eq('id', paymentId);
+      return respond(false, 'no_email', 'Jugador sin email válido');
     }
 
-    // Verify payment belongs to caller's organization
-    if (payment.organization_id !== callingProfile.organization_id) {
-      return new Response(
-        JSON.stringify({ error: 'No autorizado para este pago', sent: false }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const orgName = payment.organizations?.name;
+    const from = buildFromField(orgName);
+    const folio = generateReceiptFolio(paymentId);
+    const paymentMonth = formatPaymentMonth(payment.payment_month);
 
-    // Check if organization is enterprise
-    const orgPlan = (payment.organization as any)?.plan;
-    if (orgPlan !== 'enterprise') {
-      console.log('Organization is not enterprise, skipping receipt email');
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          sent: false, 
-          reason: 'not_enterprise',
-          message: 'Recibos digitales solo disponibles en plan Enterprise'
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const emailHtml = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f5f5f5;padding:20px;"><table width="100%" style="max-width:600px;margin:auto;background:#fff;border-radius:8px;overflow:hidden;"><tr><td style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;text-align:center;"><h1 style="color:#fff;margin:0;">${orgName || 'Academia'}</h1><p style="color:#8b8b9e;margin:8px 0 0;">Recibo de Pago Digital</p></td></tr><tr><td style="padding:30px;text-align:center;"><span style="background:#10b981;color:#fff;padding:8px 20px;border-radius:20px;font-weight:600;">✓ PAGO CONFIRMADO</span><p style="color:#6b7280;margin:15px 0 0;">Folio: <strong>${folio}</strong></p></td></tr><tr><td style="padding:0 30px 30px;"><table width="100%" style="border:1px solid #e5e7eb;border-radius:8px;"><tr><td style="padding:15px;border-bottom:1px solid #e5e7eb;">Jugador</td><td style="padding:15px;text-align:right;font-weight:600;">${playerName}</td></tr><tr><td style="padding:15px;border-bottom:1px solid #e5e7eb;">Período</td><td style="padding:15px;text-align:right;font-weight:600;">${paymentMonth}</td></tr><tr><td style="padding:15px;border-bottom:1px solid #e5e7eb;">Concepto</td><td style="padding:15px;text-align:right;font-weight:600;">${payment.concept || 'Mensualidad'}</td></tr><tr style="background:#1a1a2e;"><td style="padding:20px;color:#fff;">TOTAL</td><td style="padding:20px;text-align:right;color:#10b981;font-size:24px;font-weight:700;">${formatCurrency(payment.amount)}</td></tr></table></td></tr><tr><td style="padding:20px;text-align:center;border-top:1px solid #e5e7eb;color:#9ca3af;font-size:12px;">Recibo generado por STRYK</td></tr></table></body></html>`;
 
-    // Check idempotency - already sent
-    if (payment.receipt_sent_at) {
-      console.log('Receipt already sent for payment:', paymentId);
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          sent: false, 
-          reason: 'already_sent',
-          message: 'Recibo ya fue enviado anteriormente'
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Get player email
-    const playerEmail = (payment.player as any)?.email;
-    const playerName = (payment.player as any)?.full_name || 'Jugador';
-    const orgName = (payment.organization as any)?.name || 'Academia';
-
-    if (!playerEmail) {
-      console.log('Player has no email, skipping receipt');
-      // Update payment to mark as no-op
-      await supabaseAdmin
-        .from('payments')
-        .update({ 
-          receipt_status: 'no_email',
-          receipt_error: 'Jugador sin correo electrónico'
-        })
-        .eq('id', paymentId);
-
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          sent: false, 
-          reason: 'no_email',
-          message: 'El jugador no tiene correo registrado'
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Format payment date
-    const paymentDate = new Date(payment.created_at);
-    const formattedDate = paymentDate.toLocaleDateString('es-MX', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-
-    // Format payment month
-    const paymentMonth = new Date(payment.payment_month);
-    const formattedMonth = paymentMonth.toLocaleDateString('es-MX', {
-      year: 'numeric',
-      month: 'long'
-    });
-
-    // Format amount
-    const formattedAmount = new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN'
-    }).format(payment.amount);
-
-    // Generate receipt folio
-    const folio = `REC-${paymentDate.getFullYear()}${String(paymentDate.getMonth() + 1).padStart(2, '0')}${String(paymentDate.getDate()).padStart(2, '0')}-${paymentId.slice(0, 8).toUpperCase()}`;
-
-    // Send receipt email
     try {
-      const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'notificaciones@roarid.com';
       const emailResponse = await resend.emails.send({
-        from: `${orgName} via STRYK <${fromEmail}>`,
+        from,
         to: [playerEmail],
-        subject: `Recibo de Pago - ${orgName}`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          </head>
-          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
-              <tr>
-                <td align="center">
-                  <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    <!-- Header -->
-                    <tr>
-                      <td style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px 40px; text-align: center;">
-                        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700;">Recibo de Pago</h1>
-                        <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 14px;">${orgName}</p>
-                      </td>
-                    </tr>
-                    
-                    <!-- Content -->
-                    <tr>
-                      <td style="padding: 40px;">
-                        <!-- Folio -->
-                        <div style="text-align: right; margin-bottom: 24px;">
-                          <span style="color: #64748b; font-size: 12px;">Folio:</span>
-                          <code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #1e293b; margin-left: 8px;">${folio}</code>
-                        </div>
-                        
-                        <h2 style="color: #1e293b; margin: 0 0 24px; font-size: 20px;">¡Hola ${playerName}!</h2>
-                        
-                        <p style="color: #475569; line-height: 1.6; margin: 0 0 24px;">
-                          Hemos recibido tu pago correctamente. A continuación los detalles:
-                        </p>
-                        
-                        <!-- Receipt Details -->
-                        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin: 0 0 24px;">
-                          <table width="100%" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                                <span style="color: #64748b; font-size: 14px;">Concepto:</span>
-                              </td>
-                              <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">
-                                <span style="color: #1e293b; font-size: 14px; font-weight: 500;">${payment.concept || 'Mensualidad'}</span>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                                <span style="color: #64748b; font-size: 14px;">Período:</span>
-                              </td>
-                              <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">
-                                <span style="color: #1e293b; font-size: 14px; font-weight: 500;">${formattedMonth}</span>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                                <span style="color: #64748b; font-size: 14px;">Fecha de pago:</span>
-                              </td>
-                              <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">
-                                <span style="color: #1e293b; font-size: 14px; font-weight: 500;">${formattedDate}</span>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="padding: 16px 0 0;">
-                                <span style="color: #1e293b; font-size: 16px; font-weight: 600;">Total:</span>
-                              </td>
-                              <td style="padding: 16px 0 0; text-align: right;">
-                                <span style="color: #059669; font-size: 24px; font-weight: 700;">${formattedAmount}</span>
-                              </td>
-                            </tr>
-                          </table>
-                        </div>
-                        
-                        <!-- Success Badge -->
-                        <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 16px; text-align: center;">
-                          <span style="color: #059669; font-size: 14px; font-weight: 500;">✓ Pago registrado correctamente</span>
-                        </div>
-                      </td>
-                    </tr>
-                    
-                    <!-- Footer -->
-                    <tr>
-                      <td style="background-color: #f8fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
-                        <p style="color: #64748b; font-size: 12px; margin: 0 0 8px;">
-                          Este recibo fue generado automáticamente por STRYK
-                        </p>
-                        <p style="color: #94a3b8; font-size: 11px; margin: 0;">
-                          © ${new Date().getFullYear()} STRYK. Todos los derechos reservados.
-                        </p>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-          </body>
-          </html>
-        `,
+        subject: `Recibo de Pago - ${orgName || 'Academia'} - ${paymentMonth}`,
+        html: emailHtml,
       });
 
-      console.log('Receipt email sent:', emailResponse);
-
-      // Update payment with receipt info
-      await supabaseAdmin
-        .from('payments')
-        .update({
+      if (emailResponse?.data?.id) {
+        await supabaseAdmin.from('payments').update({
           receipt_status: 'sent',
           receipt_sent_at: new Date().toISOString(),
-          receipt_email: playerEmail,
-          receipt_error: null
-        })
-        .eq('id', paymentId);
-
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          sent: true,
-          emailId: emailResponse.data?.id,
-          folio
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-
+          receipt_message_id: emailResponse.data.id,
+          receipt_error: null,
+        }).eq('id', paymentId);
+        return respond(true, 'sent', `Recibo enviado a ${playerEmail}`, emailResponse.data.id);
+      }
+      throw new Error(emailResponse?.error?.message || 'Sin respuesta de Resend');
     } catch (emailError: any) {
-      console.error('Error sending receipt email:', emailError);
-      
-      // Detect domain-related errors
-      const errorMessage = emailError.message || 'Error al enviar correo';
-      const isDomainError = errorMessage.includes('domain') || 
-                            errorMessage.includes('403') ||
-                            errorMessage.includes('not verified');
-      
-      const friendlyError = isDomainError 
-        ? 'Dominio de email no verificado en Resend. Contacte soporte.'
-        : errorMessage;
-
-      // Update payment with error
-      await supabaseAdmin
-        .from('payments')
-        .update({
-          receipt_status: 'failed',
-          receipt_error: friendlyError
-        })
-        .eq('id', paymentId);
-
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          sent: false,
-          error: 'Error al enviar recibo'
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      const errorMsg = emailError.message || 'Error al enviar';
+      await supabaseAdmin.from('payments').update({ receipt_status: 'failed', receipt_error: errorMsg }).eq('id', paymentId);
+      return respond(false, 'failed', errorMsg);
     }
-
-  } catch (error) {
-    console.error('Error in send-payment-receipt:', error);
-    return new Response(
-      JSON.stringify({ error: 'Error interno del servidor', sent: false }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+  } catch (error: any) {
+    return respond(false, 'failed', error.message || 'Error interno');
   }
 });

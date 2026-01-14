@@ -110,11 +110,16 @@ export function usePayments(filters?: PaymentsFilters) {
     fetchStats();
   }, [fetchPayments, fetchStats]);
 
-  const sendPaymentReceipt = async (paymentId: string): Promise<{ sent: boolean; reason?: string }> => {
+  const sendPaymentReceipt = async (paymentId: string): Promise<{ 
+    ok: boolean; 
+    status: 'sent' | 'failed' | 'no_email' | 'already_sent';
+    message?: string;
+    messageId?: string;
+  }> => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        return { sent: false, reason: 'no_session' };
+        return { ok: false, status: 'failed', message: 'Sesión expirada' };
       }
 
       const response = await fetch(
@@ -131,16 +136,16 @@ export function usePayments(filters?: PaymentsFilters) {
 
       const result = await response.json();
       
-      if (result.sent) {
-        console.log('Recibo enviado exitosamente:', result.folio);
-        return { sent: true };
-      } else {
-        console.log('Recibo no enviado:', result.reason || result.message);
-        return { sent: false, reason: result.reason || result.message };
-      }
+      // Return standardized response from Edge Function
+      return {
+        ok: result.ok ?? false,
+        status: result.status ?? 'failed',
+        message: result.message,
+        messageId: result.messageId,
+      };
     } catch (error) {
       console.error('Error al enviar recibo:', error);
-      return { sent: false, reason: 'network_error' };
+      return { ok: false, status: 'failed', message: 'Error de red' };
     }
   };
 
