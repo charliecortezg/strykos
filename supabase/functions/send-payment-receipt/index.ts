@@ -186,8 +186,9 @@ Deno.serve(async (req) => {
 
     // Send receipt email
     try {
+      const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'notificaciones@roarid.com';
       const emailResponse = await resend.emails.send({
-        from: 'STRYK <onboarding@resend.dev>',
+        from: `${orgName} via STRYK <${fromEmail}>`,
         to: [playerEmail],
         subject: `Recibo de Pago - ${orgName}`,
         html: `
@@ -315,13 +316,23 @@ Deno.serve(async (req) => {
 
     } catch (emailError: any) {
       console.error('Error sending receipt email:', emailError);
+      
+      // Detect domain-related errors
+      const errorMessage = emailError.message || 'Error al enviar correo';
+      const isDomainError = errorMessage.includes('domain') || 
+                            errorMessage.includes('403') ||
+                            errorMessage.includes('not verified');
+      
+      const friendlyError = isDomainError 
+        ? 'Dominio de email no verificado en Resend. Contacte soporte.'
+        : errorMessage;
 
       // Update payment with error
       await supabaseAdmin
         .from('payments')
         .update({
           receipt_status: 'failed',
-          receipt_error: emailError.message || 'Error al enviar correo'
+          receipt_error: friendlyError
         })
         .eq('id', paymentId);
 
