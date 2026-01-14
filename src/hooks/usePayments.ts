@@ -112,7 +112,7 @@ export function usePayments(filters?: PaymentsFilters) {
 
   const sendPaymentReceipt = async (paymentId: string): Promise<{ 
     ok: boolean; 
-    status: 'sent' | 'failed' | 'no_email' | 'already_sent';
+    status: 'sent' | 'sent_admin_only' | 'failed' | 'no_email' | 'already_sent';
     message?: string;
     messageId?: string;
   }> => {
