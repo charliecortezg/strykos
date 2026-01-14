@@ -438,6 +438,32 @@ export type Database = {
           },
         ]
       }
+      org_receipt_counters: {
+        Row: {
+          last_number: number
+          org_id: string
+          updated_at: string
+        }
+        Insert: {
+          last_number?: number
+          org_id: string
+          updated_at?: string
+        }
+        Update: {
+          last_number?: number
+          org_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_receipt_counters_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           approximate_students: number
@@ -460,6 +486,7 @@ export type Database = {
           phone: string
           plan: Database["public"]["Enums"]["subscription_plan"] | null
           primary_sport: string
+          receipt_logo_url: string | null
           updated_at: string | null
         }
         Insert: {
@@ -483,6 +510,7 @@ export type Database = {
           phone: string
           plan?: Database["public"]["Enums"]["subscription_plan"] | null
           primary_sport: string
+          receipt_logo_url?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -506,6 +534,7 @@ export type Database = {
           phone?: string
           plan?: Database["public"]["Enums"]["subscription_plan"] | null
           primary_sport?: string
+          receipt_logo_url?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -524,10 +553,13 @@ export type Database = {
           player_id: string
           receipt_email: string | null
           receipt_error: string | null
+          receipt_folio: string | null
           receipt_message_id: string | null
           receipt_sent_at: string | null
           receipt_sent_to: Json | null
+          receipt_sequence_number: number | null
           receipt_status: string | null
+          receipt_template_version: string
           recorded_by: string | null
           updated_at: string
         }
@@ -544,10 +576,13 @@ export type Database = {
           player_id: string
           receipt_email?: string | null
           receipt_error?: string | null
+          receipt_folio?: string | null
           receipt_message_id?: string | null
           receipt_sent_at?: string | null
           receipt_sent_to?: Json | null
+          receipt_sequence_number?: number | null
           receipt_status?: string | null
+          receipt_template_version?: string
           recorded_by?: string | null
           updated_at?: string
         }
@@ -564,10 +599,13 @@ export type Database = {
           player_id?: string
           receipt_email?: string | null
           receipt_error?: string | null
+          receipt_folio?: string | null
           receipt_message_id?: string | null
           receipt_sent_at?: string | null
           receipt_sent_to?: Json | null
+          receipt_sequence_number?: number | null
           receipt_status?: string | null
+          receipt_template_version?: string
           recorded_by?: string | null
           updated_at?: string
         }
@@ -1043,6 +1081,13 @@ export type Database = {
       }
       is_category_trainer: { Args: { _category_id: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
+      next_receipt_folio: {
+        Args: { p_org_id: string }
+        Returns: {
+          folio: string
+          sequence_number: number
+        }[]
+      }
       normalize_text: { Args: { input_text: string }; Returns: string }
       reset_monthly_payment_status: { Args: never; Returns: number }
       search_players: {
