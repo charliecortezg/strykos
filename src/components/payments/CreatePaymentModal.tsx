@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -63,7 +63,14 @@ export function CreatePaymentModal({
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { createPayment } = usePayments();
-  const { players } = usePlayers({ isActive: true });
+  const { players, refetch: refetchPlayers } = usePlayers({ isActive: true });
+
+  // Refetch players when modal opens to ensure fresh data
+  useEffect(() => {
+    if (open) {
+      refetchPlayers();
+    }
+  }, [open, refetchPlayers]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
