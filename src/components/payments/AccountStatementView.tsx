@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { usePlayers } from '@/hooks/usePlayers';
 import { useCategories } from '@/hooks/useCategories';
 import { useSports } from '@/hooks/useSports';
@@ -43,9 +43,16 @@ export function AccountStatementView({
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>('');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const { players } = usePlayers({ isActive: true });
+  const { players, refetch: refetchPlayers } = usePlayers({ isActive: true });
   const { categories } = useCategories();
   const { sports } = useSports();
+
+  // Refetch players when component mounts or when returning from player detail
+  useEffect(() => {
+    if (!selectedPlayer) {
+      refetchPlayers();
+    }
+  }, [selectedPlayer, refetchPlayers]);
 
   // Filter categories by sport
   const filteredCategories = useMemo(() => {
