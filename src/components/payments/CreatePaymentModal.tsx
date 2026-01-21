@@ -34,6 +34,7 @@ import type { PaymentMethod } from '@/types/categories';
 import { getCurrentMonthValue, parseDateOnly } from '@/lib/time-utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { normalizeSearch } from '@/lib/utils';
 
 const formSchema = z.object({
   player_id: z.string().min(1, 'Selecciona un jugador'),
@@ -84,14 +85,14 @@ export function CreatePaymentModal({
     },
   });
 
-  // Filter players based on search
+  // Filter players based on search (accent-tolerant)
   const filteredPlayers = useMemo(() => {
     if (!searchQuery.trim()) return players;
-    const query = searchQuery.toLowerCase();
+    const normalizedQuery = normalizeSearch(searchQuery);
     return players.filter(
       (p) =>
-        p.full_name.toLowerCase().includes(query) ||
-        p.category?.name?.toLowerCase().includes(query)
+        normalizeSearch(p.full_name).includes(normalizedQuery) ||
+        (p.category?.name && normalizeSearch(p.category.name).includes(normalizedQuery))
     );
   }, [players, searchQuery]);
 

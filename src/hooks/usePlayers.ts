@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Player, CreatePlayerData, PaymentStatus } from '@/types/categories';
+import { normalizeSearch } from '@/lib/utils';
 
 interface PlayersFilters {
   categoryId?: string;
@@ -56,12 +57,12 @@ export function usePlayers(filters?: PlayersFilters) {
 
       let result = (data || []) as Player[];
 
-      // Client-side search filter
+      // Client-side search filter (accent-tolerant)
       if (filters?.search) {
-        const searchLower = filters.search.toLowerCase();
+        const normalizedSearch = normalizeSearch(filters.search);
         result = result.filter(p => 
-          p.full_name.toLowerCase().includes(searchLower) ||
-          p.tutor_name?.toLowerCase().includes(searchLower)
+          normalizeSearch(p.full_name).includes(normalizedSearch) ||
+          (p.tutor_name && normalizeSearch(p.tutor_name).includes(normalizedSearch))
         );
       }
 
