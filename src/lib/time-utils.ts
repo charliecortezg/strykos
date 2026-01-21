@@ -2,6 +2,18 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 /**
+ * Get today's date as a LOCAL date string "YYYY-MM-DD"
+ * This is the single source of truth for "today"
+ */
+export function getLocalToday(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Parse a date-only string "YYYY-MM-DD" as a LOCAL date
  * avoiding timezone conversion issues (fixes the "previous day" bug)
  */
@@ -10,6 +22,15 @@ export function parseDateOnly(dateString: string | null | undefined): Date {
   
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day || 1);
+}
+
+/**
+ * Format a "YYYY-MM-DD" string to a human-readable format in local timezone
+ * Uses parseDateOnly to avoid UTC drift
+ */
+export function formatLocalDate(dateString: string, formatStr: string = "EEEE d 'de' MMMM"): string {
+  const date = parseDateOnly(dateString);
+  return format(date, formatStr, { locale: es });
 }
 
 /**

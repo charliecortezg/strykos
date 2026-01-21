@@ -9,7 +9,7 @@ import { TrainerCategory } from '@/hooks/useTrainerCategories';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { getLocalToday } from '@/lib/time-utils';
 
 interface TrialClassModalProps {
   open: boolean;
@@ -66,8 +66,8 @@ export function TrialClassModal({
 
       if (playerError) throw playerError;
 
-      // 2. Automatically mark as present for today's date
-      const attendanceDate = selectedDate || format(new Date(), 'yyyy-MM-dd');
+      // 2. Automatically mark as present for today's date (using getLocalToday for consistency)
+      const attendanceDate = selectedDate || getLocalToday();
       
       const { error: attendanceError } = await supabase
         .from('attendance')

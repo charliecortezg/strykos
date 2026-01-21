@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { User, TrendingUp, Calendar, CreditCard, FileText, CheckCircle, XCircle, AlertCircle, Trophy, Target } from 'lucide-react';
+import { User, Calendar, CreditCard, CheckCircle, XCircle, AlertCircle, Trophy, Target } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -46,24 +46,24 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-        {/* Header */}
-        <div className="bg-primary/5 p-6 border-b border-border">
-          <DialogHeader className="mb-4">
-            <DialogTitle className="font-display text-2xl flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="w-6 h-6 text-primary" />
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] max-h-[85dvh] flex flex-col p-0 gap-0 overflow-hidden">
+        {/* Fixed Header - won't scroll */}
+        <div className="flex-shrink-0 bg-primary/5 p-4 sm:p-6 border-b border-border">
+          <DialogHeader className="mb-3">
+            <DialogTitle className="font-display text-xl sm:text-2xl flex items-center gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
               </div>
-              {player.full_name}
+              <span className="truncate">{player.full_name}</span>
               {player.is_trial && (
-                <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20">
+                <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20 flex-shrink-0">
                   Clase Muestra
                 </Badge>
               )}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <span>{player.category?.name || 'Sin categoría'}</span>
             {player.position && (
               <>
@@ -80,35 +80,37 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
           </div>
         </div>
 
-        {/* KPIs */}
-        <div className="grid grid-cols-4 gap-4 p-6 border-b border-border">
-          <div className="text-center">
-            <p className="text-2xl font-display font-semibold text-primary">{stats.attendanceRate}%</p>
-            <p className="text-xs text-muted-foreground">Asistencia</p>
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain min-h-0">
+          {/* KPIs - inside scrollable area */}
+          <div className="grid grid-cols-4 gap-2 sm:gap-4 p-4 sm:p-6 border-b border-border">
+            <div className="text-center">
+              <p className="text-xl sm:text-2xl font-display font-semibold text-primary">{stats.attendanceRate}%</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Asistencia</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl sm:text-2xl font-display font-semibold text-foreground">{matchStats.attended}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Partidos</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl sm:text-2xl font-display font-semibold text-success">{matchStats.goals}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Goles</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl sm:text-2xl font-display font-semibold text-primary">{matchStats.assists}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Asistencias</p>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-display font-semibold text-foreground">{matchStats.attended}</p>
-            <p className="text-xs text-muted-foreground">Partidos</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-display font-semibold text-success">{matchStats.goals}</p>
-            <p className="text-xs text-muted-foreground">Goles</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-display font-semibold text-primary">{matchStats.assists}</p>
-            <p className="text-xs text-muted-foreground">Asistencias</p>
-          </div>
-        </div>
 
-        {/* Tabs */}
-        <div className="p-6">
-          <Tabs defaultValue="asistencia" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-4">
-              <TabsTrigger value="asistencia">Asistencia</TabsTrigger>
-              <TabsTrigger value="partidos">Partidos</TabsTrigger>
-              <TabsTrigger value="pagos">Pagos</TabsTrigger>
-              <TabsTrigger value="info">Info</TabsTrigger>
-            </TabsList>
+          {/* Tabs - inside scrollable area */}
+          <div className="p-4 sm:p-6">
+            <Tabs defaultValue="asistencia" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 mb-4">
+                <TabsTrigger value="asistencia" className="text-xs sm:text-sm">Asistencia</TabsTrigger>
+                <TabsTrigger value="partidos" className="text-xs sm:text-sm">Partidos</TabsTrigger>
+                <TabsTrigger value="pagos" className="text-xs sm:text-sm">Pagos</TabsTrigger>
+                <TabsTrigger value="info" className="text-xs sm:text-sm">Info</TabsTrigger>
+              </TabsList>
 
             {/* Attendance Tab */}
             <TabsContent value="asistencia" className="space-y-4">
@@ -376,6 +378,7 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
             </TabsContent>
           </Tabs>
         </div>
+        </div> {/* End scrollable content area */}
       </DialogContent>
     </Dialog>
   );
