@@ -58,7 +58,11 @@ export function HeroSection() {
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <Button variant="hero" size="lg" asChild>
-                <a href="#solicitar">
+                <a 
+                  href="https://calendly.com/carloscortez-roarid/set-up-academia-stryk" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
                   Solicitar implementación STRYK
                   <ArrowRight className="w-5 h-5" />
                 </a>

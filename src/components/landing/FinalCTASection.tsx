@@ -31,7 +31,7 @@ export function FinalCTASection() {
 
           <Button variant="hero" size="lg" asChild>
             <a 
-              href="https://wa.me/5218112345678?text=Hola%2C%20me%20interesa%20la%20implementaci%C3%B3n%20de%20STRYK%20para%20mi%20academia" 
+              href="https://calendly.com/carloscortez-roarid/set-up-academia-stryk" 
               target="_blank" 
               rel="noopener noreferrer"
             >
