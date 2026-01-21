@@ -23,6 +23,7 @@ import {
 import { Search, User, Filter, ChevronRight, X } from 'lucide-react';
 import { PlayerAccountStatement } from './PlayerAccountStatement';
 import type { Player } from '@/types/categories';
+import { normalizeSearch } from '@/lib/utils';
 
 interface AccountStatementViewProps {
   selectedPlayer: Player | null;
@@ -82,10 +83,11 @@ export function AccountStatementView({
       result = result.filter(p => p.payment_status === selectedPaymentStatus);
     }
 
-    // Filter by search query
+    // Filter by search query (accent-tolerant)
     if (searchQuery) {
+      const normalizedQuery = normalizeSearch(searchQuery);
       result = result.filter(p =>
-        p.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+        normalizeSearch(p.full_name).includes(normalizedQuery)
       );
     }
 
