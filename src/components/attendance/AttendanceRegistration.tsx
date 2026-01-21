@@ -113,9 +113,10 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
           </Card>
         </div>
 
-        {/* Global Actions - Large touch targets */}
+        {/* Global Actions - Large touch targets with explicit button type */}
         <div className="flex gap-2 mt-3">
           <Button 
+            type="button"
             variant="outline" 
             onClick={markAllPresent}
             className="flex-1 h-12 text-base gap-2"
@@ -124,6 +125,7 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
             Todos presente
           </Button>
           <Button
+            type="button"
             onClick={handleSave}
             disabled={!hasChanges || saveAttendance.isPending}
             className="flex-1 h-12 text-base gap-2"
@@ -171,9 +173,10 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
                 </div>
               </div>
 
-              {/* Large Toggle Buttons - Mobile friendly */}
+              {/* Large Toggle Buttons - Mobile friendly with explicit type */}
               <div className="flex gap-2">
                 <Button
+                  type="button"
                   variant={isPresent ? 'default' : 'outline'}
                   onClick={() => updatePlayerStatus(player.player_id, 'presente')}
                   className={cn(
@@ -187,6 +190,7 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
                   Presente
                 </Button>
                 <Button
+                  type="button"
                   variant={isAbsent ? 'default' : 'outline'}
                   onClick={() => updatePlayerStatus(player.player_id, 'ausente')}
                   className={cn(

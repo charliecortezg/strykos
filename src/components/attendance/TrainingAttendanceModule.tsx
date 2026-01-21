@@ -1,17 +1,16 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { CheckCircle, Calendar, Users, AlertCircle, UserPlus } from 'lucide-react';
+import { CheckCircle, AlertCircle, UserPlus } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AttendanceRegistration } from './AttendanceRegistration';
 import { TrialClassModal } from './TrialClassModal';
 import { TrainerCategory } from '@/hooks/useTrainerCategories';
 import { useQueryClient } from '@tanstack/react-query';
+import { getLocalToday, formatLocalDate, parseDateOnly } from '@/lib/time-utils';
+import { format } from 'date-fns';
 
 interface TrainingAttendanceModuleProps {
   categories: TrainerCategory[];
@@ -19,7 +18,8 @@ interface TrainingAttendanceModuleProps {
 
 export function TrainingAttendanceModule({ categories }: TrainingAttendanceModuleProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(categories[0]?.id || '');
-  const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  // Use getLocalToday() for consistent local date handling
+  const [selectedDate, setSelectedDate] = useState<string>(getLocalToday());
   const [showTrialModal, setShowTrialModal] = useState(false);
   const queryClient = useQueryClient();
 
@@ -40,6 +40,7 @@ export function TrainingAttendanceModule({ categories }: TrainingAttendanceModul
           </h2>
         </div>
         <Button 
+          type="button"
           onClick={() => setShowTrialModal(true)}
           variant="outline"
           className="h-10 gap-2 text-sm"
@@ -74,16 +75,16 @@ export function TrainingAttendanceModule({ categories }: TrainingAttendanceModul
             </Select>
           </div>
 
-          {/* Date - Locked to today */}
+          {/* Date - Locked to today, using parseDateOnly to avoid UTC drift */}
           <div className="w-full sm:w-44 space-y-1.5">
             <Label className="text-xs text-muted-foreground">Fecha</Label>
             <div className="h-12 flex items-center px-3 bg-muted/50 border border-input rounded-md text-base">
-              {format(new Date(selectedDate), "dd/MM/yyyy")}
+              {format(parseDateOnly(selectedDate), "dd/MM/yyyy")}
             </div>
           </div>
         </div>
 
-        {/* Context Info */}
+        {/* Context Info - using formatLocalDate for consistent timezone handling */}
         {selectedCategory && (
           <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center gap-2 text-sm">
             <Badge variant="outline" className="text-xs">
@@ -95,7 +96,7 @@ export function TrainingAttendanceModule({ categories }: TrainingAttendanceModul
               </Badge>
             )}
             <span className="text-muted-foreground text-xs">
-              {format(new Date(selectedDate), "EEEE d 'de' MMMM", { locale: es })}
+              {formatLocalDate(selectedDate)}
             </span>
           </div>
         )}
