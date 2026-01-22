@@ -45,7 +45,7 @@ export function BenefitsSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="flex items-start gap-4 p-4 rounded-lg bg-white/5 border border-stryk-gold/20"
+                className="stryk-glow-card flex items-start gap-4 p-4 rounded-lg bg-stryk-navy border border-stryk-gold/30"
               >
                 <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-stryk-gold/20 flex items-center justify-center">
                   <benefit.icon className="w-5 h-5 text-stryk-gold" />

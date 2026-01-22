@@ -87,7 +87,7 @@ export function HeroSection() {
               <Button 
                 variant="gold" 
                 size="xl" 
-                className="w-full sm:w-auto text-base min-h-[56px]" 
+                className="stryk-glow-button w-full sm:w-auto text-base min-h-[56px]" 
                 asChild
               >
                 <a 

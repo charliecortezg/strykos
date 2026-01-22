@@ -19,7 +19,7 @@ export function PricingSection() {
           transition={{ duration: 0.4 }}
           className="max-w-md mx-auto"
         >
-          <div className="rounded-2xl border border-stryk-gold/30 bg-white/5 backdrop-blur-sm p-6 md:p-8">
+          <div className="stryk-glow-pricing rounded-2xl bg-stryk-navyDeep/90 backdrop-blur-sm p-6 md:p-8">
             <div className="text-center mb-6">
               <span className="inline-block px-3 py-1 rounded-full bg-stryk-gold/20 text-stryk-gold text-xs font-medium mb-4">
                 Precio Early Adopter

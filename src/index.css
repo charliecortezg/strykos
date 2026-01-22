@@ -168,6 +168,121 @@
   .stryk-focus {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
+
+  /* STRYK Glow Card Effect - For Benefits Cards */
+  .stryk-glow-card {
+    position: relative;
+    z-index: 1;
+  }
+
+  .stryk-glow-card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 10px;
+    background: linear-gradient(
+      -45deg, 
+      hsl(43 72% 50%) 0%,
+      hsl(43 72% 30%) 50%,
+      hsl(222 47% 25%) 100%
+    );
+    z-index: -1;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .stryk-glow-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background: linear-gradient(
+      -45deg, 
+      hsl(43 72% 50%) 0%,
+      hsl(43 72% 40%) 100%
+    );
+    border-radius: 10px;
+    transform: translate3d(0, 0, 0) scale(0.95);
+    filter: blur(15px);
+    opacity: 0;
+    transition: all 0.4s ease;
+  }
+
+  .stryk-glow-card:hover::after {
+    filter: blur(25px);
+    opacity: 0.35;
+  }
+
+  .stryk-glow-card:hover::before {
+    opacity: 0.7;
+    transform: scale(1.01);
+  }
+
+  /* STRYK Glow Button Effect - For CTAs */
+  .stryk-glow-button {
+    position: relative;
+    z-index: 1;
+  }
+
+  .stryk-glow-button::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    z-index: -1;
+    background: linear-gradient(
+      90deg, 
+      hsl(43 72% 50% / 0.5) 0%,
+      hsl(43 72% 60% / 0.25) 50%,
+      hsl(43 72% 50% / 0.5) 100%
+    );
+    border-radius: inherit;
+    filter: blur(12px);
+    opacity: 0.5;
+    animation: glow-pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% {
+      opacity: 0.35;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scale(1.03);
+    }
+  }
+
+  /* STRYK Glow Pricing Card */
+  .stryk-glow-pricing {
+    position: relative;
+    z-index: 1;
+  }
+
+  .stryk-glow-pricing::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 18px;
+    background: linear-gradient(
+      135deg, 
+      hsl(43 72% 50%) 0%,
+      hsl(43 72% 35%) 50%,
+      hsl(222 47% 20%) 100%
+    );
+    z-index: -1;
+    opacity: 0.5;
+  }
+
+  .stryk-glow-pricing::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background: hsl(43 72% 50%);
+    border-radius: 18px;
+    filter: blur(25px);
+    opacity: 0.12;
+  }
 }
 
 @layer utilities {
