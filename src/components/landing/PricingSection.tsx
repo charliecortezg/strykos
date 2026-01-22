@@ -1,49 +1,55 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 
-const benefits = [
+const included = [
+  "Implementación incluida",
+  "Soporte directo por WhatsApp",
   "Sin contrato forzoso",
-  "Cancelable en cualquier momento",
-  "El precio subirá conforme STRYK evolucione"
+  "Cancelable en cualquier momento"
 ];
 
 export function PricingSection() {
   return (
-    <section className="py-16 md:py-24 bg-muted/30">
+    <section className="py-12 md:py-20 bg-background">
       <div className="container">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="max-w-xl mx-auto text-center"
+          transition={{ duration: 0.4 }}
+          className="max-w-md mx-auto"
         >
-          <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-            Early Adopters
-          </span>
-
-          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-8">
-            Precio especial para academias en etapa MVP
-          </h2>
-
-          <div className="bg-background rounded-xl border border-border p-8 mb-8">
-            <div className="flex items-baseline justify-center gap-2 mb-2">
-              <span className="font-display text-5xl md:text-6xl font-bold text-foreground">$500</span>
-              <span className="text-muted-foreground text-lg">MXN/mes</span>
+          <div className="bg-muted/30 rounded-2xl border border-border p-6 md:p-8">
+            <div className="text-center mb-6">
+              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">
+                Precio Early Adopter
+              </span>
+              
+              <div className="flex items-baseline justify-center gap-1 mb-2">
+                <span className="font-display text-4xl md:text-5xl font-bold text-foreground">$500</span>
+                <span className="text-muted-foreground text-sm">MXN/mes</span>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                Menos que una mensualidad de un jugador
+              </p>
             </div>
-            <p className="text-muted-foreground">
-              Implementación incluida
+
+            <ul className="space-y-3 mb-6">
+              {included.map((item, index) => (
+                <li key={index} className="flex items-center gap-3 text-sm text-foreground">
+                  <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="text-xs text-muted-foreground text-center">
+              El precio subirá conforme STRYK evolucione.
+              <br />
+              Los early adopters mantienen su precio.
             </p>
           </div>
-
-          <ul className="space-y-3 text-left max-w-sm mx-auto">
-            {benefits.map((benefit, index) => (
-              <li key={index} className="flex items-center gap-3 text-foreground">
-                <Check className="w-5 h-5 text-primary flex-shrink-0" />
-                <span>{benefit}</span>
-              </li>
-            ))}
-          </ul>
         </motion.div>
       </div>
     </section>

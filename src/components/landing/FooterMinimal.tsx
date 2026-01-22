@@ -4,12 +4,12 @@ export function FooterMinimal() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="py-8 bg-stryk-black border-t border-stryk-graphite">
+    <footer className="py-8 bg-background border-t border-border">
       <div className="container">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <Logo variant="light" size="sm" />
-          <p className="text-sm text-stryk-grey">
-            © {currentYear} STRYK. Todos los derechos reservados.
+          <Logo variant="dark" size="sm" />
+          <p className="text-xs text-muted-foreground">
+            © {currentYear} STRYK. Hecho para academias que quieren orden.
           </p>
         </div>
       </div>
