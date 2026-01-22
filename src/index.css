@@ -283,30 +283,30 @@
     filter: blur(25px);
     opacity: 0.12;
   }
-}
-
   /* STRYK Grid Pattern - Hero Background */
   .stryk-grid-pattern {
     position: absolute;
     inset: 0;
+    z-index: 1;
     background-image: 
-      linear-gradient(to right, hsl(43 72% 50% / 0.07) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(43 72% 50% / 0.07) 1px, transparent 1px);
+      linear-gradient(to right, hsl(43 72% 50% / 0.15) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(43 72% 50% / 0.15) 1px, transparent 1px);
     background-size: 50px 50px;
     mask-image: linear-gradient(
       to bottom,
-      rgba(0, 0, 0, 0.5) 0%,
-      rgba(0, 0, 0, 0.25) 40%,
-      rgba(0, 0, 0, 0) 70%
+      rgba(0, 0, 0, 0.8) 0%,
+      rgba(0, 0, 0, 0.4) 50%,
+      rgba(0, 0, 0, 0) 80%
     );
     -webkit-mask-image: linear-gradient(
       to bottom,
-      rgba(0, 0, 0, 0.5) 0%,
-      rgba(0, 0, 0, 0.25) 40%,
-      rgba(0, 0, 0, 0) 70%
+      rgba(0, 0, 0, 0.8) 0%,
+      rgba(0, 0, 0, 0.4) 50%,
+      rgba(0, 0, 0, 0) 80%
     );
     pointer-events: none;
   }
+}
 
 @layer utilities {
   /* Font Family Utilities */
