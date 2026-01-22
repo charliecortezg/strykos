@@ -8,7 +8,7 @@ const CALENDLY_LINK = "https://calendly.com/carloscortez-roarid/set-up-academia-
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-[85vh] md:min-h-[90vh] bg-gradient-to-br from-stryk-navy to-stryk-navyDeep flex flex-col overflow-hidden">
+    <section className="relative min-h-[85vh] md:min-h-[90vh] bg-gradient-to-br from-stryk-navy to-stryk-navyDeep flex flex-col overflow-hidden stryk-hero-grid">
       {/* Gold accent line top */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-stryk-gold via-stryk-gold to-stryk-gold/30" />
       
