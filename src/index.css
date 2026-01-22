@@ -283,6 +283,90 @@
     filter: blur(25px);
     opacity: 0.12;
   }
+
+  /* STRYK Problem Card - Rotating Border Effect */
+  .stryk-problem-card {
+    position: relative;
+    background-color: hsl(222 47% 18%);
+    background-image: 
+      radial-gradient(at 88% 40%, hsl(224 52% 12%) 0px, transparent 85%),
+      radial-gradient(at 49% 30%, hsl(222 47% 18%) 0px, transparent 85%),
+      radial-gradient(at 14% 26%, hsl(222 47% 18%) 0px, transparent 85%),
+      radial-gradient(at 0% 64%, hsl(43 72% 25%) 0px, transparent 85%),
+      radial-gradient(at 41% 94%, hsl(43 72% 35%) 0px, transparent 85%),
+      radial-gradient(at 100% 99%, hsl(43 72% 15%) 0px, transparent 85%);
+    border-radius: 1rem;
+    box-shadow: 0px -16px 24px 0px rgba(212, 160, 48, 0.15) inset;
+  }
+
+  .stryk-problem-card__border {
+    overflow: hidden;
+    pointer-events: none;
+    position: absolute;
+    z-index: -1;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% + 2px);
+    height: calc(100% + 2px);
+    background-image: linear-gradient(
+      0deg,
+      hsl(43 72% 50%) -50%,
+      hsl(222 47% 30%) 100%
+    );
+    border-radius: 1rem;
+  }
+
+  .stryk-problem-card__border::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    z-index: 10;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transform-origin: center;
+    width: 200%;
+    height: 8rem;
+    background-image: linear-gradient(
+      0deg,
+      hsla(43, 72%, 50%, 0) 0%,
+      hsl(43 72% 55%) 40%,
+      hsl(43 72% 55%) 60%,
+      hsla(43, 72%, 50%, 0) 100%
+    );
+    animation: stryk-rotate 6s linear infinite;
+  }
+
+  @keyframes stryk-rotate {
+    to {
+      transform: translate(-50%, -50%) rotate(360deg);
+    }
+  }
+
+  /* STRYK Hero Grid Lines Effect */
+  .stryk-hero-grid::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+      90deg, 
+      hsl(43 72% 50% / 0.04) 1px, 
+      transparent 1px
+    );
+    background-size: 60px 100%;
+    pointer-events: none;
+    mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.5) 0%,
+      rgba(0, 0, 0, 0) 70%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.5) 0%,
+      rgba(0, 0, 0, 0) 70%
+    );
+  }
 }
 
 @layer utilities {
