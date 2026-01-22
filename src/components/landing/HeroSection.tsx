@@ -9,18 +9,8 @@ export function HeroSection() {
       {/* Gold accent line top */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-stryk-gold via-stryk-gold to-stryk-gold/30" />
       
-      {/* Subtle diagonal pattern overlay */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-        backgroundImage: `repeating-linear-gradient(
-            -45deg,
-            transparent,
-            transparent 40px,
-            rgba(255,255,255,0.03) 40px,
-            rgba(255,255,255,0.03) 80px
-          )`
-      }} />
-      </div>
+      {/* Grid pattern overlay with fade effect */}
+      <div className="stryk-grid-pattern" />
 
       {/* Header - Minimal */}
       <header className="container py-4 md:py-6 relative z-10">
