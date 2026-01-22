@@ -3,59 +3,54 @@ import { motion } from "framer-motion";
 const steps = [
   {
     number: "1",
-    title: "Diagnóstico Operativo",
-    description: "Entendemos cómo opera hoy tu academia."
+    title: "Agendamos llamada",
+    description: "15 minutos para entender tu academia"
   },
   {
     number: "2",
-    title: "Implementación STRYK",
-    description: "Configuramos el sistema con tus datos reales."
+    title: "Configuramos STRYK",
+    description: "Subimos tus datos y configuramos todo"
   },
   {
     number: "3",
-    title: "Adopción Controlada",
-    description: "Acompañamos los primeros usos para asegurar que se utilice de verdad."
+    title: "Empiezas a operar",
+    description: "Tu equipo usa STRYK desde el día 1"
   }
 ];
 
 export function HowItWorksSection() {
   return (
-    <section className="py-16 md:py-24 bg-background">
+    <section className="py-12 md:py-20 bg-muted/30">
       <div className="container">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="max-w-4xl mx-auto"
+          transition={{ duration: 0.4 }}
+          className="max-w-2xl mx-auto"
         >
-          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-12 text-center">
+          <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-8 text-center">
             Cómo funciona
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="space-y-4">
             {steps.map((step, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: -10 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.15 }}
-                className="relative"
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                className="flex gap-4 items-center bg-background rounded-xl p-4 border border-border"
               >
-                {/* Connector line for desktop */}
-                {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-[60%] w-full h-px bg-border" />
-                )}
-                
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-display text-2xl font-bold mb-4 relative z-10">
-                    {step.number}
-                  </div>
-                  <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-display font-bold text-lg flex-shrink-0">
+                  {step.number}
+                </div>
+                <div>
+                  <h3 className="font-display font-semibold text-foreground">
                     {step.title}
                   </h3>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground">
                     {step.description}
                   </p>
                 </div>

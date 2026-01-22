@@ -1,44 +1,47 @@
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/brand/Logo";
-import { ArrowRight } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
+
+const CALENDLY_LINK = "https://calendly.com/carloscortez-roarid/set-up-academia-stryk";
 
 export function FinalCTASection() {
   return (
-    <section id="solicitar" className="py-20 md:py-32 bg-stryk-black relative overflow-hidden">
-      {/* Subtle accent */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -bottom-1/2 -left-1/4 w-full h-full bg-primary/5 transform -rotate-12" />
-      </div>
-
-      <div className="container relative z-10">
+    <section className="py-16 md:py-24 bg-stryk-black">
+      <div className="container">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center max-w-2xl mx-auto"
+          transition={{ duration: 0.4 }}
+          className="text-center max-w-xl mx-auto"
         >
-          <Logo variant="light" size="lg" className="justify-center mb-8" />
-          
-          <p className="text-lg text-stryk-grey mb-4">
-            STRYK no es para todos.
-          </p>
-          
-          <h2 className="font-display text-2xl md:text-3xl font-bold text-primary-foreground mb-8">
-            Es para academias que quieren operar con orden y control real.
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-primary-foreground mb-4">
+            ¿Listo para tener control real?
           </h2>
+          
+          <p className="text-stryk-grey mb-8 text-sm md:text-base">
+            Hablemos 15 minutos. Si STRYK no es para ti, te lo decimos directo.
+          </p>
 
-          <Button variant="hero" size="lg" asChild>
+          <Button 
+            variant="hero" 
+            size="xl" 
+            className="w-full sm:w-auto text-base min-h-[56px]" 
+            asChild
+          >
             <a 
-              href="https://calendly.com/carloscortez-roarid/set-up-academia-stryk" 
+              href={CALENDLY_LINK}
               target="_blank" 
               rel="noopener noreferrer"
             >
-              Solicitar implementación STRYK
-              <ArrowRight className="w-5 h-5" />
+              <MessageCircle className="w-5 h-5" />
+              Agendar llamada de 15 min
             </a>
           </Button>
+
+          <p className="text-xs text-stryk-grey/60 mt-4">
+            Sin compromiso. Sin presión de venta.
+          </p>
         </motion.div>
       </div>
     </section>
