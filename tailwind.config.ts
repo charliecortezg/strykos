@@ -79,6 +79,11 @@ export default {
           light: "hsl(var(--stryk-light-base))",
           grey: "hsl(var(--stryk-soft-grey))",
           graphite: "hsl(var(--stryk-graphite))",
+          navy: "hsl(var(--stryk-navy))",
+          navyDeep: "hsl(var(--stryk-navy-deep))",
+          gold: "hsl(var(--stryk-gold))",
+          goldLight: "hsl(var(--stryk-gold-light))",
+          silver: "hsl(var(--stryk-silver))",
         },
       },
       borderRadius: {

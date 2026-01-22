@@ -28,6 +28,8 @@ const buttonVariants = cva(
           "border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-primary-foreground active:scale-[0.98]",
         dark:
           "bg-stryk-black text-primary-foreground shadow-sm hover:bg-stryk-graphite active:scale-[0.98]",
+        gold:
+          "bg-stryk-gold text-stryk-navy font-semibold shadow-lg hover:bg-stryk-goldLight active:scale-[0.98]",
         success:
           "bg-success text-success-foreground shadow-sm hover:bg-success/90 active:scale-[0.98]",
         attendance:

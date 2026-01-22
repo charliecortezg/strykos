@@ -15,6 +15,13 @@
     --stryk-soft-grey: 220 14% 88%;
     --stryk-graphite: 220 7% 32%;
 
+    /* STRYK Athletic Palette - Inspired by Sports Crest */
+    --stryk-navy: 222 47% 18%;
+    --stryk-navy-deep: 224 52% 12%;
+    --stryk-gold: 43 72% 50%;
+    --stryk-gold-light: 43 72% 60%;
+    --stryk-silver: 220 20% 95%;
+
     /* Semantic Tokens */
     --background: 220 33% 98%;
     --foreground: 0 0% 5%;
