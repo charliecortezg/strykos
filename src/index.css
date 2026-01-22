@@ -285,6 +285,29 @@
   }
 }
 
+  /* STRYK Grid Pattern - Hero Background */
+  .stryk-grid-pattern {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(to right, hsl(43 72% 50% / 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(43 72% 50% / 0.07) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.5) 0%,
+      rgba(0, 0, 0, 0.25) 40%,
+      rgba(0, 0, 0, 0) 70%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.5) 0%,
+      rgba(0, 0, 0, 0.25) 40%,
+      rgba(0, 0, 0, 0) 70%
+    );
+    pointer-events: none;
+  }
+
 @layer utilities {
   /* Font Family Utilities */
   .font-display {
