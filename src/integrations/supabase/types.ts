@@ -22,6 +22,9 @@ export type Database = {
           id: string
           notes: string | null
           organization_id: string
+          performance_status:
+            | Database["public"]["Enums"]["attendance_performance_status"]
+            | null
           player_id: string
           recorded_by: string | null
           status: Database["public"]["Enums"]["attendance_status"]
@@ -34,6 +37,9 @@ export type Database = {
           id?: string
           notes?: string | null
           organization_id: string
+          performance_status?:
+            | Database["public"]["Enums"]["attendance_performance_status"]
+            | null
           player_id: string
           recorded_by?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
@@ -46,6 +52,9 @@ export type Database = {
           id?: string
           notes?: string | null
           organization_id?: string
+          performance_status?:
+            | Database["public"]["Enums"]["attendance_performance_status"]
+            | null
           player_id?: string
           recorded_by?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
@@ -1131,6 +1140,7 @@ export type Database = {
       }
     }
     Enums: {
+      attendance_performance_status: "excellent" | "focus" | "challenge"
       attendance_status: "presente" | "ausente" | "justificado"
       org_role:
         | "org_owner"
@@ -1279,6 +1289,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      attendance_performance_status: ["excellent", "focus", "challenge"],
       attendance_status: ["presente", "ausente", "justificado"],
       org_role: [
         "org_owner",

@@ -4,6 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AttendanceStatus } from '@/types/categories';
 import { toast } from 'sonner';
 
+export type PerformanceStatus = 'excellent' | 'focus' | 'challenge';
+
 export interface PlayerAttendanceRecord {
   player_id: string;
   full_name: string;
@@ -11,12 +13,19 @@ export interface PlayerAttendanceRecord {
   payment_status: string;
   status: AttendanceStatus;
   notes: string;
+  performance_status: PerformanceStatus | null;
 }
 
 export interface TrainingSession {
   date: string;
   category_id: string;
   players: PlayerAttendanceRecord[];
+}
+
+export interface PerformanceStats {
+  excellent: number;
+  focus: number;
+  challenge: number;
 }
 
 export function useTrainingAttendance(categoryId: string | null, date: string) {
@@ -44,7 +53,7 @@ export function useTrainingAttendance(categoryId: string | null, date: string) {
       // Get existing attendance for this date
       const { data: attendance, error: attendanceError } = await supabase
         .from('attendance')
-        .select('player_id, status, notes')
+        .select('player_id, status, notes, performance_status')
         .eq('organization_id', organization.id)
         .eq('category_id', categoryId)
         .eq('date', date);
@@ -53,7 +62,11 @@ export function useTrainingAttendance(categoryId: string | null, date: string) {
 
       // Merge players with their attendance
       const attendanceMap = new Map(
-        (attendance || []).map(a => [a.player_id, { status: a.status, notes: a.notes }])
+        (attendance || []).map(a => [a.player_id, { 
+          status: a.status, 
+          notes: a.notes,
+          performance_status: a.performance_status as PerformanceStatus | null
+        }])
       );
 
       return players.map(p => ({
@@ -63,6 +76,7 @@ export function useTrainingAttendance(categoryId: string | null, date: string) {
         payment_status: p.payment_status,
         status: (attendanceMap.get(p.id)?.status as AttendanceStatus) || 'ausente',
         notes: attendanceMap.get(p.id)?.notes || '',
+        performance_status: attendanceMap.get(p.id)?.performance_status || null,
       })) as PlayerAttendanceRecord[];
     },
     enabled: !!categoryId && !!organization?.id && !!date,
@@ -84,6 +98,10 @@ export function useTrainingAttendance(categoryId: string | null, date: string) {
         status: p.status,
         notes: p.notes || null,
         recorded_by: user.id,
+        // If present, default to excellent; if absent, set null
+        performance_status: p.status === 'presente' 
+          ? (p.performance_status || 'excellent') 
+          : null,
       }));
 
       const { error } = await supabase
@@ -124,10 +142,18 @@ export function useTrainingAttendance(categoryId: string | null, date: string) {
     enabled: !!categoryId && !!organization?.id && !!date,
   });
 
+  // Calculate performance stats
+  const performanceStats: PerformanceStats = {
+    excellent: playersWithAttendance.filter(p => p.status === 'presente' && (p.performance_status === 'excellent' || !p.performance_status)).length,
+    focus: playersWithAttendance.filter(p => p.performance_status === 'focus').length,
+    challenge: playersWithAttendance.filter(p => p.performance_status === 'challenge').length,
+  };
+
   return {
     playersWithAttendance,
     isLoading,
     saveAttendance,
     hasExistingAttendance,
+    performanceStats,
   };
 }
