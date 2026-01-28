@@ -216,305 +216,6 @@ export type Database = {
           },
         ]
       }
-      guardians: {
-        Row: {
-          created_at: string | null
-          email: string | null
-          full_name: string
-          id: string
-          is_primary: boolean | null
-          occupation: string | null
-          organization_id: string
-          phone: string
-          phone_normalized: string
-          relationship: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email?: string | null
-          full_name: string
-          id?: string
-          is_primary?: boolean | null
-          occupation?: string | null
-          organization_id: string
-          phone: string
-          phone_normalized: string
-          relationship?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string | null
-          full_name?: string
-          id?: string
-          is_primary?: boolean | null
-          occupation?: string | null
-          organization_id?: string
-          phone?: string
-          phone_normalized?: string
-          relationship?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "guardians_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      intake_documents: {
-        Row: {
-          bucket_id: string
-          created_at: string | null
-          document_type: string
-          file_name: string | null
-          file_size: number | null
-          id: string
-          intake_request_id: string
-          mime_type: string | null
-          object_path: string
-          organization_id: string
-          uploaded_by: string | null
-        }
-        Insert: {
-          bucket_id?: string
-          created_at?: string | null
-          document_type?: string
-          file_name?: string | null
-          file_size?: number | null
-          id?: string
-          intake_request_id: string
-          mime_type?: string | null
-          object_path: string
-          organization_id: string
-          uploaded_by?: string | null
-        }
-        Update: {
-          bucket_id?: string
-          created_at?: string | null
-          document_type?: string
-          file_name?: string | null
-          file_size?: number | null
-          id?: string
-          intake_request_id?: string
-          mime_type?: string | null
-          object_path?: string
-          organization_id?: string
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "intake_documents_intake_request_id_fkey"
-            columns: ["intake_request_id"]
-            isOneToOne: false
-            referencedRelation: "intake_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "intake_documents_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "intake_documents_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      intake_requests: {
-        Row: {
-          category_id: string | null
-          created_at: string | null
-          created_by: string
-          guardian_email: string | null
-          guardian_id: string | null
-          guardian_name: string
-          guardian_occupation: string | null
-          guardian_phone: string
-          guardian_phone_normalized: string
-          id: string
-          idempotency_key: string
-          monthly_fee: number
-          organization_id: string
-          payment_id: string | null
-          payment_method: string
-          plan_id: string | null
-          player_age: number | null
-          player_birth_date: string
-          player_id: string | null
-          player_name: string
-          player_name_normalized: string
-          processed_at: string | null
-          processed_by: string | null
-          processing_error: string | null
-          promo_applied: boolean | null
-          promo_code: string | null
-          receipt_error: string | null
-          receipt_sent_at: string | null
-          receipt_status: string | null
-          registration_fee: number
-          sport_id: string | null
-          status: string
-          total_amount: number
-          updated_at: string | null
-          venue_id: string | null
-        }
-        Insert: {
-          category_id?: string | null
-          created_at?: string | null
-          created_by: string
-          guardian_email?: string | null
-          guardian_id?: string | null
-          guardian_name: string
-          guardian_occupation?: string | null
-          guardian_phone: string
-          guardian_phone_normalized: string
-          id?: string
-          idempotency_key: string
-          monthly_fee?: number
-          organization_id: string
-          payment_id?: string | null
-          payment_method: string
-          plan_id?: string | null
-          player_age?: number | null
-          player_birth_date: string
-          player_id?: string | null
-          player_name: string
-          player_name_normalized: string
-          processed_at?: string | null
-          processed_by?: string | null
-          processing_error?: string | null
-          promo_applied?: boolean | null
-          promo_code?: string | null
-          receipt_error?: string | null
-          receipt_sent_at?: string | null
-          receipt_status?: string | null
-          registration_fee?: number
-          sport_id?: string | null
-          status?: string
-          total_amount?: number
-          updated_at?: string | null
-          venue_id?: string | null
-        }
-        Update: {
-          category_id?: string | null
-          created_at?: string | null
-          created_by?: string
-          guardian_email?: string | null
-          guardian_id?: string | null
-          guardian_name?: string
-          guardian_occupation?: string | null
-          guardian_phone?: string
-          guardian_phone_normalized?: string
-          id?: string
-          idempotency_key?: string
-          monthly_fee?: number
-          organization_id?: string
-          payment_id?: string | null
-          payment_method?: string
-          plan_id?: string | null
-          player_age?: number | null
-          player_birth_date?: string
-          player_id?: string | null
-          player_name?: string
-          player_name_normalized?: string
-          processed_at?: string | null
-          processed_by?: string | null
-          processing_error?: string | null
-          promo_applied?: boolean | null
-          promo_code?: string | null
-          receipt_error?: string | null
-          receipt_sent_at?: string | null
-          receipt_status?: string | null
-          registration_fee?: number
-          sport_id?: string | null
-          status?: string
-          total_amount?: number
-          updated_at?: string | null
-          venue_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "intake_requests_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "intake_requests_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "intake_requests_guardian_id_fkey"
-            columns: ["guardian_id"]
-            isOneToOne: false
-            referencedRelation: "guardians"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "intake_requests_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "intake_requests_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "intake_requests_plan_id_fkey"
-            columns: ["plan_id"]
-            isOneToOne: false
-            referencedRelation: "plans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "intake_requests_player_id_fkey"
-            columns: ["player_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "intake_requests_processed_by_fkey"
-            columns: ["processed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "intake_requests_sport_id_fkey"
-            columns: ["sport_id"]
-            isOneToOne: false
-            referencedRelation: "sports"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "intake_requests_venue_id_fkey"
-            columns: ["venue_id"]
-            isOneToOne: false
-            referencedRelation: "venues"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       match_media: {
         Row: {
           created_at: string
@@ -742,71 +443,6 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      org_intake_settings: {
-        Row: {
-          allow_promo_codes: boolean | null
-          created_at: string | null
-          default_monthly_fee: number | null
-          default_registration_fee: number | null
-          enabled: boolean | null
-          id: string
-          organization_id: string
-          parents_guide_url: string | null
-          promo_active: boolean | null
-          promo_fee: number | null
-          receipt_footer_text: string | null
-          require_evidence: boolean | null
-          require_guardian_email: boolean | null
-          updated_at: string | null
-          welcome_message: string | null
-          whatsapp_group_url: string | null
-        }
-        Insert: {
-          allow_promo_codes?: boolean | null
-          created_at?: string | null
-          default_monthly_fee?: number | null
-          default_registration_fee?: number | null
-          enabled?: boolean | null
-          id?: string
-          organization_id: string
-          parents_guide_url?: string | null
-          promo_active?: boolean | null
-          promo_fee?: number | null
-          receipt_footer_text?: string | null
-          require_evidence?: boolean | null
-          require_guardian_email?: boolean | null
-          updated_at?: string | null
-          welcome_message?: string | null
-          whatsapp_group_url?: string | null
-        }
-        Update: {
-          allow_promo_codes?: boolean | null
-          created_at?: string | null
-          default_monthly_fee?: number | null
-          default_registration_fee?: number | null
-          enabled?: boolean | null
-          id?: string
-          organization_id?: string
-          parents_guide_url?: string | null
-          promo_active?: boolean | null
-          promo_fee?: number | null
-          receipt_footer_text?: string | null
-          require_evidence?: boolean | null
-          require_guardian_email?: boolean | null
-          updated_at?: string | null
-          welcome_message?: string | null
-          whatsapp_group_url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "org_intake_settings_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: true
-            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1152,50 +788,10 @@ export type Database = {
         }
         Relationships: []
       }
-      player_guardians: {
-        Row: {
-          created_at: string | null
-          guardian_id: string
-          id: string
-          is_primary: boolean | null
-          player_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          guardian_id: string
-          id?: string
-          is_primary?: boolean | null
-          player_id: string
-        }
-        Update: {
-          created_at?: string | null
-          guardian_id?: string
-          id?: string
-          is_primary?: boolean | null
-          player_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "player_guardians_guardian_id_fkey"
-            columns: ["guardian_id"]
-            isOneToOne: false
-            referencedRelation: "guardians"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "player_guardians_player_id_fkey"
-            columns: ["player_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       players: {
         Row: {
           category_id: string | null
           created_at: string
-          date_of_birth: string | null
           email: string | null
           full_name: string
           id: string
@@ -1216,7 +812,6 @@ export type Database = {
         Insert: {
           category_id?: string | null
           created_at?: string
-          date_of_birth?: string | null
           email?: string | null
           full_name: string
           id?: string
@@ -1237,7 +832,6 @@ export type Database = {
         Update: {
           category_id?: string | null
           created_at?: string
-          date_of_birth?: string | null
           email?: string | null
           full_name?: string
           id?: string
@@ -1488,15 +1082,6 @@ export type Database = {
     }
     Functions: {
       generate_access_key: { Args: never; Returns: string }
-      generate_intake_idempotency_key: {
-        Args: {
-          p_birth_date: string
-          p_name_normalized: string
-          p_org_id: string
-          p_phone_normalized: string
-        }
-        Returns: string
-      }
       generate_org_code: { Args: { org_name: string }; Returns: string }
       get_current_org_id: { Args: never; Returns: string }
       has_org_role: {
@@ -1512,13 +1097,7 @@ export type Database = {
           sequence_number: number
         }[]
       }
-      normalize_name: { Args: { name: string }; Returns: string }
-      normalize_phone: { Args: { phone: string }; Returns: string }
       normalize_text: { Args: { input_text: string }; Returns: string }
-      process_intake_request: {
-        Args: { p_intake_request_id: string }
-        Returns: Json
-      }
       reset_monthly_payment_status: { Args: never; Returns: number }
       search_players: {
         Args: {

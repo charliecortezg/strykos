@@ -357,40 +357,4 @@
       transform: translateX(0);
     }
   }
-
-  /* STRYK Intake Module Styles */
-  .btn-cta {
-    @apply w-full h-14 text-lg font-semibold bg-primary text-primary-foreground rounded-lg;
-    @apply hover:opacity-90 active:scale-[0.98] transition-all duration-150;
-    @apply disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-
-  .card-elevated {
-    @apply bg-card rounded-xl shadow-md border border-border p-4;
-  }
-
-  .section-header {
-    @apply text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3;
-  }
-
-  .badge-age {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
-    @apply bg-accent/10 text-accent-foreground border border-accent/20;
-  }
-
-  .total-display {
-    @apply text-3xl font-bold text-primary bg-secondary rounded-xl p-4 text-center;
-  }
-
-  .status-success {
-    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary;
-  }
-
-  .status-pending {
-    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent-foreground;
-  }
-
-  .status-error {
-    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive;
-  }
 }

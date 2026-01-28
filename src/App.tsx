@@ -24,8 +24,6 @@ import PlatformDashboard from "./pages/platform/PlatformDashboard";
 import OrganizationsPage from "./pages/platform/OrganizationsPage";
 import UpgradeRequestsPage from "./pages/platform/UpgradeRequestsPage";
 import AuditLogPage from "./pages/platform/AuditLogPage";
-// Intake Module
-import { IntakeTerminal, IntakeHistory } from "./modules/intake";
 
 const queryClient = new QueryClient();
 
@@ -97,17 +95,6 @@ function AcademyRoutes() {
         <Route path="/dashboard/administrativo" element={
           <ProtectedRoute allowedRoles={['administrativo']}>
             <AdministrativoDashboard />
-          </ProtectedRoute>
-        } />
-        {/* Intake Module Routes */}
-        <Route path="/intake" element={
-          <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo', 'administrativo', 'entrenador']}>
-            <IntakeTerminal />
-          </ProtectedRoute>
-        } />
-        <Route path="/intake/history" element={
-          <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo', 'administrativo', 'entrenador']}>
-            <IntakeHistory />
           </ProtectedRoute>
         } />
         <Route path="*" element={<NotFound />} />
