@@ -22,9 +22,37 @@ La migración SQL se ejecutó exitosamente. Se crearon:
 
 ---
 
+### ✅ Fase 2 Completada - Módulo UI de Intake
+
+**Archivos Creados:**
+
+**Tipos y Utilidades:**
+- `src/modules/intake/types/intake.types.ts` - Tipos TypeScript
+- `src/modules/intake/lib/intake-utils.ts` - Funciones helper
+- `src/modules/intake/lib/intake-validations.ts` - Schema Zod
+
+**Hooks:**
+- `src/modules/intake/hooks/useIntakeSettings.ts` - Configuración por academia
+- `src/modules/intake/hooks/useIntakeCatalogs.ts` - Sports, categories, plans, venues
+- `src/modules/intake/hooks/useCreateIntakeRequest.ts` - Mutación para crear fichajes
+- `src/modules/intake/hooks/useIntakeHistory.ts` - Lista con filtros
+
+**Componentes:**
+- `src/modules/intake/components/DateInput.tsx` - Input DD/MM/AAAA
+- `src/modules/intake/components/CameraCapture.tsx` - Captura de foto
+- `src/modules/intake/components/IntakeSuccess.tsx` - Pantalla de éxito
+
+**Páginas:**
+- `src/modules/intake/pages/IntakeTerminal.tsx` - Formulario principal
+- `src/modules/intake/pages/IntakeHistory.tsx` - Historial con filtros
+
+**Rutas:**
+- `/intake` - Terminal de fichaje
+- `/intake/history` - Historial de fichajes
+
+---
+
 ### Próximos Pasos
 
-1. **Fase 2**: UI del módulo intake en STRYK OS (lista de fichajes, formulario)
-2. **Fase 3**: Implementar lógica completa en `process_intake_request()` 
-3. **Fase 4**: Integrar con `send-payment-receipt` existente para recibos automáticos
-
+1. **Fase 3**: Implementar lógica completa en `process_intake_request()` 
+2. **Fase 4**: Integrar con `send-payment-receipt` existente para recibos automáticos
