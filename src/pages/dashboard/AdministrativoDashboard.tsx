@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { CreditCard, Users, DollarSign, Settings } from 'lucide-react';
+import { CreditCard, Users, DollarSign, Settings, UserPlus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FinanceModule } from '@/components/payments/FinanceModule';
 import { PlayersTable } from '@/components/players/PlayersTable';
@@ -10,6 +13,7 @@ import { BillingConfigurationPanel } from '@/components/billing/BillingConfigura
 
 export default function AdministrativoDashboard() {
   const { user, organization } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('finanzas');
 
   return (
@@ -27,7 +31,7 @@ export default function AdministrativoDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6 w-full sm:w-auto grid grid-cols-4 sm:inline-flex">
+          <TabsList className="mb-6 w-full sm:w-auto grid grid-cols-5 sm:inline-flex">
             <TabsTrigger value="finanzas" className="gap-2">
               <CreditCard className="w-4 h-4" />
               <span className="hidden sm:inline">Finanzas</span>
@@ -45,6 +49,10 @@ export default function AdministrativoDashboard() {
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Cobranza</span>
             </TabsTrigger>
+            <TabsTrigger value="fichajes" className="gap-2">
+              <UserPlus className="w-4 h-4" />
+              <span className="hidden sm:inline">Fichajes</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="finanzas">
@@ -61,6 +69,24 @@ export default function AdministrativoDashboard() {
 
           <TabsContent value="configuracion">
             <BillingConfigurationPanel />
+          </TabsContent>
+
+          <TabsContent value="fichajes">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">Historial de Fichajes</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Registro de inscripciones y evidencias de pago
+                  </p>
+                </div>
+                <Button onClick={() => navigate('/fichajes/terminal')} className="gap-2">
+                  <UserPlus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Nuevo Fichaje</span>
+                </Button>
+              </div>
+              <IntakeHistory />
+            </div>
           </TabsContent>
         </Tabs>
       </main>

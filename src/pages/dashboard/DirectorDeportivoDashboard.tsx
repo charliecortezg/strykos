@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { Users, ClipboardList, BarChart3, MapPin, CreditCard, UserCheck, Trophy, UserPlus } from 'lucide-react';
+import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { CategoriesTable } from '@/components/categories/CategoriesTable';
@@ -143,6 +144,10 @@ export default function DirectorDeportivoDashboard() {
               <BarChart3 className="w-4 h-4" />
               Reportes
             </TabsTrigger>
+            <TabsTrigger value="fichajes" className="gap-2">
+              <UserPlus className="w-4 h-4" />
+              Fichajes
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="jugadores">
@@ -171,6 +176,24 @@ export default function DirectorDeportivoDashboard() {
 
           <TabsContent value="reportes">
             <OperationalReports />
+          </TabsContent>
+
+          <TabsContent value="fichajes">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">Historial de Fichajes</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Todos los fichajes de la academia
+                  </p>
+                </div>
+                <Button onClick={() => navigate('/fichajes/terminal')} className="gap-2">
+                  <UserPlus className="w-4 h-4" />
+                  Nuevo Fichaje
+                </Button>
+              </div>
+              <IntakeHistory />
+            </div>
           </TabsContent>
         </Tabs>
       </main>

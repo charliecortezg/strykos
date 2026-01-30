@@ -10,6 +10,7 @@ import { useTrainerCategories } from '@/hooks/useTrainerCategories';
 import { TrainerMatchesModule } from '@/components/matches/TrainerMatchesModule';
 import { TrainingAttendanceModule } from '@/components/attendance/TrainingAttendanceModule';
 import { usePlayers } from '@/hooks/usePlayers';
+import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
 
 export default function EntrenadorDashboard() {
   const navigate = useNavigate();
@@ -94,7 +95,7 @@ export default function EntrenadorDashboard() {
 
             {/* Tabs - Priority Order: Asistencia, Partidos, Jugadores */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="w-full grid grid-cols-3 mb-4 h-12">
+              <TabsList className="w-full grid grid-cols-4 mb-4 h-12">
                 <TabsTrigger value="asistencia" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <CheckCircle className="w-4 h-4" />
                   <span className="hidden xs:inline">Asistencia</span>
@@ -108,6 +109,10 @@ export default function EntrenadorDashboard() {
                   <Users className="w-4 h-4" />
                   <span className="hidden sm:inline">Jugadores</span>
                   <span className="sm:hidden">{trainerPlayers.length}</span>
+                </TabsTrigger>
+                <TabsTrigger value="fichajes" className="gap-1.5 text-xs sm:text-sm">
+                  <UserPlus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Fichajes</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -165,6 +170,19 @@ export default function EntrenadorDashboard() {
                       ))}
                     </div>
                   )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="fichajes" className="mt-0">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-display font-semibold">Mis Fichajes</h2>
+                    <Button onClick={() => navigate('/fichajes/terminal')} size="sm" className="gap-1.5">
+                      <UserPlus className="w-4 h-4" />
+                      <span className="hidden sm:inline">Nuevo</span>
+                    </Button>
+                  </div>
+                  <IntakeHistory />
                 </div>
               </TabsContent>
             </Tabs>
