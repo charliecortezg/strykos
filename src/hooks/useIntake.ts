@@ -50,6 +50,7 @@ export interface IntakeRequest {
   receipt_status: string | null;
   receipt_sent_at: string | null;
   receipt_error: string | null;
+  receipt_retry_count: number;
   processing_error: string | null;
   player_id: string | null;
   guardian_id: string | null;
@@ -361,11 +362,40 @@ export function useCreateIntake() {
 // ============================================
 // HOOK: useRetryReceipt
 // ============================================
+const MAX_RECEIPT_RETRIES = 3;
+
 export function useRetryReceipt() {
   const queryClient = useQueryClient();
 
   const retryMutation = useMutation({
     mutationFn: async (intakeId: string) => {
+      // First, check current retry count and increment it
+      const { data: currentRequest, error: fetchError } = await supabase
+        .from('intake_requests')
+        .select('receipt_retry_count')
+        .eq('id', intakeId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const currentCount = currentRequest?.receipt_retry_count ?? 0;
+      
+      if (currentCount >= MAX_RECEIPT_RETRIES) {
+        throw new Error(`Límite de reintentos alcanzado (${MAX_RECEIPT_RETRIES} máximo)`);
+      }
+
+      // Increment retry count
+      const { error: updateError } = await supabase
+        .from('intake_requests')
+        .update({ 
+          receipt_retry_count: currentCount + 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', intakeId);
+
+      if (updateError) throw updateError;
+
+      // Call the edge function
       const { data, error } = await supabase.functions.invoke('send-intake-receipt', {
         body: { intakeId },
       });
@@ -391,6 +421,7 @@ export function useRetryReceipt() {
   return {
     retryReceipt: retryMutation.mutateAsync,
     isRetrying: retryMutation.isPending,
+    maxRetries: MAX_RECEIPT_RETRIES,
   };
 }
 

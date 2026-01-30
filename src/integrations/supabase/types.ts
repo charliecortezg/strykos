@@ -359,6 +359,7 @@ export type Database = {
           promo_applied: boolean | null
           promo_code: string | null
           receipt_error: string | null
+          receipt_retry_count: number | null
           receipt_sent_at: string | null
           receipt_status: string | null
           registration_fee: number
@@ -396,6 +397,7 @@ export type Database = {
           promo_applied?: boolean | null
           promo_code?: string | null
           receipt_error?: string | null
+          receipt_retry_count?: number | null
           receipt_sent_at?: string | null
           receipt_status?: string | null
           registration_fee?: number
@@ -433,6 +435,7 @@ export type Database = {
           promo_applied?: boolean | null
           promo_code?: string | null
           receipt_error?: string | null
+          receipt_retry_count?: number | null
           receipt_sent_at?: string | null
           receipt_status?: string | null
           registration_fee?: number

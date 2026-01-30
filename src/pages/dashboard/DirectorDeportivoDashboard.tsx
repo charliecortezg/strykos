@@ -4,6 +4,7 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { Users, ClipboardList, BarChart3, MapPin, CreditCard, UserCheck, Trophy, UserPlus } from 'lucide-react';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
+import { IntakeSettingsPanel } from '@/components/fichajes/IntakeSettingsPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { CategoriesTable } from '@/components/categories/CategoriesTable';
@@ -179,7 +180,7 @@ export default function DirectorDeportivoDashboard() {
           </TabsContent>
 
           <TabsContent value="fichajes">
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold">Historial de Fichajes</h2>
@@ -193,6 +194,9 @@ export default function DirectorDeportivoDashboard() {
                 </Button>
               </div>
               <IntakeHistory />
+              
+              {/* Settings Panel */}
+              <IntakeSettingsPanel />
             </div>
           </TabsContent>
         </Tabs>
