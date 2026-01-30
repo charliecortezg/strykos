@@ -1,386 +1,379 @@
 
-# Plan: IntakeSettingsPanel + Hardening Pass (10 Checks)
+# Plan: Product Stability & UX Hardening
+
+## Objetivo
+Cero friccion en campo. Cero bugs visibles. Cero dudas.
+El Entrenador confia en STRYK sin pensar.
+
+---
 
 ## Resumen Ejecutivo
 
-Este plan cubre dos entregas en paralelo:
-1. **IntakeSettingsPanel**: UI para que org_owner/director_deportivo configuren tarifas, QR y datos bancarios
-2. **Hardening Pass**: 10 validaciones de seguridad y consistencia del modulo de Fichajes
+Este plan aborda dos areas criticas:
+1. **Mobile UX Corrections** - Problemas de scroll, overflow, teclado y botones
+2. **Estados y Feedback de Usuario** - Loading, success, error y confirmaciones
 
 ---
 
-## Parte 1: IntakeSettingsPanel
+## Parte 1: Mobile UX Corrections
 
-### Archivos a Crear
+### 1.1 Fix Scroll en Modales Largos
 
-| Archivo | Descripcion |
-|---------|-------------|
-| `src/hooks/useIntakeSettingsEditor.ts` | Hook con lectura/escritura + permisos |
-| `src/components/fichajes/IntakeSettingsPanel.tsx` | Componente UI del panel |
+**Estado Actual:**
+- `Dialog` component ya tiene `max-h-[90vh]` y `overflow-y-auto`
+- `onOpenAutoFocus` ya previene auto-focus (evita salto de viewport)
+- `PlayerProfileModal` usa estructura correcta con header fijo y contenido scrollable
 
-### Archivos a Modificar
+**Problemas Detectados:**
+- `AlertDialogContent` NO tiene `max-h-[90vh]` ni scroll
+- `Drawer` no tiene manejo de altura maxima consistente
+- Algunos modales como `CreateMatchModal` no usan estructura de scroll optimizada
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/pages/dashboard/OrgOwnerDashboard.tsx` | Agregar seccion IntakeSettingsPanel despues de BillingConfigurationPanel |
-| `src/pages/dashboard/DirectorDeportivoDashboard.tsx` | Agregar IntakeSettingsPanel al final del tab Fichajes |
-
-### Estructura del Hook
-
-```typescript
-// useIntakeSettingsEditor.ts
-interface UseIntakeSettingsEditor {
-  settings: IntakeSettings | null;
-  isLoading: boolean;
-  isSaving: boolean;
-  canEdit: boolean;  // org_owner || director_deportivo
-  saveSettings: (updates: Partial<IntakeSettings>) => Promise<void>;
-  error: Error | null;
-}
-```
-
-### Campos del Panel
-
-**Seccion: Tarifas**
-- `default_registration_fee` - Inscripcion (numero, min 0)
-- `soccer_fee` - Mensualidad Futbol (numero)
-- `basketball_fee` - Mensualidad Basketball (numero)
-
-**Seccion: Promociones**
-- `promo_active` - Switch: Activar promo en cancha
-- `promo_fee` - Tarifa promocional (habilitado solo si promo_active)
-
-**Seccion: Opciones**
-- `enabled` - Switch: Modulo activo
-- `require_evidence` - Switch: Requerir foto para efectivo
-- `require_guardian_email` - Switch: Email del tutor obligatorio
-
-**Seccion: Transferencia**
-- `transfer_qr_url` - URL del QR (con preview en tiempo real)
-- `transfer_bank_info` - Textarea multilinea (datos bancarios)
-
-**Seccion: Personalizacion (opcional)**
-- `receipt_footer_text` - Texto footer del recibo
-
----
-
-## Parte 2: Hardening Pass - 10 Checks
-
-### Check 1: profiles.id == auth.uid()
-
-**Estado: VERIFICADO OK**
-
-Consulta ejecutada confirma que `profiles.id` siempre coincide con `auth.users.id`:
-```
-profile_id == auth_user_id: MATCH (todos los registros)
-```
-
-Las policies actuales usan `created_by = auth.uid()` correctamente.
-
-### Check 2: entrenador solo ve sus intake_requests
-
-**Estado: VERIFICADO OK**
-
-RLS policy actual:
-```sql
--- SELECT policy para intake_requests:
-(has_org_role('org_owner') OR has_org_role('director_deportivo') 
- OR has_org_role('administrativo') 
- OR (has_org_role('entrenador') AND created_by = auth.uid()))
-```
-
-El entrenador SOLO ve sus propios fichajes (`created_by = auth.uid()`).
-
-Para `org_intake_settings`, la policy de SELECT permite lectura a todos los usuarios de la org, pero INSERT/UPDATE solo a org_owner/director_deportivo.
-
-Para `guardians`, el entrenador NO tiene INSERT (solo org_owner/director/admin).
-
-### Check 3: RPC SECURITY DEFINER - Validacion cross-org
-
-**Estado: REQUIERE MEJORA**
-
-El RPC `process_intake_and_create_entities` actual NO valida que el `intake_request_id` pertenezca a la organizacion del usuario invocador.
-
-**Solucion propuesta** - Agregar validacion al inicio del RPC:
-
-```sql
--- Validar que el intake_request pertenece a la org del usuario
-IF v_req.organization_id != get_current_org_id() THEN
-  RETURN jsonb_build_object('success', false, 'error', 'Cross-org access denied');
-END IF;
-```
-
-### Check 4: Test idempotencia (doble click / retry)
-
-**Estado: VERIFICADO OK**
-
-La tabla `intake_requests` tiene:
-- `idempotency_key` columna NOT NULL
-- UNIQUE constraint en `idempotency_key`
-
-El codigo frontend genera el key:
-```typescript
-const idempotencyKey = generateIdempotencyKey(
-  organization.id,
-  phoneNormalized,
-  data.playerBirthDate,
-  nameNormalized
-);
-```
-
-Error code `23505` se captura y muestra mensaje amigable: "Este jugador ya fue registrado previamente"
-
-### Check 5: Caso hermanos (mismo phone, diferente birth_date)
-
-**Estado: VERIFICADO OK**
-
-El `idempotency_key` incluye `birth_date`:
-```
-{org_id}|{phone_normalized}|{birth_date}|{name_normalized}
-```
-
-Dos hermanos con mismo tutor pero diferente fecha de nacimiento generaran keys diferentes, creando:
-- 2 players distintos
-- 1 guardian (upsert por phone_normalized)
-- 2 payments
-
-### Check 6: Validar evidencia path enforcement
-
-**Estado: REQUIERE VERIFICACION**
-
-El codigo actual usa path estandar:
-```typescript
-const storagePath = `${organization.id}/intake/${intakeRequest.id}/${fileName}`;
-```
-
-Pero el bucket `intake-documents` necesita Storage Policies que enforzen este patron.
-
-**Solucion propuesta** - Verificar/crear storage policies:
-```sql
--- Policy para INSERT en intake-documents
-CREATE POLICY "Users can upload to their org path"
-ON storage.objects FOR INSERT
-WITH CHECK (
-  bucket_id = 'intake-documents' AND
-  (storage.foldername(name))[1] = get_current_org_id()::text
-);
-```
-
-### Check 7: Manejo error evidencia mayor a 5MB
-
-**Estado: PARCIALMENTE IMPLEMENTADO**
-
-El `CameraCapture` component ya valida:
-```typescript
-if (file.size > 5 * 1024 * 1024) {
-  toast.error('La imagen es demasiado grande. Maximo 5MB.');
-  return;
-}
-```
-
-Pero si el upload falla despues de crear el intake_request, el proceso continua (solo loggea error). Esto es correcto para no bloquear el fichaje, pero podria dejar estado inconsistente.
-
-**Mejora propuesta**: Mostrar warning en UI si evidencia fallo pero fichaje exitoso.
-
-### Check 8: Recibos - estados consistentes
-
-**Estado: VERIFICADO OK**
-
-Estados manejados:
-- `pending` - Inicial
-- `sent` - Enviado a tutor
-- `sent_admin_only` - Enviado solo a admin (tutor sin email)
-- `failed` - Error de envio
-- `no_email` - Sin emails validos
-
-La logica en `send-intake-receipt` es robusta:
-- Si tutor tiene email: envia a tutor + BCC admin
-- Si tutor NO tiene email: envia a admin con nota "[COPIA ADMIN]"
-- Si ninguno tiene email: marca como `no_email`
-
-### Check 9: Limitar reintentos de receipt
-
-**Estado: REQUIERE MEJORA**
-
-Actualmente NO hay limite de reintentos. El boton "Reenviar" siempre esta disponible si `receipt_status` es `failed`, `pending` o null.
-
-**Solucion propuesta**:
-
-1. Agregar columna `receipt_retry_count` a `intake_requests`
-2. Incrementar en cada reintento
-3. Bloquear UI si `receipt_retry_count >= 3`
-4. O implementar cooldown (ej: no reenviar si `receipt_sent_at` < 5 min)
-
-### Check 10: Logs en processing_error / receipt_error + UI reintento
-
-**Estado: VERIFICADO OK**
-
-- `processing_error` se guarda en el RPC cuando falla
-- `receipt_error` se guarda en la Edge Function cuando falla
-- La UI (`IntakeDetailDrawer`) muestra ambos errores
-- El boton "Reenviar" esta disponible para reintentos
-
----
-
-## Entregables del Plan
-
-### Fase A: IntakeSettingsPanel (implementacion completa)
-
-1. Crear `useIntakeSettingsEditor.ts`
-2. Crear `IntakeSettingsPanel.tsx`
-3. Integrar en OrgOwnerDashboard
-4. Integrar en DirectorDeportivoDashboard (tab Fichajes)
-
-### Fase B: Hardening Fixes
-
-1. **Check 3**: Migrar RPC con validacion cross-org
-2. **Check 6**: Crear storage policies para path enforcement
-3. **Check 9**: Migrar DB para `receipt_retry_count` + actualizar UI
-
----
-
-## Migraciones SQL Requeridas
-
-```sql
--- 1. Agregar columna receipt_retry_count
-ALTER TABLE public.intake_requests 
-ADD COLUMN receipt_retry_count integer DEFAULT 0;
-
--- 2. Actualizar RPC con validacion cross-org
-CREATE OR REPLACE FUNCTION public.process_intake_and_create_entities(p_intake_id uuid)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-DECLARE
-  v_req intake_requests%ROWTYPE;
-  v_user_org_id uuid;
-  v_guardian_id uuid;
-  v_player_id uuid;
-  v_payment_id uuid;
-  v_payment_month text;
-BEGIN
-  -- NUEVO: Obtener org del usuario actual
-  v_user_org_id := get_current_org_id();
-  
-  -- Lock and fetch request
-  SELECT * INTO v_req FROM intake_requests WHERE id = p_intake_id FOR UPDATE;
-  
-  IF v_req.id IS NULL THEN
-    RETURN jsonb_build_object('success', false, 'error', 'Intake request not found');
-  END IF;
-  
-  -- NUEVO: Validar cross-org
-  IF v_req.organization_id != v_user_org_id THEN
-    RETURN jsonb_build_object('success', false, 'error', 'Access denied: cross-organization');
-  END IF;
-  
-  -- ... resto del codigo igual ...
-END;
-$$;
-
--- 3. Storage policy (si no existe)
--- Nota: Requiere verificar via Supabase Dashboard o API
-```
-
----
-
-## Resultado Visual
-
-### IntakeSettingsPanel en OrgOwnerDashboard
+**Cambios Propuestos:**
 
 ```text
-+----------------------------------------------------------+
-|  Configuracion de Fichajes                               |
-|  Define tarifas y metodos de pago para inscripciones     |
-+----------------------------------------------------------+
-|                                                          |
-|  TARIFAS                                                 |
-|  ┌──────────────────────────────────────────────────────┐|
-|  │ Inscripcion              [ $500            ]         │|
-|  │ Mensualidad Futbol       [ $450            ]         │|
-|  │ Mensualidad Basketball   [ $400            ]         │|
-|  └──────────────────────────────────────────────────────┘|
-|                                                          |
-|  PROMOCIONES                                             |
-|  ┌──────────────────────────────────────────────────────┐|
-|  │ [x] Activar promocion en cancha                      │|
-|  │ Tarifa promocional       [ $400            ]         │|
-|  └──────────────────────────────────────────────────────┘|
-|                                                          |
-|  OPCIONES                                                |
-|  ┌──────────────────────────────────────────────────────┐|
-|  │ [x] Modulo de fichajes activo                        │|
-|  │ [x] Requerir foto de evidencia para efectivo         │|
-|  │ [ ] Requerir email del tutor                         │|
-|  └──────────────────────────────────────────────────────┘|
-|                                                          |
-|  DATOS PARA TRANSFERENCIA                                |
-|  ┌──────────────────────────────────────────────────────┐|
-|  │ URL del QR                                           │|
-|  │ [ https://example.com/qr.png                     ]   │|
-|  │ ┌──────────┐                                         │|
-|  │ │  [QR]    │ <- Preview en tiempo real               │|
-|  │ └──────────┘                                         │|
-|  │                                                      │|
-|  │ Datos bancarios                                      │|
-|  │ ┌────────────────────────────────────────────────┐   │|
-|  │ │ Banco: BBVA                                    │   │|
-|  │ │ CLABE: 012345678901234567                      │   │|
-|  │ │ Titular: Academia FC                           │   │|
-|  │ └────────────────────────────────────────────────┘   │|
-|  └──────────────────────────────────────────────────────┘|
-|                                                          |
-|  [ Guardar configuracion ]                               |
-+----------------------------------------------------------+
+Archivo: src/components/ui/alert-dialog.tsx
+- Agregar max-h-[90vh] max-h-[90dvh] a AlertDialogContent
+- Agregar overflow-y-auto overflow-x-hidden
+- Agregar onOpenAutoFocus={(e) => e.preventDefault()}
 ```
-
----
-
-## Lista de Pruebas a Ejecutar
-
-| # | Prueba | Criterio de Exito |
-|---|--------|-------------------|
-| 1 | Crear fichaje como entrenador | Fichaje creado, player + payment + guardian existen |
-| 2 | Entrenador intenta ver fichaje de otro | No visible en historial |
-| 3 | Doble click en "Registrar" | Solo 1 intake_request creado (error amigable en 2do click) |
-| 4 | Hermanos: mismo tel, diferente fecha | 2 players, 1 guardian, 2 payments |
-| 5 | Subir evidencia >5MB | Error mostrado, formulario no se envia |
-| 6 | Fichaje sin email tutor | Recibo enviado a admin (sent_admin_only) |
-| 7 | Reintento recibo 3+ veces | Boton bloqueado o cooldown activo |
-| 8 | Settings: cambiar tarifa como org_owner | Guardado exitoso, nuevo fichaje usa tarifa actualizada |
-| 9 | Settings: intento de edicion como entrenador | Panel en modo solo lectura |
-| 10 | Cross-org RPC call | Error "Access denied: cross-organization" |
-
----
-
-## Flujo de Implementacion
 
 ```text
-Paso 1: Crear useIntakeSettingsEditor.ts
-    |
-    v
-Paso 2: Crear IntakeSettingsPanel.tsx
-    |
-    v
-Paso 3: Integrar en OrgOwnerDashboard + DirectorDeportivoDashboard
-    |
-    v
-Paso 4: Migrar DB (receipt_retry_count)
-    |
-    v
-Paso 5: Actualizar RPC con validacion cross-org
-    |
-    v
-Paso 6: Actualizar UI para limite de reintentos
-    |
-    v
-Paso 7: Pruebas end-to-end (10 checks)
-    |
-    v
-Paso 8: Documentar evidencia (screenshots/logs)
-    |
-    v
-Entregable: "Ready for field use"
+Archivo: src/components/ui/drawer.tsx
+- Agregar max-h-[90dvh] a DrawerContent
+- Asegurar overflow-hidden en base y overflow-y-auto interno
 ```
+
+```text
+Archivo: src/components/matches/CreateMatchModal.tsx
+- Reestructurar para usar header fijo + body scrollable
+- Aplicar patron de PlayerProfileModal
+```
+
+---
+
+### 1.2 Fix Overflow en Asistencia / Partidos
+
+**Estado Actual:**
+- `AttendanceRegistration` usa `sticky top-0` para stats bar (correcto)
+- `CreateMatchFlow` tiene `max-h-[45vh]` en lista de jugadores
+- Potencial overflow horizontal en cards con texto largo
+
+**Cambios Propuestos:**
+
+```text
+Archivo: src/components/attendance/AttendanceRegistration.tsx
+- Agregar overflow-x-hidden al contenedor principal
+- Verificar que sticky bar no cause layout shift
+```
+
+```text
+Archivo: src/components/matches/CreateMatchFlow.tsx
+Linea 200: DrawerContent className="max-h-[95vh]"
+- Agregar overflow-hidden y structure con flex column
+- Body scrollable separado de footer fijo
+```
+
+```text
+Global: Agregar a todos los Drawer bodies
+- overflow-x-hidden para prevenir scroll horizontal
+```
+
+---
+
+### 1.3 Fix Teclado Mobile (Android) que Tapa Navegacion
+
+**Estado Actual:**
+- No hay manejo especifico de keyboard visibility
+- Inputs pueden quedar tapados cuando el teclado aparece
+
+**Cambios Propuestos:**
+
+```text
+Crear: src/hooks/useKeyboardVisibility.ts
+- Hook para detectar cuando keyboard esta visible
+- Ajustar scroll position automaticamente
+
+Alternativa mas simple:
+- Usar visualViewport API en componentes criticos
+- Agregar padding-bottom dinamico cuando keyboard aparece
+```
+
+```text
+Archivo: src/index.css
+- Agregar meta viewport con interactive-widget=resizes-content
+- O usar env(keyboard-inset-height) si disponible
+```
+
+```text
+Archivo: index.html (meta viewport)
+- Agregar: interactive-widget=resizes-content
+```
+
+---
+
+### 1.4 Ajustar Spacing y Botones "Fat Finger"
+
+**Estado Actual:**
+- `AttendanceRegistration` ya usa botones h-14 (56px) - BIEN
+- `TrainerMatchesModule` usa h-12 (48px) - ACEPTABLE
+- Algunos botones son h-10 (40px) - MUY PEQUENO para campo
+
+**Estandar Mobile STRYK:**
+| Contexto | Altura Minima | Touch Target |
+|----------|---------------|--------------|
+| Accion primaria en campo | h-14 (56px) | 48x48px min |
+| Accion secundaria | h-12 (48px) | 44x44px min |
+| Iconos en toolbar | h-10 w-10 | 40x40px min |
+
+**Cambios Propuestos:**
+
+```text
+Archivos a revisar y ajustar:
+- IntakeTerminal.tsx - Botones de submit
+- CreateMatchFlow.tsx - Botones de navegacion
+- TrialClassModal.tsx - Formulario completo
+```
+
+```text
+Patron a aplicar:
+- Botones de accion principal: className="h-14 text-base"
+- Espaciado entre elementos tactiles: gap-3 minimo
+- Inputs en formularios: className="h-12 text-base"
+```
+
+---
+
+### 1.5 Validar Landscape/Portrait Locks
+
+**Estado Actual:**
+- No hay locks implementados
+- UI funciona en ambas orientaciones pero puede ser suboptima
+
+**Recomendacion:**
+- NO bloquear orientacion (frustra usuarios)
+- En lugar de eso, optimizar layouts para ambas
+
+```text
+Archivo: src/components/attendance/AttendanceRegistration.tsx
+- En landscape: mostrar mas columnas en stats grid
+- Ajustar max-height de listas para viewport horizontal
+```
+
+---
+
+## Parte 2: Estados y Feedback de Usuario
+
+### 2.1 Loading States Claros
+
+**Estado Actual:**
+- Spinner basico: `animate-spin rounded-full border-b-2`
+- Skeleton component existe pero poco usado
+- Algunos componentes no muestran loading (IntakeSettingsPanel)
+
+**Problemas:**
+- Loading spinner generico no indica que esta cargando
+- Falta feedback durante operaciones largas
+- Usuario no sabe si click funciono
+
+**Cambios Propuestos:**
+
+```text
+Crear: src/components/ui/loading-spinner.tsx
+- Componente estandar con opcional label
+- Variantes: inline, fullscreen, overlay
+- Mensajes contextuales: "Cargando jugadores...", "Guardando..."
+```
+
+```text
+Patron de Loading States:
+| Estado | Componente | Mensaje |
+|--------|------------|---------|
+| Lista inicial | Skeleton rows | (visual) |
+| Guardando | Button disabled + spinner | "Guardando..." |
+| Procesando | Overlay spinner | "Procesando fichaje..." |
+| Cargando datos | Center spinner + text | "Cargando..." |
+```
+
+```text
+Archivos a actualizar:
+- PlayersTable.tsx - Usar skeleton en lugar de spinner
+- IntakeHistory.tsx - Ya usa Loader2 (correcto)
+- IntakeSettingsPanel.tsx - Agregar loading inicial
+- AttendanceRegistration.tsx - Ya tiene loading (correcto)
+```
+
+---
+
+### 2.2 Success States Visibles
+
+**Estado Actual:**
+- `toast.success()` usado consistentemente
+- IntakeTerminal tiene pantalla de exito dedicada (patron ideal)
+- Algunos toasts desaparecen muy rapido
+
+**Patron Ideal (IntakeTerminal):**
+```
+1. Accion completada
+2. Transicion a pantalla de exito
+3. Iconografia clara (Check verde)
+4. Mensaje de confirmacion
+5. Siguiente accion clara ("Nuevo Fichaje")
+```
+
+**Cambios Propuestos:**
+
+```text
+Archivo: src/components/attendance/AttendanceRegistration.tsx
+- Despues de guardar, mostrar feedback visual inmediato
+- Badge temporal: "Asistencia guardada"
+- Animacion sutil en boton de guardar
+```
+
+```text
+Patron para acciones criticas:
+1. Button cambia a estado "success" brevemente
+2. Toast confirma la accion
+3. UI se actualiza inmediatamente (optimistic)
+```
+
+```text
+Crear: Componente ActionButton con estados
+- idle: texto normal
+- loading: spinner + "Guardando..."
+- success: check + "Guardado" (2 segundos)
+- error: x + "Error" (click para reintentar)
+```
+
+---
+
+### 2.3 Error States Entendibles (No Tecnicos)
+
+**Estado Actual:**
+- Mensajes de error en espanol (bien)
+- Algunos errores muestran detalles tecnicos
+- IntakeTerminal tiene pantalla de error dedicada (patron ideal)
+
+**Mapa de Errores a Humanizar:**
+
+| Error Tecnico | Mensaje Usuario |
+|---------------|-----------------|
+| Network error | "Sin conexion. Verifica tu internet." |
+| 23505 unique violation | "Este jugador ya fue registrado." |
+| RLS policy violation | "No tienes permiso para esta accion." |
+| 500 server error | "Algo salio mal. Intenta de nuevo." |
+| Timeout | "La operacion tardo demasiado. Intenta de nuevo." |
+
+**Cambios Propuestos:**
+
+```text
+Crear: src/lib/error-messages.ts
+- Funcion getHumanErrorMessage(error)
+- Mapeo de codigos a mensajes amigables
+- Fallback generico para errores desconocidos
+```
+
+```text
+Actualizar hooks para usar mensajes humanizados:
+- useTrainingAttendance.ts (onError)
+- usePayments.ts (onError)
+- useIntake.ts (ya humaniza algunos)
+```
+
+---
+
+### 2.4 Confirmaciones Antes de Acciones Criticas
+
+**Estado Actual:**
+- `AlertDialog` usado para desactivar usuarios
+- `AlertDialog` usado para eliminar partidos
+- PlayersTable tiene confirmacion de desactivacion
+
+**Acciones que REQUIEREN confirmacion:**
+
+| Accion | Implementado? | Componente |
+|--------|---------------|------------|
+| Desactivar jugador | SI | PlayersTable |
+| Desactivar usuario | SI | ConfirmDeactivateDialog |
+| Eliminar partido | SI | MatchHistoryModule |
+| Cambiar plan de usuario | NO | - |
+| Eliminar pago | NO | - |
+| Cancelar fichaje en progreso | NO | IntakeTerminal |
+
+**Cambios Propuestos:**
+
+```text
+Archivo: src/components/fichajes/IntakeTerminal.tsx
+- Agregar confirmacion si usuario intenta cerrar con datos ingresados
+- "Tienes datos sin guardar. Seguro que quieres salir?"
+```
+
+```text
+Crear: src/components/ui/confirm-dialog.tsx
+- Wrapper reutilizable sobre AlertDialog
+- Props: title, description, confirmText, variant (default/destructive)
+- Uso: <ConfirmDialog onConfirm={action} />
+```
+
+---
+
+## Archivos a Modificar
+
+| Archivo | Cambios |
+|---------|---------|
+| `src/components/ui/alert-dialog.tsx` | Agregar scroll, max-height, auto-focus prevention |
+| `src/components/ui/drawer.tsx` | Agregar max-height, overflow control |
+| `src/components/matches/CreateMatchModal.tsx` | Estructura scroll optimizada |
+| `src/components/attendance/AttendanceRegistration.tsx` | Success feedback, overflow-x-hidden |
+| `src/components/fichajes/IntakeTerminal.tsx` | Confirmacion al cerrar |
+| `index.html` | Meta viewport interactive-widget |
+
+## Archivos a Crear
+
+| Archivo | Proposito |
+|---------|-----------|
+| `src/lib/error-messages.ts` | Mapeo de errores a mensajes humanos |
+| `src/components/ui/confirm-dialog.tsx` | Wrapper reutilizable para confirmaciones |
+| `src/components/ui/action-button.tsx` | Boton con estados loading/success/error |
+
+---
+
+## Metricas de Exito
+
+| Criterio | Validacion |
+|----------|------------|
+| Modales no se cortan en mobile | Test en viewport 375x667 |
+| Teclado no tapa inputs | Test en Android Chrome |
+| Botones son tocables con dedo gordo | Touch target >= 44px |
+| Usuario sabe que accion funciono | Toast + feedback visual |
+| Errores son entendibles | Sin codigos ni stack traces |
+| Acciones destructivas protegidas | Confirmacion requerida |
+
+---
+
+## Orden de Implementacion
+
+```text
+1. AlertDialog + Drawer scroll fixes (base components)
+2. Confirmaciones en acciones criticas
+3. Error messages humanizados
+4. Success feedback mejorado
+5. Mobile keyboard handling
+6. Touch target audit y fixes
+```
+
+---
+
+## Notas Tecnicas
+
+**iOS Safari:**
+- Usar `dvh` en lugar de `vh` para viewport dinamico
+- `overscroll-contain` previene bounce effect
+
+**Android Chrome:**
+- `interactive-widget=resizes-content` ajusta viewport con keyboard
+- Usar `visualViewport` API para deteccion precisa
+
+**Skeleton vs Spinner:**
+- Skeleton: listas y contenido estructurado
+- Spinner: acciones individuales y cargas cortas
