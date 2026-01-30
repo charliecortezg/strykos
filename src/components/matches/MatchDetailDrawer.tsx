@@ -143,7 +143,7 @@ export function MatchDetailDrawer({
           </div>
         </DrawerHeader>
 
-        <ScrollArea className="flex-1 px-4">
+        <ScrollArea className="flex-1 px-4 overflow-x-hidden">
           <Tabs defaultValue="info" className="mt-4">
             <TabsList className="mb-4 w-full grid grid-cols-3">
               <TabsTrigger value="info" className="gap-2 text-xs sm:text-sm">

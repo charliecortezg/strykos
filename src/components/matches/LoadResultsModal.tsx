@@ -197,9 +197,9 @@ export function LoadResultsModal({
           </div>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4">
           <Tabs defaultValue="result" className="w-full">
-            <TabsList className="w-full grid grid-cols-3 mx-4 mt-3">
+            <TabsList className="w-full grid grid-cols-3 mt-3">
               <TabsTrigger value="result" className="gap-1.5 text-xs">
                 <Trophy className="w-4 h-4" />
                 Marcador
@@ -214,7 +214,7 @@ export function LoadResultsModal({
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="result" className="px-4 py-4 space-y-4">
+            <TabsContent value="result" className="py-4 space-y-4">
               {/* Score Display */}
               <Card className={cn(
                 "p-6 text-center",
@@ -317,7 +317,7 @@ export function LoadResultsModal({
               </div>
             </TabsContent>
 
-            <TabsContent value="stats" className="px-4 py-4 space-y-3">
+            <TabsContent value="stats" className="py-4 space-y-3">
               {loadingPlayers ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -421,7 +421,7 @@ export function LoadResultsModal({
               )}
             </TabsContent>
 
-            <TabsContent value="notes" className="px-4 py-4 space-y-4">
+            <TabsContent value="notes" className="py-4 space-y-4">
               {/* Technical Notes */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Notas Técnicas</Label>
