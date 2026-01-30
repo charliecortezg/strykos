@@ -153,7 +153,8 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
             <PerformanceStats 
               excellent={localStats.excellent} 
               focus={localStats.focus} 
-              challenge={localStats.challenge} 
+              challenge={localStats.challenge}
+              showHelp
             />
           </div>
           {/* Quick Filter for Challenge */}

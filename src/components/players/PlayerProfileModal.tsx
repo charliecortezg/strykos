@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { User, Calendar, CreditCard, CheckCircle, XCircle, AlertCircle, Trophy, Target } from 'lucide-react';
+import { User, Calendar, CreditCard, CheckCircle, XCircle, AlertCircle, Trophy, Target, Banknote, ArrowRightLeft, Receipt } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePlayerAttendance, usePlayerMatches } from '@/hooks/usePlayerAttendance';
-import { PAYMENT_STATUS_LABELS, ATTENDANCE_STATUS_LABELS, type Player } from '@/types/categories';
+import { usePayments } from '@/hooks/usePayments';
+import { PAYMENT_STATUS_LABELS, ATTENDANCE_STATUS_LABELS, type Player, type Payment } from '@/types/categories';
 import { getMatchResult } from '@/types/matches';
 import { cn } from '@/lib/utils';
 
@@ -20,11 +22,44 @@ interface PlayerProfileModalProps {
   player: Player | null;
 }
 
+const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
+  efectivo: <Banknote className="w-4 h-4 text-success" />,
+  transferencia: <ArrowRightLeft className="w-4 h-4 text-primary" />,
+  tarjeta: <CreditCard className="w-4 h-4 text-warning" />,
+  otro: <Receipt className="w-4 h-4 text-muted-foreground" />,
+};
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  efectivo: 'Efectivo',
+  transferencia: 'Transferencia',
+  tarjeta: 'Tarjeta',
+  otro: 'Otro',
+};
+
 export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfileModalProps) {
   const { attendance, stats, isLoading: loadingAttendance } = usePlayerAttendance(player?.id || null);
   const { matches, matchStats, isLoading: loadingMatches } = usePlayerMatches(player?.id || null);
+  const { getPlayerPayments } = usePayments();
+  
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+
+  // Fetch payments when player changes
+  useEffect(() => {
+    if (player?.id && open) {
+      setLoadingPayments(true);
+      getPlayerPayments(player.id)
+        .then(setPayments)
+        .finally(() => setLoadingPayments(false));
+    }
+  }, [player?.id, open, getPlayerPayments]);
 
   if (!player) return null;
+
+  // Calculate payment stats
+  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const paymentCount = payments.length;
+  const lastPayment = payments[0]; // Already sorted by date desc
 
   const getPaymentBadgeClass = (status: string) => {
     switch (status) {
@@ -331,16 +366,85 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
               )}
             </TabsContent>
 
-            <TabsContent value="pagos">
-              <div className="p-8 text-center text-muted-foreground">
-                <CreditCard className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                <p>Historial de pagos próximamente.</p>
-                {player.monthly_fee && (
-                  <p className="mt-2 text-sm">
-                    Cuota mensual: <span className="font-semibold">${player.monthly_fee}</span>
-                  </p>
-                )}
+            {/* Payments Tab */}
+            <TabsContent value="pagos" className="space-y-4">
+              {/* Payment Summary */}
+              <div className="grid grid-cols-3 gap-3 p-4 bg-muted/30 rounded-lg">
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-success">${totalPaid.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Total pagado</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-semibold">{paymentCount}</p>
+                  <p className="text-xs text-muted-foreground">Pagos</p>
+                </div>
+                <div className="text-center">
+                  <Badge className={getPaymentBadgeClass(player.payment_status)}>
+                    {PAYMENT_STATUS_LABELS[player.payment_status]}
+                  </Badge>
+                  <p className="text-xs text-muted-foreground mt-1">Estado</p>
+                </div>
               </div>
+
+              {/* Last Payment */}
+              {lastPayment && (
+                <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-2 font-medium">ÚLTIMO PAGO</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-lg">${Number(lastPayment.amount).toLocaleString()}</p>
+                      <p className="text-sm text-muted-foreground">{lastPayment.concept}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {format(new Date(lastPayment.created_at), "d MMM yyyy", { locale: es })} • {PAYMENT_METHOD_LABELS[lastPayment.payment_method] || lastPayment.payment_method}
+                      </p>
+                    </div>
+                    <div className="flex-shrink-0">
+                      {PAYMENT_METHOD_ICONS[lastPayment.payment_method]}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Payment History List */}
+              {loadingPayments ? (
+                <div className="p-8 text-center">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              ) : payments.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <CreditCard className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                  <p>No hay pagos registrados.</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <p className="text-xs text-muted-foreground font-medium px-1">HISTORIAL</p>
+                  {payments.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className="flex items-center justify-between p-3 bg-muted/20 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        {PAYMENT_METHOD_ICONS[payment.payment_method]}
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            ${Number(payment.amount).toLocaleString()} — {payment.concept}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(payment.created_at), "d MMM yyyy", { locale: es })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Monthly Fee */}
+              {player.monthly_fee && (
+                <div className="pt-2 border-t border-border text-center text-sm text-muted-foreground">
+                  Cuota mensual: <span className="font-semibold text-foreground">${player.monthly_fee}</span>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="info">

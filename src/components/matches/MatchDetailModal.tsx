@@ -138,6 +138,12 @@ export function MatchDetailModal({
                 Editar partido
               </Button>
             )}
+            {!canEdit && isFinished && (
+              <Badge variant="outline" className="bg-muted text-muted-foreground text-xs flex items-center gap-1.5">
+                <Clock className="w-3 h-3" />
+                Partido cerrado
+              </Badge>
+            )}
             {isEditing && (
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={handleCancel} className="gap-2">
