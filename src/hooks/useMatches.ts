@@ -115,12 +115,33 @@ export function useMatches(filters?: Partial<MatchFilters>) {
     },
   });
 
+  const deleteMatch = useMutation({
+    mutationFn: async (matchId: string) => {
+      const { error } = await supabase
+        .from('matches')
+        .delete()
+        .eq('id', matchId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['matches'] });
+      queryClient.invalidateQueries({ queryKey: ['matches-count'] });
+      toast.success('Partido eliminado correctamente');
+    },
+    onError: (error) => {
+      console.error('Error deleting match:', error);
+      toast.error('Error al eliminar el partido');
+    },
+  });
+
   return {
     matches,
     totalCount,
     isLoading,
     error,
     updateMatch,
+    deleteMatch,
   };
 }
 

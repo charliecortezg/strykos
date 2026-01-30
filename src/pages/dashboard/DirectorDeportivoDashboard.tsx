@@ -140,7 +140,7 @@ export default function DirectorDeportivoDashboard() {
           </TabsContent>
 
           <TabsContent value="partidos">
-            <MatchHistoryModule canEdit={true} />
+            <MatchHistoryModule canEdit={true} canDelete={true} />
           </TabsContent>
 
           <TabsContent value="entrenadores">
