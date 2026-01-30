@@ -233,57 +233,57 @@ export function LoadResultsModal({
                   {result === 'victoria' ? 'Victoria' : result === 'empate' ? 'Empate' : 'Derrota'}
                 </Badge>
 
-                <div className="flex items-center justify-center gap-8">
+                <div className="flex items-center justify-center gap-3 sm:gap-6">
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-2">Nosotros</p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-10 w-10"
+                        className="h-8 w-8 sm:h-10 sm:w-10"
                         onClick={() => setGoalsFor(Math.max(0, goalsFor - 1))}
                         disabled={isFutbol} // Disabled if auto-calculated
                       >
-                        <Minus className="w-4 h-4" />
+                        <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
-                      <span className="text-4xl font-display font-bold w-14 text-center text-primary">
+                      <span className="text-3xl sm:text-4xl font-display font-bold w-10 sm:w-14 text-center text-primary">
                         {goalsFor}
                       </span>
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-10 w-10"
+                        className="h-8 w-8 sm:h-10 sm:w-10"
                         onClick={() => setGoalsFor(goalsFor + 1)}
                         disabled={isFutbol}
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
                     </div>
                   </div>
                   
-                  <span className="text-2xl text-muted-foreground font-light">—</span>
+                  <span className="text-xl sm:text-2xl text-muted-foreground font-light">—</span>
                   
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-2">Rival</p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-10 w-10"
+                        className="h-8 w-8 sm:h-10 sm:w-10"
                         onClick={() => setGoalsAgainst(Math.max(0, goalsAgainst - 1))}
                       >
-                        <Minus className="w-4 h-4" />
+                        <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
-                      <span className="text-4xl font-display font-bold w-14 text-center">
+                      <span className="text-3xl sm:text-4xl font-display font-bold w-10 sm:w-14 text-center">
                         {goalsAgainst}
                       </span>
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-10 w-10"
+                        className="h-8 w-8 sm:h-10 sm:w-10"
                         onClick={() => setGoalsAgainst(goalsAgainst + 1)}
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
                     </div>
                   </div>
