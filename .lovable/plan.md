@@ -1,379 +1,328 @@
 
-# Plan: Product Stability & UX Hardening
+# Plan: Core Feature Completion (Cerrar lo que ya prometimos)
 
 ## Objetivo
-Cero friccion en campo. Cero bugs visibles. Cero dudas.
-El Entrenador confia en STRYK sin pensar.
+Nada "a medias" en features visibles. Completar todas las funcionalidades parcialmente implementadas.
 
 ---
 
-## Resumen Ejecutivo
+## Analisis del Estado Actual
 
-Este plan aborda dos areas criticas:
-1. **Mobile UX Corrections** - Problemas de scroll, overflow, teclado y botones
-2. **Estados y Feedback de Usuario** - Loading, success, error y confirmaciones
-
----
-
-## Parte 1: Mobile UX Corrections
-
-### 1.1 Fix Scroll en Modales Largos
+### 2.1 Perfil de Jugador - Tab Pagos
 
 **Estado Actual:**
-- `Dialog` component ya tiene `max-h-[90vh]` y `overflow-y-auto`
-- `onOpenAutoFocus` ya previene auto-focus (evita salto de viewport)
-- `PlayerProfileModal` usa estructura correcta con header fijo y contenido scrollable
-
-**Problemas Detectados:**
-- `AlertDialogContent` NO tiene `max-h-[90vh]` ni scroll
-- `Drawer` no tiene manejo de altura maxima consistente
-- Algunos modales como `CreateMatchModal` no usan estructura de scroll optimizada
-
-**Cambios Propuestos:**
-
-```text
-Archivo: src/components/ui/alert-dialog.tsx
-- Agregar max-h-[90vh] max-h-[90dvh] a AlertDialogContent
-- Agregar overflow-y-auto overflow-x-hidden
-- Agregar onOpenAutoFocus={(e) => e.preventDefault()}
+```tsx
+// PlayerProfileModal.tsx linea 334-343
+<TabsContent value="pagos">
+  <div className="p-8 text-center text-muted-foreground">
+    <CreditCard className="w-10 h-10 mx-auto mb-3 opacity-50" />
+    <p>Historial de pagos próximamente.</p>
+    {player.monthly_fee && (
+      <p className="mt-2 text-sm">
+        Cuota mensual: <span className="font-semibold">${player.monthly_fee}</span>
+      </p>
+    )}
+  </div>
+</TabsContent>
 ```
 
-```text
-Archivo: src/components/ui/drawer.tsx
-- Agregar max-h-[90dvh] a DrawerContent
-- Asegurar overflow-hidden en base y overflow-y-auto interno
-```
+**Problema:** Tab de pagos muestra placeholder, no datos reales.
 
-```text
-Archivo: src/components/matches/CreateMatchModal.tsx
-- Reestructurar para usar header fijo + body scrollable
-- Aplicar patron de PlayerProfileModal
-```
+**Hook existente:** `usePayments` ya tiene `getPlayerPayments(playerId)` que retorna historial completo.
 
 ---
 
-### 1.2 Fix Overflow en Asistencia / Partidos
+### 2.2 Estados Consistentes en Partidos
 
 **Estado Actual:**
-- `AttendanceRegistration` usa `sticky top-0` para stats bar (correcto)
-- `CreateMatchFlow` tiene `max-h-[45vh]` en lista de jugadores
-- Potencial overflow horizontal en cards con texto largo
+- Tabla `matches` usa campo `status TEXT` con valores: `programado`, `terminado`, `cancelado`
+- NO hay enum, son valores de texto con default `'programado'`
+- NO existe estado `draft`, `in_progress` ni `locked`
+- NO hay validacion de datos incompletos antes de marcar como `terminado`
 
-**Cambios Propuestos:**
-
+**Flujo actual:**
 ```text
-Archivo: src/components/attendance/AttendanceRegistration.tsx
-- Agregar overflow-x-hidden al contenedor principal
-- Verificar que sticky bar no cause layout shift
+programado --> terminado (al cargar resultado)
+           --> cancelado (manual)
 ```
 
-```text
-Archivo: src/components/matches/CreateMatchFlow.tsx
-Linea 200: DrawerContent className="max-h-[95vh]"
-- Agregar overflow-hidden y structure con flex column
-- Body scrollable separado de footer fijo
-```
-
-```text
-Global: Agregar a todos los Drawer bodies
-- overflow-x-hidden para prevenir scroll horizontal
-```
+**Problema:** No hay bloqueo post-cierre ni validacion de datos minimos.
 
 ---
 
-### 1.3 Fix Teclado Mobile (Android) que Tapa Navegacion
+### 2.3 Semaforo de Rendimiento
 
 **Estado Actual:**
-- No hay manejo especifico de keyboard visibility
-- Inputs pueden quedar tapados cuando el teclado aparece
+- Enum en DB: `attendance_performance_status: "excellent" | "focus" | "challenge"`
+- Logica implementada en `AttendanceRegistration.tsx`:
+  - Marcar "Presente" automaticamente asigna `excellent`
+  - Marcar "Ausente" limpia `performance_status` a null
+  - Tap en semaforo cicla: `excellent -> focus -> challenge -> excellent`
+- Componente `PerformanceIndicator` tiene tooltip con label pero NO explica criterio
 
-**Cambios Propuestos:**
-
-```text
-Crear: src/hooks/useKeyboardVisibility.ts
-- Hook para detectar cuando keyboard esta visible
-- Ajustar scroll position automaticamente
-
-Alternativa mas simple:
-- Usar visualViewport API en componentes criticos
-- Agregar padding-bottom dinamico cuando keyboard aparece
-```
-
-```text
-Archivo: src/index.css
-- Agregar meta viewport con interactive-widget=resizes-content
-- O usar env(keyboard-inset-height) si disponible
-```
-
-```text
-Archivo: index.html (meta viewport)
-- Agregar: interactive-widget=resizes-content
-```
+**Problema:** El usuario no sabe que significa cada estado. Es una "caja negra".
 
 ---
 
-### 1.4 Ajustar Spacing y Botones "Fat Finger"
+## Solucion Propuesta
 
-**Estado Actual:**
-- `AttendanceRegistration` ya usa botones h-14 (56px) - BIEN
-- `TrainerMatchesModule` usa h-12 (48px) - ACEPTABLE
-- Algunos botones son h-10 (40px) - MUY PEQUENO para campo
+### 2.1 Perfil de Jugador - Tab Pagos Completo
 
-**Estandar Mobile STRYK:**
-| Contexto | Altura Minima | Touch Target |
-|----------|---------------|--------------|
-| Accion primaria en campo | h-14 (56px) | 48x48px min |
-| Accion secundaria | h-12 (48px) | 44x44px min |
-| Iconos en toolbar | h-10 w-10 | 40x40px min |
+**Implementacion:**
 
-**Cambios Propuestos:**
+Crear nuevo hook `usePlayerPaymentHistory` que extienda la funcionalidad existente:
 
-```text
-Archivos a revisar y ajustar:
-- IntakeTerminal.tsx - Botones de submit
-- CreateMatchFlow.tsx - Botones de navegacion
-- TrialClassModal.tsx - Formulario completo
+```typescript
+// Hook que ya existe parcialmente en usePayments.ts
+getPlayerPayments(playerId) // Retorna Payment[]
+
+// Datos a mostrar:
+- Lista de pagos realizados (ordenados por fecha)
+- Total pagado historico
+- Ultimo pago (monto, fecha, metodo)
+- Estado actual (al_dia / pendiente / atrasado)
+- Meses sin pago (para adeudo)
 ```
 
+**UI del Tab Pagos:**
+
 ```text
-Patron a aplicar:
-- Botones de accion principal: className="h-14 text-base"
-- Espaciado entre elementos tactiles: gap-3 minimo
-- Inputs en formularios: className="h-12 text-base"
++----------------------------------------------------------+
+| ESTADO DE CUENTA                                          |
++----------------------------------------------------------+
+| ┌────────────────┐  ┌────────────────┐  ┌────────────────┐|
+| │    $1,500      │  │      5         │  │   Al día       │|
+| │  Total pagado  │  │    Pagos       │  │    Estado      │|
+| └────────────────┘  └────────────────┘  └────────────────┘|
+|                                                          |
+| ULTIMO PAGO                                              |
+| ┌──────────────────────────────────────────────────────┐ |
+| │ $300 - Mensualidad Enero 2026                        │ |
+| │ 14 Ene 2026 • Transferencia                          │ |
+| └──────────────────────────────────────────────────────┘ |
+|                                                          |
+| HISTORIAL                                                |
+| ┌──────────────────────────────────────────────────────┐ |
+| │ 💳 $300 - Mensualidad Enero         14 Ene 2026     │ |
+| │ 💵 $300 - Mensualidad Diciembre     15 Dic 2025     │ |
+| │ 💳 $300 - Mensualidad Noviembre     12 Nov 2025     │ |
+| │ ...                                                  │ |
+| └──────────────────────────────────────────────────────┘ |
+|                                                          |
+| Cuota mensual: $300                                      |
++----------------------------------------------------------+
 ```
+
+**Archivos a modificar:**
+- `src/components/players/PlayerProfileModal.tsx` - Implementar tab pagos completo
+- Usar `usePayments` hook existente (metodo `getPlayerPayments`)
 
 ---
 
-### 1.5 Validar Landscape/Portrait Locks
+### 2.2 Estados Consistentes en Partidos
 
-**Estado Actual:**
-- No hay locks implementados
-- UI funciona en ambas orientaciones pero puede ser suboptima
-
-**Recomendacion:**
-- NO bloquear orientacion (frustra usuarios)
-- En lugar de eso, optimizar layouts para ambas
+**Flujo de estados propuesto:**
 
 ```text
-Archivo: src/components/attendance/AttendanceRegistration.tsx
-- En landscape: mostrar mas columnas en stats grid
-- Ajustar max-height de listas para viewport horizontal
+            ┌──────────────────────────────────────┐
+            │        CICLO DE VIDA DEL PARTIDO     │
+            └──────────────────────────────────────┘
+
+programado ──────────────────────────────────────────┐
+    │ (partido futuro, sin resultado)                │
+    │                                                │
+    ▼                                                │
+terminado ◄─────────────────────────────────────────┤
+    │ (resultado cargado, editable por Director)     │
+    │                                                │
+    │ [Opcional futuro: locked]                      │
+    ▼                                                │
+cancelado ◄─────────────────────────────────────────┘
+    (partido no se jugo)
 ```
+
+**Validaciones requeridas antes de `terminado`:**
+1. `rival_name` no vacio
+2. `goals_for` y `goals_against` definidos (>= 0)
+3. Al menos 1 jugador presente en `match_players` con `attended = true`
+
+**Bloqueo de edicion (post-cierre):**
+- Partidos `terminado` editables solo por `org_owner` y `director_deportivo`
+- Entrenador NO puede editar partidos ya terminados
+- RLS ya maneja esto via `UPDATE` policies
+
+**Cambios propuestos:**
+
+1. **Validacion en LoadResultsModal** antes de guardar como `terminado`:
+```typescript
+// Validar antes de handleSave()
+if (attendingPlayers.length === 0) {
+  toast.error('Marca al menos un jugador como presente');
+  return;
+}
+```
+
+2. **UI clara de estados** en MatchCard y MatchDetailModal:
+```text
+| Estado     | Badge Color      | Icono   | Editable por        |
+|------------|------------------|---------|---------------------|
+| programado | Primary/Blue     | Clock   | Entrenador, Director|
+| terminado  | Success/Green    | Check   | Solo Director       |
+| cancelado  | Destructive/Red  | X       | Director (re-abrir) |
+```
+
+3. **Mensaje cuando entrenador intenta editar partido terminado:**
+```text
+"Este partido ya fue cerrado. Contacta al Director Deportivo para correcciones."
+```
+
+**Archivos a modificar:**
+- `src/components/matches/LoadResultsModal.tsx` - Agregar validacion minima
+- `src/components/matches/MatchDetailModal.tsx` - Mensaje si `canEdit=false` y `terminado`
+- `src/components/matches/MatchCard.tsx` - Indicador visual de estado editable
 
 ---
 
-## Parte 2: Estados y Feedback de Usuario
+### 2.3 Consistencia Semaforo de Rendimiento
 
-### 2.1 Loading States Claros
+**Problema actual:** Usuario no sabe que significa cada color.
 
-**Estado Actual:**
-- Spinner basico: `animate-spin rounded-full border-b-2`
-- Skeleton component existe pero poco usado
-- Algunos componentes no muestran loading (IntakeSettingsPanel)
+**Solucion:** Agregar explicacion contextual accesible.
 
-**Problemas:**
-- Loading spinner generico no indica que esta cargando
-- Falta feedback durante operaciones largas
-- Usuario no sabe si click funciono
-
-**Cambios Propuestos:**
+**Definicion clara de estados:**
 
 ```text
-Crear: src/components/ui/loading-spinner.tsx
-- Componente estandar con opcional label
-- Variantes: inline, fullscreen, overlay
-- Mensajes contextuales: "Cargando jugadores...", "Guardando..."
+┌─────────────────────────────────────────────────────────┐
+│ SEMAFORO DE RENDIMIENTO - Evaluacion del Entrenador    │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│ 🟢 EXCELENTE                                            │
+│    El jugador mostro actitud ejemplar, esfuerzo        │
+│    constante y buen desempeño en el entrenamiento.     │
+│    (Default al marcar presente)                        │
+│                                                         │
+│ 🟡 ENFOQUE                                              │
+│    El jugador necesita mejorar su concentracion        │
+│    o actitud. Requiere seguimiento esta semana.        │
+│                                                         │
+│ 🔴 RETO                                                 │
+│    El jugador presenta problemas de actitud,           │
+│    disciplina o rendimiento que requieren atencion     │
+│    inmediata del cuerpo tecnico.                       │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
 ```
 
-```text
-Patron de Loading States:
-| Estado | Componente | Mensaje |
-|--------|------------|---------|
-| Lista inicial | Skeleton rows | (visual) |
-| Guardando | Button disabled + spinner | "Guardando..." |
-| Procesando | Overlay spinner | "Procesando fichaje..." |
-| Cargando datos | Center spinner + text | "Cargando..." |
+**Implementacion UI:**
+
+1. **Tooltip mejorado en PerformanceIndicator:**
+```typescript
+// Agregar descripcion a PERFORMANCE_CONFIG
+const PERFORMANCE_CONFIG = {
+  excellent: {
+    label: 'Excelente',
+    description: 'Actitud y desempeño ejemplar',
+    bgColor: 'bg-success',
+    ringColor: 'ring-success/30',
+  },
+  focus: {
+    label: 'Enfoque',
+    description: 'Requiere mejorar concentracion',
+    bgColor: 'bg-warning',
+    ringColor: 'ring-warning/30',
+  },
+  challenge: {
+    label: 'Reto',
+    description: 'Atencion inmediata requerida',
+    bgColor: 'bg-destructive',
+    ringColor: 'ring-destructive/30',
+  },
+};
 ```
 
+2. **Icono de ayuda en header de AttendanceRegistration:**
 ```text
-Archivos a actualizar:
-- PlayersTable.tsx - Usar skeleton en lugar de spinner
-- IntakeHistory.tsx - Ya usa Loader2 (correcto)
-- IntakeSettingsPanel.tsx - Agregar loading inicial
-- AttendanceRegistration.tsx - Ya tiene loading (correcto)
+Rendimiento: 🟢 5  🟡 2  🔴 1  [?]
+                               │
+                               └── Info tooltip/popover con explicacion
 ```
+
+3. **Leyenda colapsable** al pie del modulo de asistencia (primera vez que se usa):
+```tsx
+<Collapsible>
+  <CollapsibleTrigger>
+    <Info className="w-4 h-4" /> ¿Que significa cada color?
+  </CollapsibleTrigger>
+  <CollapsibleContent>
+    // Explicacion de los 3 estados
+  </CollapsibleContent>
+</Collapsible>
+```
+
+**Archivos a modificar:**
+- `src/components/attendance/PerformanceIndicator.tsx` - Mejorar tooltip con descripcion
+- `src/components/attendance/AttendanceRegistration.tsx` - Agregar ayuda contextual
 
 ---
 
-### 2.2 Success States Visibles
+## Resumen de Cambios
 
-**Estado Actual:**
-- `toast.success()` usado consistentemente
-- IntakeTerminal tiene pantalla de exito dedicada (patron ideal)
-- Algunos toasts desaparecen muy rapido
+### Archivos a Modificar
 
-**Patron Ideal (IntakeTerminal):**
-```
-1. Accion completada
-2. Transicion a pantalla de exito
-3. Iconografia clara (Check verde)
-4. Mensaje de confirmacion
-5. Siguiente accion clara ("Nuevo Fichaje")
-```
+| Archivo | Cambio |
+|---------|--------|
+| `PlayerProfileModal.tsx` | Implementar tab Pagos completo con historial real |
+| `LoadResultsModal.tsx` | Validacion minima antes de cerrar partido |
+| `MatchDetailModal.tsx` | Mensaje para entrenador si partido bloqueado |
+| `MatchCard.tsx` | Indicador visual de editabilidad por estado |
+| `PerformanceIndicator.tsx` | Tooltip mejorado con descripcion |
+| `AttendanceRegistration.tsx` | Icono de ayuda y leyenda explicativa |
 
-**Cambios Propuestos:**
+### Sin cambios de base de datos
 
-```text
-Archivo: src/components/attendance/AttendanceRegistration.tsx
-- Despues de guardar, mostrar feedback visual inmediato
-- Badge temporal: "Asistencia guardada"
-- Animacion sutil en boton de guardar
-```
-
-```text
-Patron para acciones criticas:
-1. Button cambia a estado "success" brevemente
-2. Toast confirma la accion
-3. UI se actualiza inmediatamente (optimistic)
-```
-
-```text
-Crear: Componente ActionButton con estados
-- idle: texto normal
-- loading: spinner + "Guardando..."
-- success: check + "Guardado" (2 segundos)
-- error: x + "Error" (click para reintentar)
-```
+No se requieren migraciones SQL. Los estados de partido existentes (`programado`, `terminado`, `cancelado`) son suficientes para el flujo actual.
 
 ---
 
-### 2.3 Error States Entendibles (No Tecnicos)
+## Criterios de Exito
 
-**Estado Actual:**
-- Mensajes de error en espanol (bien)
-- Algunos errores muestran detalles tecnicos
-- IntakeTerminal tiene pantalla de error dedicada (patron ideal)
-
-**Mapa de Errores a Humanizar:**
-
-| Error Tecnico | Mensaje Usuario |
-|---------------|-----------------|
-| Network error | "Sin conexion. Verifica tu internet." |
-| 23505 unique violation | "Este jugador ya fue registrado." |
-| RLS policy violation | "No tienes permiso para esta accion." |
-| 500 server error | "Algo salio mal. Intenta de nuevo." |
-| Timeout | "La operacion tardo demasiado. Intenta de nuevo." |
-
-**Cambios Propuestos:**
-
-```text
-Crear: src/lib/error-messages.ts
-- Funcion getHumanErrorMessage(error)
-- Mapeo de codigos a mensajes amigables
-- Fallback generico para errores desconocidos
-```
-
-```text
-Actualizar hooks para usar mensajes humanizados:
-- useTrainingAttendance.ts (onError)
-- usePayments.ts (onError)
-- useIntake.ts (ya humaniza algunos)
-```
-
----
-
-### 2.4 Confirmaciones Antes de Acciones Criticas
-
-**Estado Actual:**
-- `AlertDialog` usado para desactivar usuarios
-- `AlertDialog` usado para eliminar partidos
-- PlayersTable tiene confirmacion de desactivacion
-
-**Acciones que REQUIEREN confirmacion:**
-
-| Accion | Implementado? | Componente |
-|--------|---------------|------------|
-| Desactivar jugador | SI | PlayersTable |
-| Desactivar usuario | SI | ConfirmDeactivateDialog |
-| Eliminar partido | SI | MatchHistoryModule |
-| Cambiar plan de usuario | NO | - |
-| Eliminar pago | NO | - |
-| Cancelar fichaje en progreso | NO | IntakeTerminal |
-
-**Cambios Propuestos:**
-
-```text
-Archivo: src/components/fichajes/IntakeTerminal.tsx
-- Agregar confirmacion si usuario intenta cerrar con datos ingresados
-- "Tienes datos sin guardar. Seguro que quieres salir?"
-```
-
-```text
-Crear: src/components/ui/confirm-dialog.tsx
-- Wrapper reutilizable sobre AlertDialog
-- Props: title, description, confirmText, variant (default/destructive)
-- Uso: <ConfirmDialog onConfirm={action} />
-```
-
----
-
-## Archivos a Modificar
-
-| Archivo | Cambios |
-|---------|---------|
-| `src/components/ui/alert-dialog.tsx` | Agregar scroll, max-height, auto-focus prevention |
-| `src/components/ui/drawer.tsx` | Agregar max-height, overflow control |
-| `src/components/matches/CreateMatchModal.tsx` | Estructura scroll optimizada |
-| `src/components/attendance/AttendanceRegistration.tsx` | Success feedback, overflow-x-hidden |
-| `src/components/fichajes/IntakeTerminal.tsx` | Confirmacion al cerrar |
-| `index.html` | Meta viewport interactive-widget |
-
-## Archivos a Crear
-
-| Archivo | Proposito |
-|---------|-----------|
-| `src/lib/error-messages.ts` | Mapeo de errores a mensajes humanos |
-| `src/components/ui/confirm-dialog.tsx` | Wrapper reutilizable para confirmaciones |
-| `src/components/ui/action-button.tsx` | Boton con estados loading/success/error |
-
----
-
-## Metricas de Exito
-
-| Criterio | Validacion |
-|----------|------------|
-| Modales no se cortan en mobile | Test en viewport 375x667 |
-| Teclado no tapa inputs | Test en Android Chrome |
-| Botones son tocables con dedo gordo | Touch target >= 44px |
-| Usuario sabe que accion funciono | Toast + feedback visual |
-| Errores son entendibles | Sin codigos ni stack traces |
-| Acciones destructivas protegidas | Confirmacion requerida |
+| Feature | Criterio |
+|---------|----------|
+| Tab Pagos | Muestra historial real, total pagado, ultimo pago, estado |
+| Estados Partidos | Validacion minima antes de cerrar, mensaje si bloqueado |
+| Semaforo | Usuario entiende que significa cada color (no es caja negra) |
 
 ---
 
 ## Orden de Implementacion
 
 ```text
-1. AlertDialog + Drawer scroll fixes (base components)
-2. Confirmaciones en acciones criticas
-3. Error messages humanizados
-4. Success feedback mejorado
-5. Mobile keyboard handling
-6. Touch target audit y fixes
+1. Tab Pagos en PlayerProfileModal (mas visible, mas valor)
+   │
+   ▼
+2. Validaciones y mensajes en Partidos
+   │
+   ▼
+3. Explicaciones del Semaforo de Rendimiento
+   │
+   ▼
+4. Test end-to-end de los 3 features
 ```
 
 ---
 
 ## Notas Tecnicas
 
-**iOS Safari:**
-- Usar `dvh` en lugar de `vh` para viewport dinamico
-- `overscroll-contain` previene bounce effect
+**Hook usePayments ya tiene todo:**
+- `getPlayerPayments(playerId)` - Retorna array de Payment[]
+- Cada Payment tiene: amount, payment_method, payment_month, concept, created_at
 
-**Android Chrome:**
-- `interactive-widget=resizes-content` ajusta viewport con keyboard
-- Usar `visualViewport` API para deteccion precisa
+**Datos reales en DB:**
+- Pagos existentes con montos $300-$400
+- Conceptos: "Mensualidad", "Mensualidad Enero 2025"
+- Metodos: efectivo, transferencia
 
-**Skeleton vs Spinner:**
-- Skeleton: listas y contenido estructurado
-- Spinner: acciones individuales y cargas cortas
+**RLS de partidos:**
+- Entrenadores solo pueden UPDATE matches de sus categorias
+- Director/Owner pueden UPDATE cualquier match
+- Ya funciona correctamente para bloqueo de edicion
