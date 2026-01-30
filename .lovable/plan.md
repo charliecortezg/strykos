@@ -1,62 +1,102 @@
 
-# Plan: Resolver Módulo de Partidos (RLS + UI/UX)
+# Plan: Corregir Overflow en Modales/Drawers de Partidos
 
-## ✅ COMPLETADO
+## Problema Diagnosticado
 
-### Fase 1: Base de Datos (RLS) ✅
-- **Migración ejecutada**: 4 nuevas políticas RLS
-  - Entrenadores pueden UPDATE sus partidos y match_players
-  - Directores/Owners pueden DELETE partidos y match_players
+Analizando las imágenes y el código, identifico **dos problemas de overflow horizontal**:
 
-### Fase 2: Backend (Hook) ✅
-- `deleteMatch` mutation agregada a `useMatches.ts`
-- Invalidación de cache correcta
+### 1. LoadResultsModal.tsx ("Cargar Resultado")
+- La barra de scroll horizontal visible en la imagen se debe a:
+  - `TabsList` en línea 202 tiene `mx-4` (margen horizontal) pero está fuera del contenedor con padding
+  - El contenedor scrollable (`div className="flex-1 overflow-y-auto"`) no tiene `overflow-x-hidden`
+  - Los tabs flotan fuera del área contenida
 
-### Fase 3: UI/UX Rediseño ✅
-- **MatchCard.tsx**: Actualizado con variante `full` para historial y soporte para delete
-- **MatchesGrid.tsx**: Nuevo componente - grid responsivo de cards (1-3 columnas)
-- **MatchDetailDrawer.tsx**: Nuevo componente - drawer mobile-first reemplazando Dialog
-- **MatchHistoryModule.tsx**: Actualizado para usar Grid + Drawer + Delete
+### 2. MatchDetailDrawer.tsx ("Detalle del Partido")  
+- Similar problema potencial con el `ScrollArea` y contenido interno
 
-### Archivos Modificados
-| Archivo | Estado |
+---
+
+## Solución Propuesta
+
+### Cambios en LoadResultsModal.tsx
+
+**Línea 200-202** — Mover padding al contenedor externo y eliminar margen en TabsList:
+
+```tsx
+// ANTES
+<div className="flex-1 overflow-y-auto">
+  <Tabs defaultValue="result" className="w-full">
+    <TabsList className="w-full grid grid-cols-3 mx-4 mt-3">
+
+// DESPUÉS  
+<div className="flex-1 overflow-y-auto overflow-x-hidden px-4">
+  <Tabs defaultValue="result" className="w-full">
+    <TabsList className="w-full grid grid-cols-3 mt-3">
+```
+
+**Línea 217, 320, 424** — Remover padding horizontal duplicado de TabsContent:
+
+```tsx
+// ANTES
+<TabsContent value="result" className="px-4 py-4 space-y-4">
+
+// DESPUÉS
+<TabsContent value="result" className="py-4 space-y-4">
+```
+
+### Cambios en MatchDetailDrawer.tsx
+
+**Línea 146** — Agregar overflow-x-hidden al ScrollArea container:
+
+```tsx
+// ANTES
+<ScrollArea className="flex-1 px-4">
+
+// DESPUÉS
+<ScrollArea className="flex-1 px-4 overflow-x-hidden">
+```
+
+### Cambios en drawer.tsx (Componente base)
+
+**Línea 34** — Agregar `overflow-hidden` al DrawerContent para prevenir overflow horizontal a nivel global:
+
+```tsx
+// ANTES
+className={cn(
+  "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background",
+  className,
+)}
+
+// DESPUÉS
+className={cn(
+  "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background overflow-hidden",
+  className,
+)}
+```
+
+---
+
+## Archivos a Modificar
+
+| Archivo | Cambio |
 |---------|--------|
-| `supabase/migrations/` | ✅ Migración RLS ejecutada |
-| `src/hooks/useMatches.ts` | ✅ deleteMatch agregado |
-| `src/components/matches/MatchCard.tsx` | ✅ Variante full + delete |
-| `src/components/matches/MatchesGrid.tsx` | ✅ Nuevo componente |
-| `src/components/matches/MatchDetailDrawer.tsx` | ✅ Nuevo componente |
-| `src/components/matches/MatchHistoryModule.tsx` | ✅ Actualizado |
-| `src/pages/dashboard/DirectorDeportivoDashboard.tsx` | ✅ canDelete=true |
+| `src/components/ui/drawer.tsx` | Agregar `overflow-hidden` al contenedor base |
+| `src/components/matches/LoadResultsModal.tsx` | Reorganizar padding, eliminar márgenes, agregar `overflow-x-hidden` |
+| `src/components/matches/MatchDetailDrawer.tsx` | Agregar `overflow-x-hidden` al ScrollArea |
 
 ---
 
-## Comportamiento Post-Implementación
+## Resultado Esperado
 
-| Actor | Acción | Resultado |
-|-------|--------|-----------|
-| Entrenador | Crear partido | ✅ Funciona |
-| Entrenador | Cargar resultado de SU partido | ✅ **Ahora funciona** |
-| Director | Ver todos los partidos | ✅ Funciona |
-| Director | Editar cualquier partido | ✅ Funciona |
-| Director | Eliminar partido de prueba | ✅ **Ahora funciona** |
-| Owner | Todo lo anterior | ✅ Funciona |
+- Sin scroll horizontal en ningún drawer
+- Layout contenido correctamente dentro del viewport móvil
+- Consistencia visual en ambos modales
+- Sin romper funcionalidad existente
 
 ---
 
-## Mejoras de UX Implementadas
+## Detalles Técnicos
 
-1. **Grid responsivo** en lugar de tabla horizontal
-   - 1 columna en móvil
-   - 2 columnas en tablet
-   - 3 columnas en desktop
+El problema raíz es que Vaul Drawer (el componente base) no previene overflow horizontal por defecto, y los márgenes internos (`mx-4`) empujan el contenido fuera del contenedor cuando se combinan con elementos de ancho completo (`w-full`).
 
-2. **Drawer mobile-first** en lugar de Dialog pesado
-   - Desliza desde abajo
-   - Scroll interno
-   - Tabs compactos
-
-3. **Botón eliminar** con confirmación
-   - Visible solo para Director/Owner
-   - AlertDialog de confirmación
-   - Feedback con toast
+La solución sigue el patrón STRYK de "scroll-safe modal standard" mencionado en la memoria del proyecto: contenedores con max-height, flex bodies scrollables, y sin layout shifts.
