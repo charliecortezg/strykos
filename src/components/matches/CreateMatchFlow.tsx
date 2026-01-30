@@ -197,8 +197,8 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
 
   return (
     <Drawer open={isOpen} onOpenChange={() => handleClose()}>
-      <DrawerContent className="max-h-[95vh]">
-        <DrawerHeader className="border-b border-border pb-3">
+      <DrawerContent className="max-h-[95dvh] flex flex-col overflow-hidden">
+        <DrawerHeader className="border-b border-border pb-3 shrink-0">
           <DrawerTitle className="flex items-center gap-2 text-lg">
             <Trophy className="w-5 h-5 text-primary" />
             {step === 'info' && 'Crear Partido'}
@@ -232,7 +232,7 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
           </div>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4">
           {step === 'info' && (
             <div className="space-y-4">
               {/* Category Selection */}
@@ -380,7 +380,7 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
               )}
 
               {/* Players List - Fast Toggle UI */}
-              <div className="space-y-2 max-h-[45vh] overflow-y-auto">
+              <div className="space-y-2 max-h-[40vh] overflow-y-auto overflow-x-hidden">
                 {playerAttendance.map((player) => (
                   <button
                     key={player.player_id}
