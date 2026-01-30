@@ -151,6 +151,19 @@ export function LoadResultsModal({
   const handleSave = async () => {
     if (!match || !user?.id) return;
 
+    // Validation: At least one player must be present
+    const presentPlayers = playerStats.filter(p => p.attended);
+    if (presentPlayers.length === 0) {
+      toast.error('Marca al menos un jugador como presente');
+      return;
+    }
+
+    // Validation: Score must be defined (both >= 0)
+    if (goalsFor < 0 || goalsAgainst < 0) {
+      toast.error('El marcador no puede ser negativo');
+      return;
+    }
+
     setIsSaving(true);
     
     try {
