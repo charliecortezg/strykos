@@ -1,48 +1,46 @@
 
 
-# Plan: Integrar Fichajes en AdministrativoDashboard
+# Plan: Integrar Tab "Fichajes" en Todos los Dashboards
 
-## Problema Identificado
+## Resumen
 
-El Dashboard Administrativo (`/dashboard/administrativo`) no tiene ningún enlace ni tab para acceder al módulo de Fichajes, a pesar de que:
-1. El rol `administrativo` tiene permisos para acceder a `/fichajes/terminal` y `/fichajes/historial` (configurado en App.tsx)
-2. Los otros dashboards (OrgOwner, Director, Entrenador) sí tienen acceso integrado
+Agregar acceso consistente al módulo de Fichajes en los tres dashboards:
+- **Administrativo**: Tab nuevo con historial completo + botón nuevo fichaje
+- **Entrenador**: Tab nuevo "Fichajes" (4 tabs total) con historial limitado a sus categorías
+- **Director Deportivo**: Tab nuevo "Fichajes" (8 tabs) con historial completo
 
-## Solución
+---
 
-Agregar un **tab "Fichajes"** al Dashboard Administrativo con dos sub-opciones:
-- Botón para ir a la Terminal de Fichaje
-- Historial de Fichajes integrado directamente (igual que Director)
+## Cambios por Dashboard
 
-## Cambios Técnicos
+### 1. AdministrativoDashboard.tsx
 
-### Archivo: `src/pages/dashboard/AdministrativoDashboard.tsx`
+**Estado actual:** 4 tabs (Finanzas, Jugadores, Planes, Cobranza), sin acceso a fichajes
 
-**1. Agregar imports necesarios:**
+**Cambios:**
+
 ```tsx
-import { UserPlus, ClipboardList } from 'lucide-react';
+// Agregar imports
 import { useNavigate } from 'react-router-dom';
+import { UserPlus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
-```
 
-**2. Agregar hook de navegación:**
-```tsx
+// Agregar hook
 const navigate = useNavigate();
-```
 
-**3. Agregar nuevo tab "Fichajes" en el TabsList:**
-```tsx
+// Cambiar grid a 5 columnas
+<TabsList className="mb-6 w-full sm:w-auto grid grid-cols-5 sm:inline-flex">
+
+// Agregar tab después de "configuracion"
 <TabsTrigger value="fichajes" className="gap-2">
   <UserPlus className="w-4 h-4" />
   <span className="hidden sm:inline">Fichajes</span>
 </TabsTrigger>
-```
 
-**4. Agregar contenido del tab con header y historial:**
-```tsx
+// Agregar TabsContent
 <TabsContent value="fichajes">
   <div className="space-y-4">
-    {/* Header con botón de nuevo fichaje */}
     <div className="flex items-center justify-between">
       <div>
         <h2 className="text-lg font-semibold">Historial de Fichajes</h2>
@@ -50,69 +48,138 @@ const navigate = useNavigate();
           Registro de inscripciones y evidencias de pago
         </p>
       </div>
-      <Button 
-        onClick={() => navigate('/fichajes/terminal')}
-        className="gap-2"
-      >
+      <Button onClick={() => navigate('/fichajes/terminal')} className="gap-2">
         <UserPlus className="w-4 h-4" />
         <span className="hidden sm:inline">Nuevo Fichaje</span>
       </Button>
     </div>
-    {/* Componente de historial */}
     <IntakeHistory />
   </div>
 </TabsContent>
 ```
 
-**5. Actualizar TabsList grid a 5 columnas:**
+---
+
+### 2. EntrenadorDashboard.tsx
+
+**Estado actual:** 3 tabs (Asistencia, Partidos, Jugadores) + botón en header
+
+**Cambios:**
+
 ```tsx
-<TabsList className="mb-6 w-full sm:w-auto grid grid-cols-5 sm:inline-flex">
+// Agregar import (ya tiene useNavigate y UserPlus)
+import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
+
+// Cambiar grid a 4 columnas
+<TabsList className="w-full grid grid-cols-4 mb-4 h-12">
+
+// Agregar tab después de "jugadores"
+<TabsTrigger value="fichajes" className="gap-1.5 text-xs sm:text-sm">
+  <UserPlus className="w-4 h-4" />
+  <span className="hidden sm:inline">Fichajes</span>
+</TabsTrigger>
+
+// Agregar TabsContent
+<TabsContent value="fichajes" className="mt-0">
+  <div className="space-y-3">
+    <div className="flex items-center justify-between">
+      <h2 className="text-lg font-display font-semibold">Mis Fichajes</h2>
+      <Button onClick={() => navigate('/fichajes/terminal')} size="sm" className="gap-1.5">
+        <UserPlus className="w-4 h-4" />
+        <span className="hidden sm:inline">Nuevo</span>
+      </Button>
+    </div>
+    <IntakeHistory />
+  </div>
+</TabsContent>
 ```
 
-## Resultado Visual
+**Nota:** El botón de header se mantiene para acceso rápido.
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  Panel Administrativo                                       │
-│  Bienvenido, [nombre]. Control financiero de [academia].   │
-├─────────────────────────────────────────────────────────────┤
-│  [ $ Finanzas ] [ Jugadores ] [ Planes ] [ Cobranza ] [ Fichajes ] │
-├─────────────────────────────────────────────────────────────┤
-│  Historial de Fichajes          [ + Nuevo Fichaje ]        │
-│  Registro de inscripciones y evidencias de pago            │
-│                                                              │
-│  🔍 Buscar por nombre o teléfono...    [⚙ Filtros] [↻]     │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │ Juan Pérez                        ✓ Completado          ││
-│  │ 👤 María García  📱 555-1234                            ││
-│  │ 📅 24 Ene, 10:30  💳 Efectivo                           ││
-│  │                                   $1,350.00  PROMO   >  ││
-│  └─────────────────────────────────────────────────────────┘│
-│  ... más cards ...                                          │
-└─────────────────────────────────────────────────────────────┘
+---
+
+### 3. DirectorDeportivoDashboard.tsx
+
+**Estado actual:** 7 tabs + botones en header (sin tab integrado)
+
+**Cambios:**
+
+```tsx
+// Agregar import
+import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
+
+// Agregar tab en TabsList (después de "reportes")
+<TabsTrigger value="fichajes" className="gap-2">
+  <UserPlus className="w-4 h-4" />
+  Fichajes
+</TabsTrigger>
+
+// Agregar TabsContent
+<TabsContent value="fichajes">
+  <div className="space-y-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <h2 className="text-lg font-semibold">Historial de Fichajes</h2>
+        <p className="text-sm text-muted-foreground">
+          Todos los fichajes de la academia
+        </p>
+      </div>
+      <Button onClick={() => navigate('/fichajes/terminal')} className="gap-2">
+        <UserPlus className="w-4 h-4" />
+        Nuevo Fichaje
+      </Button>
+    </div>
+    <IntakeHistory />
+  </div>
+</TabsContent>
 ```
 
-## Comportamiento Esperado
+**Nota:** Los botones del header se pueden mantener o remover (ya que el tab ofrece la misma funcionalidad).
 
-| Acción | Resultado |
-|--------|-----------|
-| Click en tab "Fichajes" | Muestra historial de fichajes con filtros |
-| Click en "Nuevo Fichaje" | Navega a `/fichajes/terminal` |
-| Click en card de fichaje | Abre `IntakeDetailDrawer` con detalles |
-| Filtrar/buscar | Actualiza lista en tiempo real |
-| Click en "Ver evidencia" | Abre imagen de comprobante |
-| Click en "Reenviar recibo" | Reintenta envío de email |
+---
 
 ## Archivos a Modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/pages/dashboard/AdministrativoDashboard.tsx` | Agregar tab Fichajes + IntakeHistory |
+| `src/pages/dashboard/AdministrativoDashboard.tsx` | +imports, +navigate, +tab Fichajes, grid 5 cols |
+| `src/pages/dashboard/EntrenadorDashboard.tsx` | +import IntakeHistory, +tab Fichajes, grid 4 cols |
+| `src/pages/dashboard/DirectorDeportivoDashboard.tsx` | +import IntakeHistory, +tab Fichajes |
 
-## Notas de Implementación
+---
 
-- El grid pasa de 4 a 5 columnas en móvil, lo cual puede quedar apretado - considerar usar scroll horizontal o iconos solo en móvil extremo
-- `IntakeHistory` ya incluye `IntakeDetailDrawer` internamente, no hay que agregarlo por separado
-- Los permisos RLS ya están configurados para que `administrativo` vea todos los fichajes de su organización
+## Resultado Visual
+
+### Administrativo (5 tabs)
+```
+[ $ Finanzas ] [ Jugadores ] [ Planes ] [ Cobranza ] [ Fichajes ]
+```
+
+### Entrenador (4 tabs)
+```
+[ Lista ] [ Partidos ] [ Jugadores ] [ Fichajes ]
+```
+
+### Director Deportivo (8 tabs)
+```
+[ Jugadores ] [ Categorías ] [ Sedes ] [ Finanzas ] [ Partidos ] [ Entrenadores ] [ Reportes ] [ Fichajes ]
+```
+
+---
+
+## Consideraciones Mobile
+
+- En móvil, los tabs de Administrativo usan iconos sin texto (grid 5 cols)
+- En móvil, los tabs de Entrenador mantienen diseño compacto (grid 4 cols, 12px altura)
+- Director Deportivo ya usa `flex-wrap` que funciona bien en móvil
+
+---
+
+## Comportamiento RLS
+
+El componente `IntakeHistory` ya respeta RLS:
+- **Entrenador**: Ve solo fichajes que él creó
+- **Administrativo/Director**: Ven todos los fichajes de la organización
+
+No se requieren cambios adicionales de permisos.
 
