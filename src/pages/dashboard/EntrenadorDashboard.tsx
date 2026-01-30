@@ -1,15 +1,18 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, CheckCircle, Trophy, ClipboardList } from 'lucide-react';
+import { Users, CheckCircle, Trophy, ClipboardList, UserPlus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useTrainerCategories } from '@/hooks/useTrainerCategories';
 import { TrainerMatchesModule } from '@/components/matches/TrainerMatchesModule';
 import { TrainingAttendanceModule } from '@/components/attendance/TrainingAttendanceModule';
 import { usePlayers } from '@/hooks/usePlayers';
 
 export default function EntrenadorDashboard() {
+  const navigate = useNavigate();
   const { user, organization } = useAuth();
   const { categories, hasCategories, isLoading } = useTrainerCategories();
   const { players } = usePlayers();
@@ -39,13 +42,25 @@ export default function EntrenadorDashboard() {
 
       <main className="container px-3 sm:px-4 py-4 sm:py-6">
         {/* Compact Header for Mobile */}
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl font-display font-semibold text-foreground">
-            Hola, {user?.full_name?.split(' ')[0]}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {organization?.name}
-          </p>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-display font-semibold text-foreground">
+              Hola, {user?.full_name?.split(' ')[0]}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {organization?.name}
+            </p>
+          </div>
+          {/* Quick Action: New Intake */}
+          <Button 
+            onClick={() => navigate('/fichajes/terminal')}
+            size="sm"
+            className="gap-1.5"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span className="hidden sm:inline">Nuevo Fichaje</span>
+            <span className="sm:hidden">Fichar</span>
+          </Button>
         </div>
 
         {!hasCategories ? (

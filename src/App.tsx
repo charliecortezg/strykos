@@ -18,6 +18,9 @@ import OrgOwnerDashboard from "./pages/dashboard/OrgOwnerDashboard";
 import DirectorDeportivoDashboard from "./pages/dashboard/DirectorDeportivoDashboard";
 import EntrenadorDashboard from "./pages/dashboard/EntrenadorDashboard";
 import AdministrativoDashboard from "./pages/dashboard/AdministrativoDashboard";
+// Fichajes (Intake) Pages
+import TerminalPage from "./pages/fichajes/TerminalPage";
+import HistorialPage from "./pages/fichajes/HistorialPage";
 // Platform Admin Pages
 import PlatformLogin from "./pages/platform/PlatformLogin";
 import PlatformDashboard from "./pages/platform/PlatformDashboard";
@@ -95,6 +98,17 @@ function AcademyRoutes() {
         <Route path="/dashboard/administrativo" element={
           <ProtectedRoute allowedRoles={['administrativo']}>
             <AdministrativoDashboard />
+          </ProtectedRoute>
+        } />
+        {/* Fichajes Routes */}
+        <Route path="/fichajes/terminal" element={
+          <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo', 'administrativo', 'entrenador']}>
+            <TerminalPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/fichajes/historial" element={
+          <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo', 'administrativo']}>
+            <HistorialPage />
           </ProtectedRoute>
         } />
         <Route path="*" element={<NotFound />} />

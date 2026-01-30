@@ -749,6 +749,7 @@ export type Database = {
       org_intake_settings: {
         Row: {
           allow_promo_codes: boolean | null
+          basketball_fee: number | null
           created_at: string | null
           default_monthly_fee: number | null
           default_registration_fee: number | null
@@ -761,12 +762,16 @@ export type Database = {
           receipt_footer_text: string | null
           require_evidence: boolean | null
           require_guardian_email: boolean | null
+          soccer_fee: number | null
+          transfer_bank_info: string | null
+          transfer_qr_url: string | null
           updated_at: string | null
           welcome_message: string | null
           whatsapp_group_url: string | null
         }
         Insert: {
           allow_promo_codes?: boolean | null
+          basketball_fee?: number | null
           created_at?: string | null
           default_monthly_fee?: number | null
           default_registration_fee?: number | null
@@ -779,12 +784,16 @@ export type Database = {
           receipt_footer_text?: string | null
           require_evidence?: boolean | null
           require_guardian_email?: boolean | null
+          soccer_fee?: number | null
+          transfer_bank_info?: string | null
+          transfer_qr_url?: string | null
           updated_at?: string | null
           welcome_message?: string | null
           whatsapp_group_url?: string | null
         }
         Update: {
           allow_promo_codes?: boolean | null
+          basketball_fee?: number | null
           created_at?: string | null
           default_monthly_fee?: number | null
           default_registration_fee?: number | null
@@ -797,6 +806,9 @@ export type Database = {
           receipt_footer_text?: string | null
           require_evidence?: boolean | null
           require_guardian_email?: boolean | null
+          soccer_fee?: number | null
+          transfer_bank_info?: string | null
+          transfer_qr_url?: string | null
           updated_at?: string | null
           welcome_message?: string | null
           whatsapp_group_url?: string | null
@@ -1499,6 +1511,7 @@ export type Database = {
       }
       generate_org_code: { Args: { org_name: string }; Returns: string }
       get_current_org_id: { Args: never; Returns: string }
+      has_intake_access: { Args: never; Returns: boolean }
       has_org_role: {
         Args: { _role: Database["public"]["Enums"]["org_role"] }
         Returns: boolean
@@ -1515,6 +1528,10 @@ export type Database = {
       normalize_name: { Args: { name: string }; Returns: string }
       normalize_phone: { Args: { phone: string }; Returns: string }
       normalize_text: { Args: { input_text: string }; Returns: string }
+      process_intake_and_create_entities: {
+        Args: { p_intake_id: string }
+        Returns: Json
+      }
       process_intake_request: {
         Args: { p_intake_request_id: string }
         Returns: Json

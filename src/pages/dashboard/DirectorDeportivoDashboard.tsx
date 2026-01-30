@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, ClipboardList, BarChart3, MapPin, CreditCard, UserCheck, Trophy } from 'lucide-react';
+import { Users, ClipboardList, BarChart3, MapPin, CreditCard, UserCheck, Trophy, UserPlus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { CategoriesTable } from '@/components/categories/CategoriesTable';
 import { PlayersTable } from '@/components/players/PlayersTable';
 import { VenuesTable } from '@/components/venues/VenuesTable';
@@ -16,6 +18,7 @@ import { useVenues } from '@/hooks/useVenues';
 import { useTrainersWithCategories } from '@/hooks/useTrainersWithCategories';
 
 export default function DirectorDeportivoDashboard() {
+  const navigate = useNavigate();
   const { user, organization } = useAuth();
   const { categories } = useCategories();
   const { players } = usePlayers();
@@ -33,13 +36,32 @@ export default function DirectorDeportivoDashboard() {
       <DashboardHeader />
 
       <main className="container px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Panel del Director Deportivo
-          </h1>
-          <p className="text-muted-foreground">
-            Bienvenido, {user?.full_name}. Control deportivo de {organization?.name}.
-          </p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
+              Panel del Director Deportivo
+            </h1>
+            <p className="text-muted-foreground">
+              Bienvenido, {user?.full_name}. Control deportivo de {organization?.name}.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/fichajes/historial')}
+              className="gap-2"
+            >
+              <ClipboardList className="w-4 h-4" />
+              <span className="hidden sm:inline">Historial</span>
+            </Button>
+            <Button 
+              onClick={() => navigate('/fichajes/terminal')}
+              className="gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              Nuevo Fichaje
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}

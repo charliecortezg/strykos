@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Users, ClipboardList, Briefcase, Settings, ChevronDown, ChevronUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Users, ClipboardList, Briefcase, Settings, ChevronDown, ChevronUp, UserPlus } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { RoleCard } from '@/components/dashboard/RoleCard';
 import { CreateUserModal } from '@/components/dashboard/CreateUserModal';
@@ -28,6 +29,7 @@ interface OrgUser {
 }
 
 export default function OrgOwnerDashboard() {
+  const navigate = useNavigate();
   const { organization, user } = useAuth();
   const { toast } = useToast();
   const [users, setUsers] = useState<OrgUser[]>([]);
@@ -208,13 +210,32 @@ export default function OrgOwnerDashboard() {
       <DashboardHeader />
 
       <main className="container px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Panel del Fundador
-          </h1>
-          <p className="text-muted-foreground">
-            Gestiona tu academia y equipo de trabajo.
-          </p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
+              Panel del Fundador
+            </h1>
+            <p className="text-muted-foreground">
+              Gestiona tu academia y equipo de trabajo.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/fichajes/historial')}
+              className="gap-2"
+            >
+              <ClipboardList className="w-4 h-4" />
+              <span className="hidden sm:inline">Historial</span>
+            </Button>
+            <Button 
+              onClick={() => navigate('/fichajes/terminal')}
+              className="gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span className="hidden sm:inline">Nuevo Fichaje</span>
+            </Button>
+          </div>
         </div>
 
         {/* Onboarding Checklist */}
