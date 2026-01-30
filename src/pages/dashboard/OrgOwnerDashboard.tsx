@@ -12,6 +12,7 @@ import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist
 import { FounderKPISection } from '@/components/dashboard/FounderKPISection';
 import { PlanLimitBanner } from '@/components/dashboard/PlanLimitBanner';
 import { BillingConfigurationPanel } from '@/components/billing/BillingConfigurationPanel';
+import { IntakeSettingsPanel } from '@/components/fichajes/IntakeSettingsPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
@@ -349,6 +350,11 @@ export default function OrgOwnerDashboard() {
             Configuración de Cobranza
           </h2>
           <BillingConfigurationPanel />
+        </div>
+
+        {/* Intake Settings Section */}
+        <div className="mt-8">
+          <IntakeSettingsPanel />
         </div>
       </main>
 

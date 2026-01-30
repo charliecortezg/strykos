@@ -35,6 +35,8 @@ const receiptStatusLabels: Record<string, string> = {
   no_email: 'Sin email',
 };
 
+const MAX_RECEIPT_RETRIES = 3;
+
 export function IntakeDetailDrawer({ intake, onClose }: IntakeDetailDrawerProps) {
   const { retryReceipt, isRetrying } = useRetryReceipt();
   const { documents, getSignedUrl } = useIntakeEvidence(intake?.id || '');
@@ -70,9 +72,12 @@ export function IntakeDetailDrawer({ intake, onClose }: IntakeDetailDrawerProps)
     }
   };
 
-  const canRetryReceipt = intake.receipt_status === 'failed' || 
+  const retryCount = intake.receipt_retry_count ?? 0;
+  const canRetryReceipt = (
+    intake.receipt_status === 'failed' || 
     intake.receipt_status === 'pending' || 
-    !intake.receipt_status;
+    !intake.receipt_status
+  ) && retryCount < MAX_RECEIPT_RETRIES;
 
   return (
     <>
@@ -256,7 +261,7 @@ export function IntakeDetailDrawer({ intake, onClose }: IntakeDetailDrawerProps)
                       </span>
                     )}
                   </div>
-                  {canRetryReceipt && intake.guardian_email && (
+                {canRetryReceipt && intake.guardian_email && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -268,10 +273,15 @@ export function IntakeDetailDrawer({ intake, onClose }: IntakeDetailDrawerProps)
                       ) : (
                         <>
                           <RefreshCcw className="w-4 h-4 mr-1" />
-                          Reenviar
+                          Reenviar ({MAX_RECEIPT_RETRIES - retryCount} restantes)
                         </>
                       )}
                     </Button>
+                  )}
+                  {retryCount >= MAX_RECEIPT_RETRIES && (
+                    <span className="text-xs text-muted-foreground">
+                      Límite de reintentos alcanzado
+                    </span>
                   )}
                 </div>
                 {intake.receipt_error && (
