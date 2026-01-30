@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { SettingsPanelSkeleton } from '@/components/ui/loading-spinner';
 import { 
   Save, 
   Loader2, 
@@ -15,7 +16,8 @@ import {
   Settings2, 
   CreditCard,
   Lock,
-  AlertCircle
+  AlertCircle,
+  Check
 } from 'lucide-react';
 
 interface FormState {
@@ -32,7 +34,8 @@ interface FormState {
 }
 
 export function IntakeSettingsPanel() {
-  const { settings, isLoading, isSaving, canEdit, saveSettings } = useIntakeSettingsEditor();
+  const { settings, isLoading, isSaving, canEdit, saveSettings, error } = useIntakeSettingsEditor();
+  const [showSuccess, setShowSuccess] = useState(false);
   const [formState, setFormState] = useState<FormState>({
     enabled: true,
     default_registration_fee: 500,
@@ -73,27 +76,31 @@ export function IntakeSettingsPanel() {
   };
 
   const handleSave = async () => {
-    await saveSettings({
-      enabled: formState.enabled,
-      default_registration_fee: formState.default_registration_fee,
-      soccer_fee: formState.soccer_fee,
-      basketball_fee: formState.basketball_fee,
-      promo_active: formState.promo_active,
-      promo_fee: formState.promo_fee,
-      require_evidence: formState.require_evidence,
-      require_guardian_email: formState.require_guardian_email,
-      transfer_qr_url: formState.transfer_qr_url || null,
-      transfer_bank_info: formState.transfer_bank_info || null,
-    });
-    setHasChanges(false);
+    try {
+      await saveSettings({
+        enabled: formState.enabled,
+        default_registration_fee: formState.default_registration_fee,
+        soccer_fee: formState.soccer_fee,
+        basketball_fee: formState.basketball_fee,
+        promo_active: formState.promo_active,
+        promo_fee: formState.promo_fee,
+        require_evidence: formState.require_evidence,
+        require_guardian_email: formState.require_guardian_email,
+        transfer_qr_url: formState.transfer_qr_url || null,
+        transfer_bank_info: formState.transfer_bank_info || null,
+      });
+      setHasChanges(false);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+    } catch (err) {
+      // Error is handled by the hook
+    }
   };
 
   if (isLoading) {
     return (
       <div className="stryk-card p-6">
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
+        <SettingsPanelSkeleton />
       </div>
     );
   }
@@ -352,14 +359,16 @@ export function IntakeSettingsPanel() {
               <Button
                 onClick={handleSave}
                 disabled={!hasChanges || isSaving}
-                className="gap-2"
+                className={`gap-2 transition-all ${showSuccess ? 'bg-success hover:bg-success/90' : ''}`}
               >
                 {isSaving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
+                ) : showSuccess ? (
+                  <Check className="w-4 h-4" />
                 ) : (
                   <Save className="w-4 h-4" />
                 )}
-                Guardar configuración
+                {isSaving ? 'Guardando...' : showSuccess ? '¡Guardado!' : 'Guardar configuración'}
               </Button>
             </div>
           </>
