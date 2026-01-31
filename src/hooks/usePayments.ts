@@ -36,7 +36,8 @@ export function usePayments(filters?: PaymentsFilters) {
           concept, notes, evidence_url, recorded_by, created_at, updated_at,
           receipt_folio, receipt_sequence_number, receipt_template_version,
           receipt_status, receipt_sent_at, receipt_error, receipt_message_id,
-          player:players(id, full_name, category:categories(name))
+          player:players(id, full_name, category:categories(name)),
+          recorded_by_profile:profiles!payments_recorded_by_fkey(full_name)
         `)
         .eq('organization_id', organization.id)
         .order('created_at', { ascending: false });

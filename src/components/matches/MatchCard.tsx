@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { MapPin, Eye, Target, Trash2, Calendar, User } from 'lucide-react';
+import { MapPin, Eye, Target, Trash2, Calendar, User, ShieldCheck } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -114,15 +114,18 @@ export function MatchCard({
           {/* Score/Status + Actions */}
           <div className="flex items-center gap-2 shrink-0">
             {isFinished ? (
-              <div className={cn(
-                "text-center px-3 py-1.5 rounded-lg font-display font-bold",
-                result === 'victoria' && "bg-success/10 text-success",
-                result === 'empate' && "bg-warning/10 text-warning",
-                result === 'derrota' && "bg-destructive/10 text-destructive"
-              )}>
-                <span className="text-xl">{match.goals_for}</span>
-                <span className="mx-1 text-muted-foreground">-</span>
-                <span className="text-xl">{match.goals_against}</span>
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "text-center px-3 py-1.5 rounded-lg font-display font-bold",
+                  result === 'victoria' && "bg-success/10 text-success",
+                  result === 'empate' && "bg-warning/10 text-warning",
+                  result === 'derrota' && "bg-destructive/10 text-destructive"
+                )}>
+                  <span className="text-xl">{match.goals_for}</span>
+                  <span className="mx-1 text-muted-foreground">-</span>
+                  <span className="text-xl">{match.goals_against}</span>
+                </div>
+                <ShieldCheck className="w-4 h-4 text-success hidden sm:block" />
               </div>
             ) : isScheduled ? (
               <div className="flex items-center gap-1.5">
@@ -191,6 +194,12 @@ export function MatchCard({
           <Badge variant="outline" className={cn("text-xs", statusInfo.className)}>
             {statusInfo.label}
           </Badge>
+          {isFinished && (
+            <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/20 gap-1">
+              <ShieldCheck className="w-3 h-3" />
+              <span className="hidden sm:inline">Registro oficial</span>
+            </Badge>
+          )}
         </div>
       </div>
 

@@ -35,6 +35,11 @@ export function OperationalReports() {
 
   return (
     <div className="space-y-6">
+      {/* Header with guide text */}
+      <div className="text-sm text-muted-foreground">
+        Resumen operativo del periodo seleccionado
+      </div>
+
       {/* KPIs Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
@@ -142,9 +147,10 @@ export function OperationalReports() {
                 </LineChart>
               </ChartContainer>
             ) : (
-              <div className="h-[250px] flex items-center justify-center text-muted-foreground">
-                <Calendar className="w-8 h-8 mr-2" />
-                Sin datos de asistencia
+              <div className="h-[250px] flex flex-col items-center justify-center text-muted-foreground text-center px-4">
+                <Calendar className="w-10 h-10 mb-3 opacity-50" />
+                <p className="font-medium">Aún no hay datos de asistencia</p>
+                <p className="text-xs mt-1">Los reportes se generarán automáticamente al registrar entrenamientos.</p>
               </div>
             )}
           </CardContent>
@@ -181,9 +187,10 @@ export function OperationalReports() {
                 </PieChart>
               </ChartContainer>
             ) : (
-              <div className="h-[250px] flex items-center justify-center text-muted-foreground">
-                <Calendar className="w-8 h-8 mr-2" />
-                Sin datos de asistencia
+              <div className="h-[250px] flex flex-col items-center justify-center text-muted-foreground text-center px-4">
+                <Users className="w-10 h-10 mb-3 opacity-50" />
+                <p className="font-medium">Aún no hay datos de asistencia</p>
+                <p className="text-xs mt-1">Registra asistencias para ver la distribución.</p>
               </div>
             )}
           </CardContent>
@@ -225,9 +232,10 @@ export function OperationalReports() {
                 </BarChart>
               </ChartContainer>
             ) : (
-              <div className="h-[280px] flex items-center justify-center text-muted-foreground">
-                <Calendar className="w-8 h-8 mr-2" />
-                Sin categorías con datos
+              <div className="h-[280px] flex flex-col items-center justify-center text-muted-foreground text-center px-4">
+                <Calendar className="w-10 h-10 mb-3 opacity-50" />
+                <p className="font-medium">Sin categorías con datos</p>
+                <p className="text-xs mt-1">Registra asistencias en tus categorías para ver el desglose.</p>
               </div>
             )}
           </CardContent>
@@ -271,9 +279,10 @@ export function OperationalReports() {
                 </BarChart>
               </ChartContainer>
             ) : (
-              <div className="h-[280px] flex items-center justify-center text-muted-foreground">
-                <DollarSign className="w-8 h-8 mr-2" />
-                Sin datos de pagos
+              <div className="h-[280px] flex flex-col items-center justify-center text-muted-foreground text-center px-4">
+                <DollarSign className="w-10 h-10 mb-3 opacity-50" />
+                <p className="font-medium">Aún no hay pagos registrados</p>
+                <p className="text-xs mt-1">Registra el primer pago para ver tendencias de recaudación.</p>
               </div>
             )}
           </CardContent>

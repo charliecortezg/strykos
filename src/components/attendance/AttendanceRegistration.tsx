@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Check, X, Save, Users, CheckCheck, Filter } from 'lucide-react';
+import { Check, X, Save, Users, CheckCheck, Filter, CheckCircle2, Clock, UserCheck } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,8 @@ import { useTrainingAttendance, PlayerAttendanceRecord, PerformanceStatus } from
 import { AttendanceStatus, PAYMENT_STATUS_LABELS } from '@/types/categories';
 import { PerformanceIndicator, PerformanceStats } from './PerformanceIndicator';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface AttendanceRegistrationProps {
   categoryId: string;
@@ -23,7 +25,7 @@ const ABSENCE_REASONS = [
 type PerformanceFilter = 'all' | 'challenge';
 
 export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrationProps) {
-  const { playersWithAttendance, isLoading, saveAttendance, hasExistingAttendance, performanceStats } = useTrainingAttendance(categoryId, date);
+  const { playersWithAttendance, isLoading, saveAttendance, hasExistingAttendance, performanceStats, traceabilityInfo } = useTrainingAttendance(categoryId, date);
   const [localPlayers, setLocalPlayers] = useState<PlayerAttendanceRecord[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [performanceFilter, setPerformanceFilter] = useState<PerformanceFilter>('all');
@@ -116,8 +118,11 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
       <Card className="p-8 text-center">
         <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-medium mb-2">Sin jugadores</h3>
-        <p className="text-muted-foreground">
-          No hay jugadores activos en esta categoría
+        <p className="text-muted-foreground text-sm">
+          Aún no hay jugadores en esta categoría.
+        </p>
+        <p className="text-muted-foreground text-xs mt-1">
+          Agrega jugadores desde el módulo de Plantilla.
         </p>
       </Card>
     );
@@ -197,9 +202,32 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
             className="flex-1 h-12 text-base gap-2"
           >
             <Save className="w-5 h-5" />
-            {saveAttendance.isPending ? 'Guardando...' : 'Guardar'}
+            {saveAttendance.isPending ? 'Guardando...' : 'Guardar asistencia'}
           </Button>
         </div>
+
+        {/* Traceability Footer - Shows when attendance exists */}
+        {hasExistingAttendance && traceabilityInfo && (
+          <Card className="mt-3 p-3 bg-success/5 border-success/20">
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+              <div className="flex-1 min-w-0">
+                <span className="font-medium text-success">Registro guardado</span>
+                <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground mt-0.5">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {format(new Date(traceabilityInfo.updatedAt), "HH:mm", { locale: es })}
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <UserCheck className="w-3 h-3" />
+                    {traceabilityInfo.recordedBy}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {hasExistingAttendance && (
           <Badge variant="outline" className="mt-2 bg-primary/10 text-primary w-full justify-center">

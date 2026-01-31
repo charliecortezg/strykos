@@ -53,7 +53,7 @@ export function useTrainingAttendance(categoryId: string | null, date: string) {
       // Get existing attendance for this date
       const { data: attendance, error: attendanceError } = await supabase
         .from('attendance')
-        .select('player_id, status, notes, performance_status')
+        .select('player_id, status, notes, performance_status, recorded_by, updated_at')
         .eq('organization_id', organization.id)
         .eq('category_id', categoryId)
         .eq('date', date);
@@ -65,7 +65,9 @@ export function useTrainingAttendance(categoryId: string | null, date: string) {
         (attendance || []).map(a => [a.player_id, { 
           status: a.status, 
           notes: a.notes,
-          performance_status: a.performance_status as PerformanceStatus | null
+          performance_status: a.performance_status as PerformanceStatus | null,
+          recorded_by: a.recorded_by,
+          updated_at: a.updated_at,
         }])
       );
 
@@ -78,6 +80,33 @@ export function useTrainingAttendance(categoryId: string | null, date: string) {
         notes: attendanceMap.get(p.id)?.notes || '',
         performance_status: attendanceMap.get(p.id)?.performance_status || null,
       })) as PlayerAttendanceRecord[];
+    },
+    enabled: !!categoryId && !!organization?.id && !!date,
+  });
+
+  // Query for traceability info (who recorded the attendance)
+  const { data: traceabilityInfo } = useQuery({
+    queryKey: ['attendance-traceability', categoryId, date, organization?.id],
+    queryFn: async () => {
+      if (!categoryId || !organization?.id || !date) return null;
+
+      // Get any attendance record for this category/date to find who recorded it
+      const { data, error } = await supabase
+        .from('attendance')
+        .select('recorded_by, updated_at, recorded_by_profile:profiles!attendance_recorded_by_fkey(full_name)')
+        .eq('organization_id', organization.id)
+        .eq('category_id', categoryId)
+        .eq('date', date)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error || !data) return null;
+
+      return {
+        recordedBy: (data.recorded_by_profile as { full_name: string } | null)?.full_name || 'Sistema',
+        updatedAt: data.updated_at,
+      };
     },
     enabled: !!categoryId && !!organization?.id && !!date,
   });
@@ -155,5 +184,6 @@ export function useTrainingAttendance(categoryId: string | null, date: string) {
     saveAttendance,
     hasExistingAttendance,
     performanceStats,
+    traceabilityInfo,
   };
 }

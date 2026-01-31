@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, MoreHorizontal, Edit, Eye, Search, Filter, Upload, Power, DollarSign, X, History } from 'lucide-react';
+import { Plus, MoreHorizontal, Edit, Eye, Search, Filter, Upload, Power, DollarSign, X, History, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -360,13 +360,17 @@ export function PlayersTable() {
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           </div>
         ) : filteredPlayers.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
-            <p>No hay jugadores registrados.</p>
-            {hasFilters && (
-              <p className="text-sm mt-2">
-                Intenta ajustar los filtros o <button onClick={clearFilters} className="text-primary underline">limpiar filtros</button>.
-              </p>
-            )}
+          <div className="p-8 text-center">
+            <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+            <p className="text-muted-foreground font-medium">
+              {hasFilters ? 'Sin resultados' : 'Aún no hay jugadores registrados'}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {hasFilters 
+                ? <>Intenta ajustar los filtros o <button onClick={clearFilters} className="text-primary underline">limpiar filtros</button>.</>
+                : 'Agrega tu primer jugador para comenzar.'
+              }
+            </p>
           </div>
         ) : (
           <>
