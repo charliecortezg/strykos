@@ -55,6 +55,7 @@ import {
   Clock,
   MailX,
   Loader2,
+  UserCheck,
 } from 'lucide-react';
 import { CreatePaymentModal } from './CreatePaymentModal';
 import { PAYMENT_METHOD_LABELS, RECEIPT_STATUS_LABELS, type Player, type ReceiptStatus } from '@/types/categories';
@@ -530,8 +531,9 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
                 <TableRow>
                   <TableCell colSpan={canManageReceipts ? 7 : 6} className="text-center py-8">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Receipt className="w-8 h-8" />
-                      <p>No hay pagos registrados</p>
+                      <Receipt className="w-10 h-10 opacity-50" />
+                      <p className="font-medium">Aún no hay pagos registrados</p>
+                      <p className="text-sm">Registra el primer pago para comenzar el control financiero.</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -565,8 +567,16 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
                       <TableCell className="hidden md:table-cell">
                         {format(new Date(payment.payment_month), 'MMM yyyy', { locale: es })}
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">
-                        {format(new Date(payment.created_at), 'dd/MM/yyyy')}
+                      <TableCell className="hidden lg:table-cell text-sm">
+                        <div className="flex flex-col">
+                          <span className="text-muted-foreground">{format(new Date(payment.created_at), 'dd/MM/yyyy HH:mm')}</span>
+                          {payment.recorded_by_profile?.full_name && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                              <UserCheck className="w-3 h-3" />
+                              {payment.recorded_by_profile.full_name}
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       {canManageReceipts && (
                         <TableCell>
@@ -629,9 +639,10 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
             </div>
           ) : filteredPayments.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              <Receipt className="w-8 h-8 mx-auto mb-2" />
-              <p>No hay pagos registrados</p>
+            <div className="p-8 text-center">
+              <Receipt className="w-10 h-10 mx-auto mb-3 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground font-medium">Aún no hay pagos registrados</p>
+              <p className="text-sm text-muted-foreground mt-1">Registra el primer pago para comenzar el control financiero.</p>
             </div>
           ) : (
             filteredPayments.map((payment) => {
@@ -655,6 +666,10 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         {format(new Date(payment.payment_month), 'MMM yyyy', { locale: es })} • {payment.concept}
+                      </p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                        <UserCheck className="w-3 h-3" />
+                        {payment.recorded_by_profile?.full_name || 'Sistema'} • {format(new Date(payment.created_at), 'dd/MM HH:mm')}
                       </p>
                     </div>
                     {player && (

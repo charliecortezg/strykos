@@ -135,6 +135,7 @@ export interface Payment {
   receipt_message_id: string | null;
   // Joined data
   player?: { id: string; full_name: string; category?: { name: string } | null } | null;
+  recorded_by_profile?: { full_name: string } | null;
 }
 
 export interface CreateCategoryData {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, MapPin, User, Trophy, Edit2, Save, XCircle, Shield, Target, Users, Trash2 } from 'lucide-react';
+import { Calendar, MapPin, User, Trophy, Edit2, Save, XCircle, Shield, Target, Users, Trash2, ShieldCheck } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -128,16 +128,25 @@ export function MatchDetailDrawer({
               <Trophy className="w-5 h-5 text-primary" />
               <span>Detalle del Partido</span>
               {isFinished && (
-                <Badge 
-                  variant="outline"
-                  className={cn(
-                    result === 'victoria' && "bg-success/10 text-success border-success/20",
-                    result === 'empate' && "bg-warning/10 text-warning border-warning/20",
-                    result === 'derrota' && "bg-destructive/10 text-destructive border-destructive/20"
-                  )}
-                >
-                  {result === 'victoria' ? 'Victoria' : result === 'empate' ? 'Empate' : 'Derrota'}
-                </Badge>
+                <>
+                  <Badge 
+                    variant="outline"
+                    className={cn(
+                      result === 'victoria' && "bg-success/10 text-success border-success/20",
+                      result === 'empate' && "bg-warning/10 text-warning border-warning/20",
+                      result === 'derrota' && "bg-destructive/10 text-destructive border-destructive/20"
+                    )}
+                  >
+                    {result === 'victoria' ? 'Victoria' : result === 'empate' ? 'Empate' : 'Derrota'}
+                  </Badge>
+                  <Badge 
+                    variant="outline" 
+                    className="bg-success/10 text-success border-success/20 gap-1"
+                  >
+                    <ShieldCheck className="w-3 h-3" />
+                    Registro oficial
+                  </Badge>
+                </>
               )}
             </DrawerTitle>
           </div>
