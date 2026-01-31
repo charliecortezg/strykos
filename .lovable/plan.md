@@ -1,328 +1,326 @@
 
-# Plan: Core Feature Completion (Cerrar lo que ya prometimos)
+
+# Plan: Fase 3 — Demo-Ready Product Hardening
 
 ## Objetivo
-Nada "a medias" en features visibles. Completar todas las funcionalidades parcialmente implementadas.
+Convertir STRYK en un producto demo-ready donde cualquier fundador/director:
+- Confía en los datos (trazabilidad visible)
+- Entiende lo que ve sin explicación (microcopy claro)
+- Percibe orden, control y seriedad institucional
+- Puede verlo 2 minutos y decir: "esto es justo lo que necesito"
 
 ---
 
-## Analisis del Estado Actual
+## Estado Actual (Análisis)
 
-### 2.1 Perfil de Jugador - Tab Pagos
+### Trazabilidad (Trust Layer)
 
-**Estado Actual:**
-```tsx
-// PlayerProfileModal.tsx linea 334-343
-<TabsContent value="pagos">
-  <div className="p-8 text-center text-muted-foreground">
-    <CreditCard className="w-10 h-10 mx-auto mb-3 opacity-50" />
-    <p>Historial de pagos próximamente.</p>
-    {player.monthly_fee && (
-      <p className="mt-2 text-sm">
-        Cuota mensual: <span className="font-semibold">${player.monthly_fee}</span>
-      </p>
-    )}
-  </div>
-</TabsContent>
-```
+| Entidad | Campo `recorded_by`/`created_by` | Visible en UI? |
+|---------|----------------------------------|----------------|
+| Asistencias | `recorded_by` en DB | NO visible |
+| Partidos | `created_by` + `last_edited_by` | SI visible (MatchDetailModal ya muestra) |
+| Pagos | `recorded_by` en DB | NO visible |
 
-**Problema:** Tab de pagos muestra placeholder, no datos reales.
+### Empty States Actuales
 
-**Hook existente:** `usePayments` ya tiene `getPlayerPayments(playerId)` que retorna historial completo.
+| Componente | Estado Actual | Tono STRYK? |
+|------------|---------------|-------------|
+| AttendanceRegistration | "Sin jugadores" / "No hay jugadores activos" | Parcial |
+| TrainerMatchesModule | "Sin partidos" / "Registra tu primer partido" | SI |
+| PaymentsDashboard | "No hay pagos registrados" | Genérico |
+| OperationalReports | "Sin datos de asistencia" | Genérico |
+| PlayersTable | No tiene empty state | FALTA |
+| PlayerProfileModal Pagos | "Historial de pagos próximamente" | INCORRECTO (ya implementado) |
 
----
+### Microcopy Actual
 
-### 2.2 Estados Consistentes en Partidos
-
-**Estado Actual:**
-- Tabla `matches` usa campo `status TEXT` con valores: `programado`, `terminado`, `cancelado`
-- NO hay enum, son valores de texto con default `'programado'`
-- NO existe estado `draft`, `in_progress` ni `locked`
-- NO hay validacion de datos incompletos antes de marcar como `terminado`
-
-**Flujo actual:**
-```text
-programado --> terminado (al cargar resultado)
-           --> cancelado (manual)
-```
-
-**Problema:** No hay bloqueo post-cierre ni validacion de datos minimos.
+| Componente | Texto Actual | Problema |
+|------------|--------------|----------|
+| AttendanceRegistration | "Guardar" | Genérico |
+| CreatePaymentModal | "Crear pago" / "Registrar" | OK |
+| LoadResultsModal | "Guardar y cerrar partido" | OK |
+| Botones generales | Mezcla de "Guardar" / "Confirmar" | Inconsistente |
 
 ---
 
-### 2.3 Semaforo de Rendimiento
+## Bloque 1: Trazabilidad Visible (Trust Layer)
 
-**Estado Actual:**
-- Enum en DB: `attendance_performance_status: "excellent" | "focus" | "challenge"`
-- Logica implementada en `AttendanceRegistration.tsx`:
-  - Marcar "Presente" automaticamente asigna `excellent`
-  - Marcar "Ausente" limpia `performance_status` a null
-  - Tap en semaforo cicla: `excellent -> focus -> challenge -> excellent`
-- Componente `PerformanceIndicator` tiene tooltip con label pero NO explica criterio
+### 1.1 Asistencias — Agregar info de registro
 
-**Problema:** El usuario no sabe que significa cada estado. Es una "caja negra".
+**Problema**: Después de guardar asistencia, el usuario no sabe quién la registró ni cuándo.
+
+**Solución**: Mostrar footer de trazabilidad cuando existe registro guardado.
+
+```text
+Archivo: src/components/attendance/AttendanceRegistration.tsx
+
+Cambio:
+- Agregar query para obtener info de `recorded_by` de la tabla attendance
+- Mostrar footer cuando `hasExistingAttendance = true`:
+
+┌────────────────────────────────────────────────────────┐
+│ ✓ Registro guardado                                    │
+│ 🕒 Hoy 14:32 • Por: Coach Martínez                    │
+└────────────────────────────────────────────────────────┘
+```
+
+**Hook adicional**: Modificar `useTrainingAttendance.ts` para incluir `recorded_by` con join a `profiles`.
+
+### 1.2 Partidos — Estado ya implementado
+
+**Estado actual**: MatchDetailModal ya muestra trazabilidad completa:
+- "Registrado por: [nombre]"
+- "Última edición: [nombre] — [fecha/hora]"
+- Badge de estado (Terminado/Programado/Cancelado)
+
+**Mejora mínima**: Agregar badge "Registro oficial" cuando `status = 'terminado'`.
+
+### 1.3 Pagos — Agregar info de registro
+
+**Problema**: La tabla de pagos no muestra quién registró cada pago.
+
+**Solución**: 
+1. Modificar query de `usePayments` para incluir join a `profiles` via `recorded_by`
+2. Mostrar en tooltip o columna adicional
+
+```text
+Archivo: src/components/payments/PaymentsDashboard.tsx
+Archivo: src/hooks/usePayments.ts
+
+Cambio en hook:
+- Agregar al SELECT: `recorded_by_profile:profiles!recorded_by(full_name)`
+
+Cambio en UI:
+- En mobile cards: agregar línea "Registrado por: [nombre] • [fecha hora]"
+- En desktop table: agregar columna o tooltip con esta info
+```
 
 ---
 
-## Solucion Propuesta
+## Bloque 2: Demo Flows (Verificación + Optimización)
 
-### 2.1 Perfil de Jugador - Tab Pagos Completo
+### 2.1 Demo Flow: Asistencia (10 segundos)
 
-**Implementacion:**
+**Estado actual**: Funciona bien, pero el mensaje de éxito es solo un toast.
 
-Crear nuevo hook `usePlayerPaymentHistory` que extienda la funcionalidad existente:
+**Mejora**: 
+- El botón "Guardar" ya cambia a "Guardando..." 
+- Después de guardar, mostrar transición visible de éxito en el botón
+- Toast ya funciona con "Asistencia registrada correctamente"
 
-```typescript
-// Hook que ya existe parcialmente en usePayments.ts
-getPlayerPayments(playerId) // Retorna Payment[]
+**Verificar**: No hay textos técnicos visibles.
 
-// Datos a mostrar:
-- Lista de pagos realizados (ordenados por fecha)
-- Total pagado historico
-- Ultimo pago (monto, fecha, metodo)
-- Estado actual (al_dia / pendiente / atrasado)
-- Meses sin pago (para adeudo)
-```
+### 2.2 Demo Flow: Partido completo
 
-**UI del Tab Pagos:**
+**Estado actual**: 
+- Crear partido funciona
+- Pasar lista funciona
+- Registrar marcador funciona
+- Cerrar partido funciona
 
+**Mejora al cerrar**:
 ```text
-+----------------------------------------------------------+
-| ESTADO DE CUENTA                                          |
-+----------------------------------------------------------+
-| ┌────────────────┐  ┌────────────────┐  ┌────────────────┐|
-| │    $1,500      │  │      5         │  │   Al día       │|
-| │  Total pagado  │  │    Pagos       │  │    Estado      │|
-| └────────────────┘  └────────────────┘  └────────────────┘|
-|                                                          |
-| ULTIMO PAGO                                              |
-| ┌──────────────────────────────────────────────────────┐ |
-| │ $300 - Mensualidad Enero 2026                        │ |
-| │ 14 Ene 2026 • Transferencia                          │ |
-| └──────────────────────────────────────────────────────┘ |
-|                                                          |
-| HISTORIAL                                                |
-| ┌──────────────────────────────────────────────────────┐ |
-| │ 💳 $300 - Mensualidad Enero         14 Ene 2026     │ |
-| │ 💵 $300 - Mensualidad Diciembre     15 Dic 2025     │ |
-| │ 💳 $300 - Mensualidad Noviembre     12 Nov 2025     │ |
-| │ ...                                                  │ |
-| └──────────────────────────────────────────────────────┘ |
-|                                                          |
-| Cuota mensual: $300                                      |
-+----------------------------------------------------------+
+Archivo: src/components/matches/LoadResultsModal.tsx
+
+Después de handleSave exitoso:
+- Toast: "Partido cerrado correctamente" (ya existe similar)
+- El partido cambia a estado "Terminado" (ya funciona)
 ```
 
-**Archivos a modificar:**
-- `src/components/players/PlayerProfileModal.tsx` - Implementar tab pagos completo
-- Usar `usePayments` hook existente (metodo `getPlayerPayments`)
+**Agregar**: Badge visual prominente "Registro oficial" en partidos terminados.
+
+### 2.3 Demo Flow: Estado de Cuenta
+
+**Estado actual**: PlayerProfileModal tab "Pagos" YA ESTÁ IMPLEMENTADO con:
+- Total pagado
+- Número de pagos
+- Estado (Al día / Adeudo)
+- Último pago destacado
+- Historial completo
+
+**Problema detectado**: El código en PlayerProfileModal líneas 334-343 todavía tiene el placeholder viejo.
+
+**Corrección necesaria**: El tab de pagos YA FUE implementado en sesión anterior (Core Feature Completion). Verificar que el código actual muestra datos reales, no placeholder.
+
+### 2.4 Demo Flow: Reporte Ejecutivo
+
+**Estado actual**: OperationalReports ya muestra:
+- Asistencia Global %
+- Recaudado (mes)
+- Pagos Pendientes
+- Jugadores Activos
+- Gráficas de tendencia
+
+**Mejora**: Agregar texto guía en header:
+```text
+"Resumen operativo del periodo seleccionado"
+```
 
 ---
 
-### 2.2 Estados Consistentes en Partidos
+## Bloque 3: Empty States + Microcopy STRYK
 
-**Flujo de estados propuesto:**
+### 3.1 Empty States a Implementar/Mejorar
 
+| Componente | Estado Actual | Nuevo Empty State (Tono STRYK) |
+|------------|---------------|--------------------------------|
+| AttendanceRegistration | "No hay jugadores activos" | "Aún no hay jugadores en esta categoría. Agrega jugadores desde el módulo de Plantilla." |
+| PaymentsDashboard | "No hay pagos registrados" | "Aún no hay pagos registrados. Registra el primer pago para comenzar el control financiero." |
+| TrainerMatchesModule | "Registra tu primer partido" | OK - mantener |
+| OperationalReports (sin datos) | "Sin datos de asistencia" | "Aún no hay datos de asistencia. Los reportes se generarán automáticamente al registrar entrenamientos." |
+| PlayersTable (vacío) | No existe | "Aún no hay jugadores registrados. Agrega tu primer jugador para comenzar." |
+
+### 3.2 Microcopy Institucional
+
+**Patrón de botones de acción:**
+
+| Contexto | Texto Actual | Texto STRYK |
+|----------|--------------|-------------|
+| Guardar asistencia | "Guardar" | "Guardar asistencia" |
+| Crear partido | "Registrar" | "Registrar partido" |
+| Cerrar partido | "Guardar y cerrar" | "Cerrar partido" |
+| Crear pago | "Registrar Pago" | OK - mantener |
+| Crear jugador | "Crear Jugador" | "Registrar jugador" |
+
+**Agregar donde aplique (footer de sección):**
 ```text
-            ┌──────────────────────────────────────┐
-            │        CICLO DE VIDA DEL PARTIDO     │
-            └──────────────────────────────────────┘
-
-programado ──────────────────────────────────────────┐
-    │ (partido futuro, sin resultado)                │
-    │                                                │
-    ▼                                                │
-terminado ◄─────────────────────────────────────────┤
-    │ (resultado cargado, editable por Director)     │
-    │                                                │
-    │ [Opcional futuro: locked]                      │
-    ▼                                                │
-cancelado ◄─────────────────────────────────────────┘
-    (partido no se jugo)
+"Si no está en STRYK, no sucedió."
 ```
 
-**Validaciones requeridas antes de `terminado`:**
-1. `rival_name` no vacio
-2. `goals_for` y `goals_against` definidos (>= 0)
-3. Al menos 1 jugador presente en `match_players` con `attended = true`
-
-**Bloqueo de edicion (post-cierre):**
-- Partidos `terminado` editables solo por `org_owner` y `director_deportivo`
-- Entrenador NO puede editar partidos ya terminados
-- RLS ya maneja esto via `UPDATE` policies
-
-**Cambios propuestos:**
-
-1. **Validacion en LoadResultsModal** antes de guardar como `terminado`:
-```typescript
-// Validar antes de handleSave()
-if (attendingPlayers.length === 0) {
-  toast.error('Marca al menos un jugador como presente');
-  return;
-}
-```
-
-2. **UI clara de estados** en MatchCard y MatchDetailModal:
-```text
-| Estado     | Badge Color      | Icono   | Editable por        |
-|------------|------------------|---------|---------------------|
-| programado | Primary/Blue     | Clock   | Entrenador, Director|
-| terminado  | Success/Green    | Check   | Solo Director       |
-| cancelado  | Destructive/Red  | X       | Director (re-abrir) |
-```
-
-3. **Mensaje cuando entrenador intenta editar partido terminado:**
-```text
-"Este partido ya fue cerrado. Contacta al Director Deportivo para correcciones."
-```
-
-**Archivos a modificar:**
-- `src/components/matches/LoadResultsModal.tsx` - Agregar validacion minima
-- `src/components/matches/MatchDetailModal.tsx` - Mensaje si `canEdit=false` y `terminado`
-- `src/components/matches/MatchCard.tsx` - Indicador visual de estado editable
+Ubicaciones sugeridas:
+- Footer del módulo de asistencia (después de guardar exitosamente)
+- Footer del historial de partidos
+- NO en cada acción (sería invasivo)
 
 ---
 
-### 2.3 Consistencia Semaforo de Rendimiento
+## Bloque 4: Consistencia Visual y Estados
 
-**Problema actual:** Usuario no sabe que significa cada color.
+### Checklist de Estados
 
-**Solucion:** Agregar explicacion contextual accesible.
+| Estado | Implementado? | Componente |
+|--------|---------------|------------|
+| Loading spinner | SI | LoadingSpinner.tsx |
+| Loading skeleton | SI | loading-spinner.tsx (SettingsPanelSkeleton, CardSkeleton) |
+| Success feedback | PARCIAL | ActionButton.tsx (nuevo) |
+| Disabled states | SI | Buttons con disabled prop |
+| Error states | SI | error-messages.ts |
 
-**Definicion clara de estados:**
+### Badges Consistentes
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│ SEMAFORO DE RENDIMIENTO - Evaluacion del Entrenador    │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│ 🟢 EXCELENTE                                            │
-│    El jugador mostro actitud ejemplar, esfuerzo        │
-│    constante y buen desempeño en el entrenamiento.     │
-│    (Default al marcar presente)                        │
-│                                                         │
-│ 🟡 ENFOQUE                                              │
-│    El jugador necesita mejorar su concentracion        │
-│    o actitud. Requiere seguimiento esta semana.        │
-│                                                         │
-│ 🔴 RETO                                                 │
-│    El jugador presenta problemas de actitud,           │
-│    disciplina o rendimiento que requieren atencion     │
-│    inmediata del cuerpo tecnico.                       │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
+**Partidos:**
+- `programado` → Badge azul "Programado"
+- `terminado` → Badge verde "Terminado" + opcional "Registro oficial"
+- `cancelado` → Badge rojo "Cancelado"
 
-**Implementacion UI:**
+**Pagos:**
+- Estado de recibo con iconos (ya implementado)
 
-1. **Tooltip mejorado en PerformanceIndicator:**
-```typescript
-// Agregar descripcion a PERFORMANCE_CONFIG
-const PERFORMANCE_CONFIG = {
-  excellent: {
-    label: 'Excelente',
-    description: 'Actitud y desempeño ejemplar',
-    bgColor: 'bg-success',
-    ringColor: 'ring-success/30',
-  },
-  focus: {
-    label: 'Enfoque',
-    description: 'Requiere mejorar concentracion',
-    bgColor: 'bg-warning',
-    ringColor: 'ring-warning/30',
-  },
-  challenge: {
-    label: 'Reto',
-    description: 'Atencion inmediata requerida',
-    bgColor: 'bg-destructive',
-    ringColor: 'ring-destructive/30',
-  },
-};
-```
-
-2. **Icono de ayuda en header de AttendanceRegistration:**
-```text
-Rendimiento: 🟢 5  🟡 2  🔴 1  [?]
-                               │
-                               └── Info tooltip/popover con explicacion
-```
-
-3. **Leyenda colapsable** al pie del modulo de asistencia (primera vez que se usa):
-```tsx
-<Collapsible>
-  <CollapsibleTrigger>
-    <Info className="w-4 h-4" /> ¿Que significa cada color?
-  </CollapsibleTrigger>
-  <CollapsibleContent>
-    // Explicacion de los 3 estados
-  </CollapsibleContent>
-</Collapsible>
-```
-
-**Archivos a modificar:**
-- `src/components/attendance/PerformanceIndicator.tsx` - Mejorar tooltip con descripcion
-- `src/components/attendance/AttendanceRegistration.tsx` - Agregar ayuda contextual
+**Jugadores:**
+- `al_dia` → Badge verde
+- `pendiente` → Badge amarillo
+- `atrasado` → Badge rojo
 
 ---
 
-## Resumen de Cambios
+## Resumen de Archivos a Modificar
 
-### Archivos a Modificar
+### Bloque 1 (Trazabilidad)
 
 | Archivo | Cambio |
 |---------|--------|
-| `PlayerProfileModal.tsx` | Implementar tab Pagos completo con historial real |
-| `LoadResultsModal.tsx` | Validacion minima antes de cerrar partido |
-| `MatchDetailModal.tsx` | Mensaje para entrenador si partido bloqueado |
-| `MatchCard.tsx` | Indicador visual de editabilidad por estado |
-| `PerformanceIndicator.tsx` | Tooltip mejorado con descripcion |
-| `AttendanceRegistration.tsx` | Icono de ayuda y leyenda explicativa |
+| `src/hooks/useTrainingAttendance.ts` | Agregar query de `recorded_by` con join a profiles |
+| `src/components/attendance/AttendanceRegistration.tsx` | Mostrar footer de trazabilidad |
+| `src/hooks/usePayments.ts` | Agregar join a profiles via `recorded_by` |
+| `src/components/payments/PaymentsDashboard.tsx` | Mostrar info de quién registró |
+| `src/components/matches/MatchCard.tsx` | Agregar badge "Registro oficial" si terminado |
 
-### Sin cambios de base de datos
+### Bloque 2 (Demo Flows)
 
-No se requieren migraciones SQL. Los estados de partido existentes (`programado`, `terminado`, `cancelado`) son suficientes para el flujo actual.
+| Archivo | Cambio |
+|---------|--------|
+| `src/components/matches/LoadResultsModal.tsx` | Verificar mensaje de éxito claro |
+| `src/components/reports/OperationalReports.tsx` | Agregar texto guía en header |
+
+### Bloque 3 (Empty States + Microcopy)
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/components/attendance/AttendanceRegistration.tsx` | Mejorar empty state |
+| `src/components/payments/PaymentsDashboard.tsx` | Mejorar empty state |
+| `src/components/players/PlayersTable.tsx` | Agregar empty state |
+| `src/components/reports/OperationalReports.tsx` | Mejorar empty states de gráficas |
+| Varios | Actualizar microcopy de botones |
+
+### Bloque 4 (Consistencia Visual)
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/components/matches/MatchCard.tsx` | Estandarizar badges de estado |
+| `src/components/matches/MatchDetailDrawer.tsx` | Agregar badge "Registro oficial" |
 
 ---
 
-## Criterios de Exito
-
-| Feature | Criterio |
-|---------|----------|
-| Tab Pagos | Muestra historial real, total pagado, ultimo pago, estado |
-| Estados Partidos | Validacion minima antes de cerrar, mensaje si bloqueado |
-| Semaforo | Usuario entiende que significa cada color (no es caja negra) |
-
----
-
-## Orden de Implementacion
+## Orden de Implementación
 
 ```text
-1. Tab Pagos en PlayerProfileModal (mas visible, mas valor)
-   │
-   ▼
-2. Validaciones y mensajes en Partidos
-   │
-   ▼
-3. Explicaciones del Semaforo de Rendimiento
-   │
-   ▼
-4. Test end-to-end de los 3 features
+Paso 1: Trazabilidad en Asistencias
+    │   - Modificar hook
+    │   - Agregar footer visual
+    ▼
+Paso 2: Trazabilidad en Pagos
+    │   - Modificar hook
+    │   - Agregar info en UI
+    ▼
+Paso 3: Badge "Registro oficial" en Partidos
+    │
+    ▼
+Paso 4: Empty States mejorados
+    │   - Todos los componentes listados
+    ▼
+Paso 5: Microcopy institucional
+    │   - Botones de acción
+    │   - Texto guía en reportes
+    ▼
+Paso 6: Consistencia de badges
+    │
+    ▼
+Test: Verificar demo flows completos
 ```
 
 ---
 
-## Notas Tecnicas
+## Criterios de Aceptación
 
-**Hook usePayments ya tiene todo:**
-- `getPlayerPayments(playerId)` - Retorna array de Payment[]
-- Cada Payment tiene: amount, payment_method, payment_month, concept, created_at
+| Criterio | Validación |
+|----------|------------|
+| Demo completo en móvil | Probar los 4 flows en viewport 375px |
+| Usuario entiende qué pasó | Cada acción tiene feedback visible |
+| Usuario sabe quién lo hizo | Trazabilidad visible en asistencias, partidos, pagos |
+| Usuario sabe cuándo pasó | Timestamps visibles |
+| No hay textos técnicos | Auditoría de console.log y mensajes de error |
+| No hay pantallas vacías sin explicación | Todos los empty states con mensaje claro |
+| STRYK se percibe como sistema oficial | Badges, microcopy, trazabilidad |
 
-**Datos reales en DB:**
-- Pagos existentes con montos $300-$400
-- Conceptos: "Mensualidad", "Mensualidad Enero 2025"
-- Metodos: efectivo, transferencia
+---
 
-**RLS de partidos:**
-- Entrenadores solo pueden UPDATE matches de sus categorias
-- Director/Owner pueden UPDATE cualquier match
-- Ya funciona correctamente para bloqueo de edicion
+## Notas Técnicas
+
+**Queries de trazabilidad:**
+
+Para asistencias (en useTrainingAttendance):
+```sql
+SELECT recorded_by, profiles!attendance_recorded_by_fkey(full_name)
+FROM attendance
+WHERE category_id = X AND date = Y
+LIMIT 1
+```
+
+Para pagos (en usePayments):
+```sql
+SELECT ..., recorded_by, recorded_by_profile:profiles!recorded_by(full_name)
+FROM payments
+```
+
+**No se requieren migraciones SQL** - todos los campos de trazabilidad ya existen en la base de datos.
+
