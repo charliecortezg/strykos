@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, ClipboardList, Briefcase, Settings, ChevronDown, ChevronUp, UserPlus } from 'lucide-react';
+import { Users, ClipboardList, Briefcase, Settings, ChevronDown, ChevronUp, UserPlus, Sparkles } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { RoleCard } from '@/components/dashboard/RoleCard';
 import { CreateUserModal } from '@/components/dashboard/CreateUserModal';
@@ -17,8 +17,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ORG_ROLE_LABELS, type OrgRole } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useFeatureFlags } from '@/hooks/useStrykWay';
 
 interface OrgUser {
   id: string;
@@ -33,6 +35,7 @@ export default function OrgOwnerDashboard() {
   const navigate = useNavigate();
   const { organization, user } = useAuth();
   const { toast } = useToast();
+  const { feature_stryk_way_enabled } = useFeatureFlags();
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [categoriesCount, setCategoriesCount] = useState<number>(0);
   const [playersCount, setPlayersCount] = useState<number>(0);
@@ -355,6 +358,35 @@ export default function OrgOwnerDashboard() {
         {/* Intake Settings Section */}
         <div className="mt-8">
           <IntakeSettingsPanel />
+        </div>
+
+        {/* STRYK Way Section */}
+        <div className="mt-8">
+          <h2 className="text-xl font-display font-semibold text-foreground mb-4">
+            STRYK Way
+          </h2>
+          <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => navigate('/stryk-way')}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">STRYK Way Studio</CardTitle>
+                    <CardDescription>
+                      Sistema de progreso con XP, badges y retos para jugadores
+                    </CardDescription>
+                  </div>
+                </div>
+                {feature_stryk_way_enabled ? (
+                  <Badge variant="default" className="bg-success">Activo</Badge>
+                ) : (
+                  <Badge variant="secondary">No activado</Badge>
+                )}
+              </div>
+            </CardHeader>
+          </Card>
         </div>
       </main>
 

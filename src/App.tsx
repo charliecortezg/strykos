@@ -27,6 +27,8 @@ import PlatformDashboard from "./pages/platform/PlatformDashboard";
 import OrganizationsPage from "./pages/platform/OrganizationsPage";
 import UpgradeRequestsPage from "./pages/platform/UpgradeRequestsPage";
 import AuditLogPage from "./pages/platform/AuditLogPage";
+// STRYK Way Pages
+import StudioPage from "./pages/stryk-way/StudioPage";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +111,12 @@ function AcademyRoutes() {
         <Route path="/fichajes/historial" element={
           <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo', 'administrativo']}>
             <HistorialPage />
+          </ProtectedRoute>
+        } />
+        {/* STRYK Way Routes */}
+        <Route path="/stryk-way" element={
+          <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo']}>
+            <StudioPage />
           </ProtectedRoute>
         } />
         <Route path="*" element={<NotFound />} />
