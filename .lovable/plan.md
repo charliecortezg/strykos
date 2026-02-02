@@ -1,326 +1,519 @@
 
-
-# Plan: Fase 3 — Demo-Ready Product Hardening
-
-## Objetivo
-Convertir STRYK en un producto demo-ready donde cualquier fundador/director:
-- Confía en los datos (trazabilidad visible)
-- Entiende lo que ve sin explicación (microcopy claro)
-- Percibe orden, control y seriedad institucional
-- Puede verlo 2 minutos y decir: "esto es justo lo que necesito"
+# Plan Actualizado: STRYK Way Implementation
+## Clarificación de Terminología + Modelo Existente
 
 ---
 
-## Estado Actual (Análisis)
+## Clarificación Importante
 
-### Trazabilidad (Trust Layer)
+Según lo confirmado:
+- **Guardian = Tutor** (son sinónimos, usaremos "tutor" en la UI en español)
+- **Player = Jugador** (el atleta/estudiante)
+- Ejemplo: Jugador `Said Lopez Cebrero` tiene como Tutor `Satya Cebrero`
 
-| Entidad | Campo `recorded_by`/`created_by` | Visible en UI? |
-|---------|----------------------------------|----------------|
-| Asistencias | `recorded_by` en DB | NO visible |
-| Partidos | `created_by` + `last_edited_by` | SI visible (MatchDetailModal ya muestra) |
-| Pagos | `recorded_by` en DB | NO visible |
-
-### Empty States Actuales
-
-| Componente | Estado Actual | Tono STRYK? |
-|------------|---------------|-------------|
-| AttendanceRegistration | "Sin jugadores" / "No hay jugadores activos" | Parcial |
-| TrainerMatchesModule | "Sin partidos" / "Registra tu primer partido" | SI |
-| PaymentsDashboard | "No hay pagos registrados" | Genérico |
-| OperationalReports | "Sin datos de asistencia" | Genérico |
-| PlayersTable | No tiene empty state | FALTA |
-| PlayerProfileModal Pagos | "Historial de pagos próximamente" | INCORRECTO (ya implementado) |
-
-### Microcopy Actual
-
-| Componente | Texto Actual | Problema |
-|------------|--------------|----------|
-| AttendanceRegistration | "Guardar" | Genérico |
-| CreatePaymentModal | "Crear pago" / "Registrar" | OK |
-| LoadResultsModal | "Guardar y cerrar partido" | OK |
-| Botones generales | Mezcla de "Guardar" / "Confirmar" | Inconsistente |
+El sistema ya tiene:
+- Tabla `guardians` con datos del tutor (nombre, email, teléfono, relación)
+- Tabla `player_guardians` para vincular tutores con jugadores
+- Campo legacy `players.tutor_name` (texto directo)
 
 ---
 
-## Bloque 1: Trazabilidad Visible (Trust Layer)
+## Cambios al Plan Original
 
-### 1.1 Asistencias — Agregar info de registro
-
-**Problema**: Después de guardar asistencia, el usuario no sabe quién la registró ni cuándo.
-
-**Solución**: Mostrar footer de trazabilidad cuando existe registro guardado.
-
-```text
-Archivo: src/components/attendance/AttendanceRegistration.tsx
-
-Cambio:
-- Agregar query para obtener info de `recorded_by` de la tabla attendance
-- Mostrar footer cuando `hasExistingAttendance = true`:
-
-┌────────────────────────────────────────────────────────┐
-│ ✓ Registro guardado                                    │
-│ 🕒 Hoy 14:32 • Por: Coach Martínez                    │
-└────────────────────────────────────────────────────────┘
+### 1. NO crear `guardian_player_links`
+Ya existe `player_guardians` con la misma estructura:
+```
+player_guardians:
+  - id
+  - player_id
+  - guardian_id
+  - is_primary
+  - created_at
 ```
 
-**Hook adicional**: Modificar `useTrainingAttendance.ts` para incluir `recorded_by` con join a `profiles`.
+### 2. Terminología UI
+En toda la interfaz usar:
+- "Tutor" (no "Guardian") 
+- "Jugador" (no "Player")
+- "Portal de Padres" o "Portal Familiar" (no "Player Portal")
 
-### 1.2 Partidos — Estado ya implementado
+### 3. Autenticación de Tutores
+Los tutores (`guardians`) NO son usuarios de Supabase Auth. Necesitan:
+- Login especial via código de organización + teléfono + PIN
+- O magic link a su email
+- Sesión separada del admin (similar a como funciona Platform Admin)
 
-**Estado actual**: MatchDetailModal ya muestra trazabilidad completa:
-- "Registrado por: [nombre]"
-- "Última edición: [nombre] — [fecha/hora]"
-- Badge de estado (Terminado/Programado/Cancelado)
+---
 
-**Mejora mínima**: Agregar badge "Registro oficial" cuando `status = 'terminado'`.
+## Arquitectura Actualizada
 
-### 1.3 Pagos — Agregar info de registro
+### Modelo de Datos Fase 1 (Ajustado)
 
-**Problema**: La tabla de pagos no muestra quién registró cada pago.
+```sql
+-- 1. FEATURE FLAGS EN ORGANIZATIONS (nuevo)
+ALTER TABLE public.organizations
+ADD COLUMN IF NOT EXISTS feature_stryk_way_enabled boolean NOT NULL DEFAULT false,
+ADD COLUMN IF NOT EXISTS feature_portal_familiar_enabled boolean NOT NULL DEFAULT false,
+ADD COLUMN IF NOT EXISTS feature_studio_pro_enabled boolean NOT NULL DEFAULT false,
+ADD COLUMN IF NOT EXISTS feature_analytics_enabled boolean NOT NULL DEFAULT false;
 
-**Solución**: 
-1. Modificar query de `usePayments` para incluir join a `profiles` via `recorded_by`
-2. Mostrar en tooltip o columna adicional
+-- 2. STRYK PACKS (contenedor de configuración)
+CREATE TABLE public.stryk_packs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  name text NOT NULL DEFAULT 'Core Pack',
+  version integer NOT NULL DEFAULT 1,
+  status text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','published','archived')),
+  created_by uuid REFERENCES auth.users(id),
+  created_at timestamptz DEFAULT now(),
+  published_at timestamptz,
+  published_by uuid,
+  UNIQUE(organization_id, name, version)
+);
 
-```text
-Archivo: src/components/payments/PaymentsDashboard.tsx
-Archivo: src/hooks/usePayments.ts
+-- 3. STRYK RULESETS (reglas de XP, caps, multiplicadores)
+CREATE TABLE public.stryk_rulesets (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  pack_id uuid NOT NULL REFERENCES stryk_packs(id) ON DELETE CASCADE,
+  economy jsonb NOT NULL DEFAULT '{"xp_per_attendance":10,"xp_per_level":100}'::jsonb,
+  caps jsonb NOT NULL DEFAULT '{"daily_xp_cap":100,"weekly_xp_cap":500}'::jsonb,
+  multipliers jsonb NOT NULL DEFAULT '{"amistoso":1.0,"liga":1.5}'::jsonb,
+  ovr_weights jsonb NOT NULL DEFAULT '{"tecnica":0.25,"tactica":0.25,"fisica":0.25,"mental":0.25}'::jsonb,
+  created_by uuid,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(pack_id)
+);
 
-Cambio en hook:
-- Agregar al SELECT: `recorded_by_profile:profiles!recorded_by(full_name)`
+-- 4. STRYK BADGES (logros desbloqueables)
+CREATE TABLE public.stryk_badges (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  pack_id uuid NOT NULL REFERENCES stryk_packs(id) ON DELETE CASCADE,
+  key text NOT NULL,
+  name text NOT NULL,
+  description text,
+  icon text DEFAULT 'trophy',
+  rarity text DEFAULT 'common' CHECK (rarity IN ('common','rare','epic','legendary')),
+  criteria jsonb NOT NULL DEFAULT '{"type":"attendance_count","threshold":10}'::jsonb,
+  is_active boolean DEFAULT true,
+  created_by uuid,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(organization_id, pack_id, key)
+);
 
-Cambio en UI:
-- En mobile cards: agregar línea "Registrado por: [nombre] • [fecha hora]"
-- En desktop table: agregar columna o tooltip con esta info
+-- 5. STRYK CHALLENGES (retos temporales)
+CREATE TABLE public.stryk_challenges (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  pack_id uuid NOT NULL REFERENCES stryk_packs(id) ON DELETE CASCADE,
+  key text NOT NULL,
+  name text NOT NULL,
+  description text,
+  xp_reward integer DEFAULT 50,
+  criteria jsonb NOT NULL DEFAULT '{"type":"weekly_attendance","threshold":3}'::jsonb,
+  start_at timestamptz,
+  end_at timestamptz,
+  is_active boolean DEFAULT true,
+  created_by uuid,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(organization_id, pack_id, key)
+);
+
+-- 6. STRYK AUDIT LOGS (trazabilidad)
+CREATE TABLE public.stryk_audit_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  actor_user_id uuid,
+  action text NOT NULL,
+  entity_type text NOT NULL,
+  entity_id uuid,
+  meta jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz DEFAULT now()
+);
+```
+
+### Modelo de Datos Fase 2 (Progress Engine)
+
+```sql
+-- 7. STRYK EVENTS (ledger de progreso - inmutable)
+CREATE TABLE public.stryk_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  player_id uuid NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  source_type text NOT NULL CHECK (source_type IN ('attendance','match','manual','challenge')),
+  source_id uuid NOT NULL,
+  xp_delta integer NOT NULL DEFAULT 0,
+  attributes_delta jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_by uuid,
+  created_at timestamptz DEFAULT now(),
+  -- DEDUPE: Un evento por fuente
+  UNIQUE(organization_id, source_type, source_id, player_id)
+);
+
+-- 8. PLAYER PROGRESS (estado agregado - mutable)
+CREATE TABLE public.player_progress (
+  organization_id uuid NOT NULL,
+  player_id uuid NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  xp_total integer DEFAULT 0,
+  level integer DEFAULT 1,
+  streak integer DEFAULT 0,
+  ovr integer DEFAULT 50,
+  radar jsonb DEFAULT '{"tecnica":50,"tactica":50,"fisica":50,"mental":50}'::jsonb,
+  last_event_at timestamptz,
+  updated_at timestamptz DEFAULT now(),
+  PRIMARY KEY(organization_id, player_id)
+);
+
+-- 9. PLAYER BADGES (badges ganados)
+CREATE TABLE public.player_badges (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  player_id uuid NOT NULL,
+  badge_id uuid NOT NULL REFERENCES stryk_badges(id) ON DELETE CASCADE,
+  earned_at timestamptz DEFAULT now(),
+  UNIQUE(player_id, badge_id)
+);
+
+-- 10. TUTOR AUTH TOKENS (login de tutores sin ser usuario Supabase)
+CREATE TABLE public.tutor_auth_tokens (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  guardian_id uuid NOT NULL REFERENCES guardians(id) ON DELETE CASCADE,
+  token_hash text NOT NULL,
+  expires_at timestamptz NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  last_used_at timestamptz
+);
 ```
 
 ---
 
-## Bloque 2: Demo Flows (Verificación + Optimización)
+## Flujo del Portal Familiar (Tutores)
 
-### 2.1 Demo Flow: Asistencia (10 segundos)
+### Opción de Login
 
-**Estado actual**: Funciona bien, pero el mensaje de éxito es solo un toast.
-
-**Mejora**: 
-- El botón "Guardar" ya cambia a "Guardando..." 
-- Después de guardar, mostrar transición visible de éxito en el botón
-- Toast ya funciona con "Asistencia registrada correctamente"
-
-**Verificar**: No hay textos técnicos visibles.
-
-### 2.2 Demo Flow: Partido completo
-
-**Estado actual**: 
-- Crear partido funciona
-- Pasar lista funciona
-- Registrar marcador funciona
-- Cerrar partido funciona
-
-**Mejora al cerrar**:
 ```text
-Archivo: src/components/matches/LoadResultsModal.tsx
-
-Después de handleSave exitoso:
-- Toast: "Partido cerrado correctamente" (ya existe similar)
-- El partido cambia a estado "Terminado" (ya funciona)
+┌─────────────────────────────────────────────────┐
+│            PORTAL FAMILIAR STRYK                │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  Código de Academia: [WHITE-LIONS]              │
+│                                                 │
+│  Teléfono: [6861393993]                         │
+│                                                 │
+│  [Enviar código de acceso]                      │
+│                                                 │
+│  ─────────────────────────────────────────────  │
+│  Recibirás un código de 6 dígitos por SMS      │
+│  o WhatsApp                                     │
+│                                                 │
+└─────────────────────────────────────────────────┘
 ```
 
-**Agregar**: Badge visual prominente "Registro oficial" en partidos terminados.
+### Dashboard del Tutor
 
-### 2.3 Demo Flow: Estado de Cuenta
-
-**Estado actual**: PlayerProfileModal tab "Pagos" YA ESTÁ IMPLEMENTADO con:
-- Total pagado
-- Número de pagos
-- Estado (Al día / Adeudo)
-- Último pago destacado
-- Historial completo
-
-**Problema detectado**: El código en PlayerProfileModal líneas 334-343 todavía tiene el placeholder viejo.
-
-**Corrección necesaria**: El tab de pagos YA FUE implementado en sesión anterior (Core Feature Completion). Verificar que el código actual muestra datos reales, no placeholder.
-
-### 2.4 Demo Flow: Reporte Ejecutivo
-
-**Estado actual**: OperationalReports ya muestra:
-- Asistencia Global %
-- Recaudado (mes)
-- Pagos Pendientes
-- Jugadores Activos
-- Gráficas de tendencia
-
-**Mejora**: Agregar texto guía en header:
 ```text
-"Resumen operativo del periodo seleccionado"
+┌─────────────────────────────────────────────────┐
+│  👋 Hola, Satya                                 │
+│  Tus jugadores:                                 │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  ┌───────────────────────────────────────────┐  │
+│  │ [Avatar]  Said Lopez Cebrero              │  │
+│  │           Escuelita Fútbol                │  │
+│  │           ⭐ Nivel 3 • 280 XP             │  │
+│  │           🔥 Racha: 5 días                │  │
+│  └───────────────────────────────────────────┘  │
+│                                                 │
+│  (Si tiene más hijos, aparecerán aquí)         │
+│                                                 │
+└─────────────────────────────────────────────────┘
+```
+
+### Perfil del Jugador (Vista Tutor)
+
+```text
+┌─────────────────────────────────────────────────┐
+│  ← Said Lopez Cebrero                           │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  ┌─────────────────┐  ┌─────────────────────┐  │
+│  │   PLAYER CARD   │  │      RADAR          │  │
+│  │                 │  │     Técnica         │  │
+│  │   OVR: 72       │  │    ┌───┐            │  │
+│  │                 │  │  Táct│   │Física    │  │
+│  │   [Badges]      │  │    └───┘            │  │
+│  │   🏅 🎯 ⚽      │  │     Mental          │  │
+│  └─────────────────┘  └─────────────────────┘  │
+│                                                 │
+│  ────────────────────────────────────────────  │
+│                                                 │
+│  XP: 280 / 300 para Nivel 4                    │
+│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░ 93%                      │
+│                                                 │
+│  🔥 Racha actual: 5 días                       │
+│                                                 │
+│  ────────────────────────────────────────────  │
+│                                                 │
+│  RETOS ACTIVOS                                 │
+│  ┌───────────────────────────────────────────┐  │
+│  │ 🎯 Asiste 3 veces esta semana             │  │
+│  │    Progreso: 2/3  ▓▓▓▓▓▓░░░░ +30 XP       │  │
+│  └───────────────────────────────────────────┘  │
+│                                                 │
+│  ACTIVIDAD RECIENTE                            │
+│  • Hoy: Asistencia registrada (+10 XP)         │
+│  • Ayer: Partido vs Tigres (+25 XP, 1 gol)     │
+│  • Hace 3 días: Badge "Dedicado" desbloqueado  │
+│                                                 │
+└─────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Bloque 3: Empty States + Microcopy STRYK
+## Rutas Frontend
 
-### 3.1 Empty States a Implementar/Mejorar
+### Nuevas Rutas a Agregar
 
-| Componente | Estado Actual | Nuevo Empty State (Tono STRYK) |
-|------------|---------------|--------------------------------|
-| AttendanceRegistration | "No hay jugadores activos" | "Aún no hay jugadores en esta categoría. Agrega jugadores desde el módulo de Plantilla." |
-| PaymentsDashboard | "No hay pagos registrados" | "Aún no hay pagos registrados. Registra el primer pago para comenzar el control financiero." |
-| TrainerMatchesModule | "Registra tu primer partido" | OK - mantener |
-| OperationalReports (sin datos) | "Sin datos de asistencia" | "Aún no hay datos de asistencia. Los reportes se generarán automáticamente al registrar entrenamientos." |
-| PlayersTable (vacío) | No existe | "Aún no hay jugadores registrados. Agrega tu primer jugador para comenzar." |
+```tsx
+// En App.tsx
 
-### 3.2 Microcopy Institucional
+// Portal Familiar (aislado con su propio auth provider)
+function PortalFamiliarRoutes() {
+  return (
+    <PortalAuthProvider>
+      <Routes>
+        <Route path="login" element={<PortalLogin />} />
+        <Route path="" element={
+          <PortalAuthGuard>
+            <PortalDashboard />
+          </PortalAuthGuard>
+        } />
+        <Route path="jugador/:playerId" element={
+          <PortalAuthGuard>
+            <PortalPlayerView />
+          </PortalAuthGuard>
+        } />
+      </Routes>
+    </PortalAuthProvider>
+  );
+}
 
-**Patrón de botones de acción:**
+// En AcademyRoutes, agregar:
+<Route path="/stryk-way" element={
+  <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo']}>
+    <FeatureGate feature="stryk_way">
+      <StudioPage />
+    </FeatureGate>
+  </ProtectedRoute>
+} />
 
-| Contexto | Texto Actual | Texto STRYK |
-|----------|--------------|-------------|
-| Guardar asistencia | "Guardar" | "Guardar asistencia" |
-| Crear partido | "Registrar" | "Registrar partido" |
-| Cerrar partido | "Guardar y cerrar" | "Cerrar partido" |
-| Crear pago | "Registrar Pago" | OK - mantener |
-| Crear jugador | "Crear Jugador" | "Registrar jugador" |
-
-**Agregar donde aplique (footer de sección):**
-```text
-"Si no está en STRYK, no sucedió."
+// Ruta separada para portal
+<Route path="/portal/*" element={<PortalFamiliarRoutes />} />
 ```
 
-Ubicaciones sugeridas:
-- Footer del módulo de asistencia (después de guardar exitosamente)
-- Footer del historial de partidos
-- NO en cada acción (sería invasivo)
+---
+
+## Estructura de Archivos
+
+```text
+src/
+├── components/
+│   ├── stryk-way/
+│   │   ├── FeatureGate.tsx           # HOC para feature flags
+│   │   ├── StudioLayout.tsx          # Layout del studio
+│   │   ├── PackActivator.tsx         # Activar STRYK Way
+│   │   ├── BadgesList.tsx            # CRUD badges
+│   │   ├── BadgeFormModal.tsx        # Form badge
+│   │   ├── ChallengesList.tsx        # CRUD retos
+│   │   ├── ChallengeFormModal.tsx    # Form reto
+│   │   └── StudioPreview.tsx         # Preview player card
+│   │
+│   └── portal/
+│       ├── PortalLayout.tsx          # Layout para tutores
+│       ├── PlayerSelector.tsx        # Selector de jugador
+│       ├── ProgressCard.tsx          # XP, nivel, streak
+│       ├── PlayerCard.tsx            # Card visual con OVR
+│       ├── RadarChart.tsx            # Gráfica radar 6 ejes
+│       ├── BadgesGrid.tsx            # Grid de badges
+│       ├── ChallengesActive.tsx      # Retos activos
+│       └── ActivityFeed.tsx          # Últimos eventos
+│
+├── contexts/
+│   └── PortalAuthContext.tsx         # Auth separado tutores
+│
+├── hooks/
+│   ├── useStrykWay/
+│   │   ├── useFeatureFlags.ts
+│   │   ├── usePacks.ts
+│   │   ├── useBadges.ts
+│   │   └── useChallenges.ts
+│   │
+│   └── usePortal/
+│       ├── usePlayerProgress.ts
+│       ├── usePlayerBadges.ts
+│       └── usePlayerActivity.ts
+│
+├── pages/
+│   ├── stryk-way/
+│   │   └── StudioPage.tsx
+│   │
+│   └── portal/
+│       ├── PortalLogin.tsx
+│       ├── PortalDashboard.tsx
+│       └── PortalPlayerView.tsx
+│
+└── types/
+    └── stryk-way.ts
+```
 
 ---
 
-## Bloque 4: Consistencia Visual y Estados
+## RLS Policies (Críticas)
 
-### Checklist de Estados
+### Para Portal de Tutores
 
-| Estado | Implementado? | Componente |
-|--------|---------------|------------|
-| Loading spinner | SI | LoadingSpinner.tsx |
-| Loading skeleton | SI | loading-spinner.tsx (SettingsPanelSkeleton, CardSkeleton) |
-| Success feedback | PARCIAL | ActionButton.tsx (nuevo) |
-| Disabled states | SI | Buttons con disabled prop |
-| Error states | SI | error-messages.ts |
+```sql
+-- Tutores pueden ver SOLO jugadores vinculados a ellos
+CREATE POLICY "Tutores ven sus jugadores"
+ON public.player_progress FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM player_guardians pg
+    JOIN tutor_auth_tokens tat ON tat.guardian_id = pg.guardian_id
+    WHERE pg.player_id = player_progress.player_id
+    AND tat.token_hash = current_setting('app.tutor_token', true)
+    AND tat.expires_at > now()
+  )
+);
+```
 
-### Badges Consistentes
-
-**Partidos:**
-- `programado` → Badge azul "Programado"
-- `terminado` → Badge verde "Terminado" + opcional "Registro oficial"
-- `cancelado` → Badge rojo "Cancelado"
-
-**Pagos:**
-- Estado de recibo con iconos (ya implementado)
-
-**Jugadores:**
-- `al_dia` → Badge verde
-- `pendiente` → Badge amarillo
-- `atrasado` → Badge rojo
+La seguridad es **doble aislamiento**:
+1. Por `organization_id` (multi-tenant)
+2. Por `guardian_id` via `player_guardians` (aislamiento familiar)
 
 ---
 
-## Resumen de Archivos a Modificar
+## Progress Engine (Trigger)
 
-### Bloque 1 (Trazabilidad)
+```sql
+-- Cuando se registra asistencia "presente", generar XP
+CREATE OR REPLACE FUNCTION process_attendance_xp()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_ruleset record;
+  v_xp_delta integer;
+  v_daily_xp integer;
+  v_daily_cap integer;
+BEGIN
+  -- Solo procesar status "presente"
+  IF NEW.status != 'presente' THEN
+    RETURN NEW;
+  END IF;
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/hooks/useTrainingAttendance.ts` | Agregar query de `recorded_by` con join a profiles |
-| `src/components/attendance/AttendanceRegistration.tsx` | Mostrar footer de trazabilidad |
-| `src/hooks/usePayments.ts` | Agregar join a profiles via `recorded_by` |
-| `src/components/payments/PaymentsDashboard.tsx` | Mostrar info de quién registró |
-| `src/components/matches/MatchCard.tsx` | Agregar badge "Registro oficial" si terminado |
+  -- Obtener ruleset publicado
+  SELECT rs.economy, rs.caps INTO v_ruleset
+  FROM stryk_packs p
+  JOIN stryk_rulesets rs ON rs.pack_id = p.id
+  WHERE p.organization_id = NEW.organization_id
+    AND p.status = 'published'
+  LIMIT 1;
 
-### Bloque 2 (Demo Flows)
+  -- Si no hay STRYK Way configurado, salir
+  IF v_ruleset IS NULL THEN
+    RETURN NEW;
+  END IF;
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/components/matches/LoadResultsModal.tsx` | Verificar mensaje de éxito claro |
-| `src/components/reports/OperationalReports.tsx` | Agregar texto guía en header |
+  -- Calcular XP con cap
+  v_xp_delta := COALESCE((v_ruleset.economy->>'xp_per_attendance')::int, 10);
+  v_daily_cap := COALESCE((v_ruleset.caps->>'daily_xp_cap')::int, 100);
 
-### Bloque 3 (Empty States + Microcopy)
+  -- Verificar cap diario
+  SELECT COALESCE(SUM(xp_delta), 0) INTO v_daily_xp
+  FROM stryk_events
+  WHERE organization_id = NEW.organization_id
+    AND player_id = NEW.player_id
+    AND created_at::date = NEW.date;
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/components/attendance/AttendanceRegistration.tsx` | Mejorar empty state |
-| `src/components/payments/PaymentsDashboard.tsx` | Mejorar empty state |
-| `src/components/players/PlayersTable.tsx` | Agregar empty state |
-| `src/components/reports/OperationalReports.tsx` | Mejorar empty states de gráficas |
-| Varios | Actualizar microcopy de botones |
+  IF v_daily_xp + v_xp_delta > v_daily_cap THEN
+    v_xp_delta := GREATEST(0, v_daily_cap - v_daily_xp);
+  END IF;
 
-### Bloque 4 (Consistencia Visual)
+  -- Insertar evento (dedupe via UNIQUE)
+  INSERT INTO stryk_events (organization_id, player_id, source_type, source_id, xp_delta, created_by)
+  VALUES (NEW.organization_id, NEW.player_id, 'attendance', NEW.id, v_xp_delta, NEW.recorded_by)
+  ON CONFLICT DO NOTHING;
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/components/matches/MatchCard.tsx` | Estandarizar badges de estado |
-| `src/components/matches/MatchDetailDrawer.tsx` | Agregar badge "Registro oficial" |
+  -- Actualizar progreso
+  INSERT INTO player_progress (organization_id, player_id, xp_total, level, last_event_at)
+  VALUES (NEW.organization_id, NEW.player_id, v_xp_delta, 1, now())
+  ON CONFLICT (organization_id, player_id) DO UPDATE SET
+    xp_total = player_progress.xp_total + v_xp_delta,
+    level = GREATEST(1, (player_progress.xp_total + v_xp_delta) / 100 + 1),
+    last_event_at = now(),
+    updated_at = now();
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER trigger_attendance_xp
+AFTER INSERT OR UPDATE OF status ON attendance
+FOR EACH ROW EXECUTE FUNCTION process_attendance_xp();
+```
 
 ---
 
 ## Orden de Implementación
 
-```text
-Paso 1: Trazabilidad en Asistencias
-    │   - Modificar hook
-    │   - Agregar footer visual
-    ▼
-Paso 2: Trazabilidad en Pagos
-    │   - Modificar hook
-    │   - Agregar info en UI
-    ▼
-Paso 3: Badge "Registro oficial" en Partidos
-    │
-    ▼
-Paso 4: Empty States mejorados
-    │   - Todos los componentes listados
-    ▼
-Paso 5: Microcopy institucional
-    │   - Botones de acción
-    │   - Texto guía en reportes
-    ▼
-Paso 6: Consistencia de badges
-    │
-    ▼
-Test: Verificar demo flows completos
-```
+### Fase 1: Foundation + Studio Básico
+1. Migración SQL: Feature flags en `organizations`
+2. Migración SQL: Tablas `stryk_packs`, `stryk_rulesets`, `stryk_badges`, `stryk_challenges`
+3. RLS policies para admin
+4. Edge function: Initialize Core Pack
+5. UI: FeatureGate component
+6. UI: StudioPage con CRUD badges/retos
+7. Agregar menú "STRYK Way" en dashboard (si feature enabled)
+
+### Fase 2: Portal Familiar + Engine
+1. Migración SQL: `stryk_events`, `player_progress`, `player_badges`
+2. Migración SQL: `tutor_auth_tokens`
+3. Trigger: `process_attendance_xp()`
+4. Edge function: Tutor login (generar/validar token)
+5. Context: PortalAuthContext
+6. UI: PortalLogin, PortalDashboard, PortalPlayerView
+7. Componentes: RadarChart, ProgressCard, ActivityFeed
+
+### Fase 3: Studio Pro + Analytics
+1. UI: Editor de ruleset (economy, caps, weights)
+2. UI: Versionado (publish/rollback)
+3. Analytics: Queries de adopción
+4. UI: Dashboard de analytics
 
 ---
 
-## Criterios de Aceptación
+## Métricas de Éxito
 
 | Criterio | Validación |
 |----------|------------|
-| Demo completo en móvil | Probar los 4 flows en viewport 375px |
-| Usuario entiende qué pasó | Cada acción tiene feedback visible |
-| Usuario sabe quién lo hizo | Trazabilidad visible en asistencias, partidos, pagos |
-| Usuario sabe cuándo pasó | Timestamps visibles |
-| No hay textos técnicos | Auditoría de console.log y mensajes de error |
-| No hay pantallas vacías sin explicación | Todos los empty states con mensaje claro |
-| STRYK se percibe como sistema oficial | Badges, microcopy, trazabilidad |
+| Multi-tenant | Org A no ve datos de Org B |
+| Aislamiento familiar | Tutor A no ve hijos de Tutor B |
+| Dedupe | Mismo attendance no genera doble XP |
+| Caps | Después de 100 XP diarios, no suma más |
+| Mobile-first | Todo funciona en viewport 375px |
+| Demo-ready | Flujo completo en menos de 2 minutos |
 
 ---
 
-## Notas Técnicas
+## Notas Finales
 
-**Queries de trazabilidad:**
+Este plan:
+- ✅ Reutiliza modelo existente (`guardians`, `player_guardians`)
+- ✅ Usa terminología correcta (Tutor, Jugador)
+- ✅ Mantiene RLS estricto (multi-tenant + aislamiento familiar)
+- ✅ No agrega gamificación tipo RPG
+- ✅ Deriva XP solo de eventos reales (asistencia, partidos)
+- ✅ Es mobile-first
 
-Para asistencias (en useTrainingAttendance):
-```sql
-SELECT recorded_by, profiles!attendance_recorded_by_fkey(full_name)
-FROM attendance
-WHERE category_id = X AND date = Y
-LIMIT 1
-```
-
-Para pagos (en usePayments):
-```sql
-SELECT ..., recorded_by, recorded_by_profile:profiles!recorded_by(full_name)
-FROM payments
-```
-
-**No se requieren migraciones SQL** - todos los campos de trazabilidad ya existen en la base de datos.
-
+La implementación será incremental por fases, con feature flags para control por organización.
