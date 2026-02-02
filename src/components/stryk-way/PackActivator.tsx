@@ -103,10 +103,15 @@ export function PackActivator({ isEnabled, packId, onActivated }: PackActivatorP
         });
       }
 
-      // Enable feature flag
+      // Enable all STRYK Way related feature flags
       await supabase
         .from('organizations')
-        .update({ feature_stryk_way_enabled: true })
+        .update({ 
+          feature_stryk_way_enabled: true,
+          feature_portal_familiar_enabled: true,
+          feature_analytics_enabled: true,
+          feature_studio_pro_enabled: true,
+        })
         .eq('id', orgId);
 
       return packIdToUse;
