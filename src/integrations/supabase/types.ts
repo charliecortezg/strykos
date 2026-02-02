@@ -864,6 +864,10 @@ export type Database = {
           city: string
           country: string
           created_at: string | null
+          feature_analytics_enabled: boolean
+          feature_portal_familiar_enabled: boolean
+          feature_stryk_way_enabled: boolean
+          feature_studio_pro_enabled: boolean
           id: string
           is_active: boolean | null
           name: string
@@ -888,6 +892,10 @@ export type Database = {
           city: string
           country: string
           created_at?: string | null
+          feature_analytics_enabled?: boolean
+          feature_portal_familiar_enabled?: boolean
+          feature_stryk_way_enabled?: boolean
+          feature_studio_pro_enabled?: boolean
           id?: string
           is_active?: boolean | null
           name: string
@@ -912,6 +920,10 @@ export type Database = {
           city?: string
           country?: string
           created_at?: string | null
+          feature_analytics_enabled?: boolean
+          feature_portal_familiar_enabled?: boolean
+          feature_stryk_way_enabled?: boolean
+          feature_studio_pro_enabled?: boolean
           id?: string
           is_active?: boolean | null
           name?: string
@@ -1167,6 +1179,52 @@ export type Database = {
         }
         Relationships: []
       }
+      player_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string
+          id: string
+          organization_id: string
+          player_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string
+          id?: string
+          organization_id: string
+          player_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string
+          id?: string
+          organization_id?: string
+          player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "stryk_badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_badges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_badges_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_guardians: {
         Row: {
           created_at: string | null
@@ -1199,6 +1257,57 @@ export type Database = {
           },
           {
             foreignKeyName: "player_guardians_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_progress: {
+        Row: {
+          last_event_at: string | null
+          level: number
+          organization_id: string
+          ovr: number
+          player_id: string
+          radar: Json
+          streak: number
+          updated_at: string
+          xp_total: number
+        }
+        Insert: {
+          last_event_at?: string | null
+          level?: number
+          organization_id: string
+          ovr?: number
+          player_id: string
+          radar?: Json
+          streak?: number
+          updated_at?: string
+          xp_total?: number
+        }
+        Update: {
+          last_event_at?: string | null
+          level?: number
+          organization_id?: string
+          ovr?: number
+          player_id?: string
+          radar?: Json
+          streak?: number
+          updated_at?: string
+          xp_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_progress_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_progress_player_id_fkey"
             columns: ["player_id"]
             isOneToOne: false
             referencedRelation: "players"
@@ -1370,6 +1479,364 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stryk_audit_logs: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          meta: Json | null
+          organization_id: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          meta?: Json | null
+          organization_id: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          meta?: Json | null
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stryk_audit_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stryk_badges: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          criteria: Json
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          key: string
+          name: string
+          organization_id: string
+          pack_id: string
+          rarity: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          criteria?: Json
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          key: string
+          name: string
+          organization_id: string
+          pack_id: string
+          rarity?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          criteria?: Json
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          key?: string
+          name?: string
+          organization_id?: string
+          pack_id?: string
+          rarity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stryk_badges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stryk_badges_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "stryk_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stryk_challenges: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          criteria: Json
+          description: string | null
+          end_at: string | null
+          id: string
+          is_active: boolean
+          key: string
+          name: string
+          organization_id: string
+          pack_id: string
+          start_at: string | null
+          xp_reward: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          criteria?: Json
+          description?: string | null
+          end_at?: string | null
+          id?: string
+          is_active?: boolean
+          key: string
+          name: string
+          organization_id: string
+          pack_id: string
+          start_at?: string | null
+          xp_reward?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          criteria?: Json
+          description?: string | null
+          end_at?: string | null
+          id?: string
+          is_active?: boolean
+          key?: string
+          name?: string
+          organization_id?: string
+          pack_id?: string
+          start_at?: string | null
+          xp_reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stryk_challenges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stryk_challenges_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "stryk_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stryk_events: {
+        Row: {
+          attributes_delta: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          organization_id: string
+          player_id: string
+          source_id: string
+          source_type: string
+          xp_delta: number
+        }
+        Insert: {
+          attributes_delta?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          organization_id: string
+          player_id: string
+          source_id: string
+          source_type: string
+          xp_delta?: number
+        }
+        Update: {
+          attributes_delta?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          organization_id?: string
+          player_id?: string
+          source_id?: string
+          source_type?: string
+          xp_delta?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stryk_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stryk_events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stryk_packs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          organization_id: string
+          published_at: string | null
+          published_by: string | null
+          status: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          organization_id: string
+          published_at?: string | null
+          published_by?: string | null
+          status?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          published_at?: string | null
+          published_by?: string | null
+          status?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stryk_packs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stryk_rulesets: {
+        Row: {
+          caps: Json
+          created_at: string
+          created_by: string | null
+          economy: Json
+          id: string
+          multipliers: Json
+          organization_id: string
+          ovr_weights: Json
+          pack_id: string
+        }
+        Insert: {
+          caps?: Json
+          created_at?: string
+          created_by?: string | null
+          economy?: Json
+          id?: string
+          multipliers?: Json
+          organization_id: string
+          ovr_weights?: Json
+          pack_id: string
+        }
+        Update: {
+          caps?: Json
+          created_at?: string
+          created_by?: string | null
+          economy?: Json
+          id?: string
+          multipliers?: Json
+          organization_id?: string
+          ovr_weights?: Json
+          pack_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stryk_rulesets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stryk_rulesets_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: true
+            referencedRelation: "stryk_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tutor_auth_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          guardian_id: string
+          id: string
+          last_used_at: string | null
+          organization_id: string
+          pin_hash: string | null
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          guardian_id: string
+          id?: string
+          last_used_at?: string | null
+          organization_id: string
+          pin_hash?: string | null
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          guardian_id?: string
+          id?: string
+          last_used_at?: string | null
+          organization_id?: string
+          pin_hash?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutor_auth_tokens_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tutor_auth_tokens_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
