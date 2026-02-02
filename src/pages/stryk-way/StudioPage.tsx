@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Trophy, Target, Sparkles, Settings } from 'lucide-react';
+import { ArrowLeft, Trophy, Target, Sparkles, Settings, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,10 +8,13 @@ import { usePacks, useFeatureFlags } from '@/hooks/useStrykWay';
 import { PackActivator } from '@/components/stryk-way/PackActivator';
 import { BadgesList } from '@/components/stryk-way/BadgesList';
 import { ChallengesList } from '@/components/stryk-way/ChallengesList';
+import { RulesetEditor } from '@/components/stryk-way/RulesetEditor';
+import { AnalyticsDashboard } from '@/components/stryk-way/AnalyticsDashboard';
+import type { RulesetEconomy, RulesetCaps, RulesetMultipliers, OvrWeights } from '@/types/stryk-way';
 
 export default function StudioPage() {
   const { organization, activeRole } = useAuth();
-  const { feature_stryk_way_enabled } = useFeatureFlags();
+  const { feature_stryk_way_enabled, feature_studio_pro_enabled, feature_analytics_enabled } = useFeatureFlags();
   const { publishedPack, ruleset, isLoading } = usePacks();
   const [activeTab, setActiveTab] = useState('badges');
 
@@ -56,15 +59,15 @@ export default function StudioPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-4 rounded-lg border bg-card">
                   <p className="text-sm text-muted-foreground">XP por Asistencia</p>
-                  <p className="text-2xl font-bold">{(ruleset.economy as any).xp_per_attendance ?? 10}</p>
+                  <p className="text-2xl font-bold">{(ruleset.economy as any)?.xp_per_attendance ?? 10}</p>
                 </div>
                 <div className="p-4 rounded-lg border bg-card">
                   <p className="text-sm text-muted-foreground">Cap Diario</p>
-                  <p className="text-2xl font-bold">{(ruleset.caps as any).daily_xp_cap ?? 100} XP</p>
+                  <p className="text-2xl font-bold">{(ruleset.caps as any)?.daily_xp_cap ?? 100} XP</p>
                 </div>
                 <div className="p-4 rounded-lg border bg-card">
                   <p className="text-sm text-muted-foreground">XP por Nivel</p>
-                  <p className="text-2xl font-bold">{(ruleset.economy as any).xp_per_level ?? 100}</p>
+                  <p className="text-2xl font-bold">{(ruleset.economy as any)?.xp_per_level ?? 100}</p>
                 </div>
                 <div className="p-4 rounded-lg border bg-card">
                   <p className="text-sm text-muted-foreground">Pack</p>
@@ -73,17 +76,29 @@ export default function StudioPage() {
               </div>
             )}
 
-            {/* Tabs for Badges and Challenges */}
+            {/* Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 max-w-md">
+              <TabsList className={`grid w-full max-w-lg ${feature_analytics_enabled ? 'grid-cols-4' : 'grid-cols-3'}`}>
                 <TabsTrigger value="badges" className="gap-2">
                   <Trophy className="w-4 h-4" />
-                  Badges
+                  <span className="hidden sm:inline">Badges</span>
                 </TabsTrigger>
                 <TabsTrigger value="challenges" className="gap-2">
                   <Target className="w-4 h-4" />
-                  Retos
+                  <span className="hidden sm:inline">Retos</span>
                 </TabsTrigger>
+                {feature_studio_pro_enabled && (
+                  <TabsTrigger value="settings" className="gap-2">
+                    <Settings className="w-4 h-4" />
+                    <span className="hidden sm:inline">Config</span>
+                  </TabsTrigger>
+                )}
+                {feature_analytics_enabled && (
+                  <TabsTrigger value="analytics" className="gap-2">
+                    <BarChart3 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Analytics</span>
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               <TabsContent value="badges" className="mt-6">
@@ -93,6 +108,26 @@ export default function StudioPage() {
               <TabsContent value="challenges" className="mt-6">
                 <ChallengesList packId={publishedPack.id} />
               </TabsContent>
+
+              {feature_studio_pro_enabled && ruleset && (
+                <TabsContent value="settings" className="mt-6">
+                  <RulesetEditor
+                    rulesetId={ruleset.id}
+                    packId={publishedPack.id}
+                    economy={ruleset.economy as RulesetEconomy}
+                    caps={ruleset.caps as RulesetCaps}
+                    multipliers={ruleset.multipliers as RulesetMultipliers}
+                    ovrWeights={ruleset.ovr_weights as OvrWeights}
+                    onSaved={() => {}}
+                  />
+                </TabsContent>
+              )}
+
+              {feature_analytics_enabled && (
+                <TabsContent value="analytics" className="mt-6">
+                  <AnalyticsDashboard />
+                </TabsContent>
+              )}
             </Tabs>
           </>
         )}

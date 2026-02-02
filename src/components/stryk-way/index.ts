@@ -4,3 +4,6 @@ export { BadgesList } from './BadgesList';
 export { BadgeFormModal } from './BadgeFormModal';
 export { ChallengesList } from './ChallengesList';
 export { ChallengeFormModal } from './ChallengeFormModal';
+export { RulesetEditor } from './RulesetEditor';
+export { VersionHistory } from './VersionHistory';
+export { AnalyticsDashboard } from './AnalyticsDashboard';

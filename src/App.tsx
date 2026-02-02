@@ -5,8 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PlatformAuthProvider } from "@/contexts/PlatformAuthContext";
+import { PortalAuthProvider } from "@/contexts/PortalAuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { PlatformAuthGuard } from "@/components/platform/PlatformAuthGuard";
+import { PortalAuthGuard } from "@/components/portal/PortalAuthGuard";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import RegistroAcademia from "./pages/RegistroAcademia";
@@ -29,6 +31,10 @@ import UpgradeRequestsPage from "./pages/platform/UpgradeRequestsPage";
 import AuditLogPage from "./pages/platform/AuditLogPage";
 // STRYK Way Pages
 import StudioPage from "./pages/stryk-way/StudioPage";
+// Portal Familiar Pages
+import PortalLogin from "./pages/portal/PortalLogin";
+import PortalDashboard from "./pages/portal/PortalDashboard";
+import PortalPlayerView from "./pages/portal/PortalPlayerView";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +66,27 @@ function PlatformRoutes() {
         } />
       </Routes>
     </PlatformAuthProvider>
+  );
+}
+
+// Portal Familiar Routes - Isolated auth for guardians/tutors
+function PortalFamiliarRoutes() {
+  return (
+    <PortalAuthProvider>
+      <Routes>
+        <Route path="login" element={<PortalLogin />} />
+        <Route path="" element={
+          <PortalAuthGuard>
+            <PortalDashboard />
+          </PortalAuthGuard>
+        } />
+        <Route path="jugador/:playerId" element={
+          <PortalAuthGuard>
+            <PortalPlayerView />
+          </PortalAuthGuard>
+        } />
+      </Routes>
+    </PortalAuthProvider>
   );
 }
 
@@ -134,6 +161,9 @@ const App = () => (
         <Routes>
           {/* Platform Admin - Completely isolated routing tree */}
           <Route path="/platform-admin/*" element={<PlatformRoutes />} />
+          
+          {/* Portal Familiar - Isolated routing for guardians */}
+          <Route path="/portal/*" element={<PortalFamiliarRoutes />} />
           
           {/* Academy routes - Everything else */}
           <Route path="/*" element={<AcademyRoutes />} />
