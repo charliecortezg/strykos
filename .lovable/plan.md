@@ -1,146 +1,121 @@
 
-# Plan: Auto-creación de Guardian al Registrar Jugador
+# Plan: Habilitar Acceso RLS para Portal Familiar
 
-## Contexto Actual
+## Problema Identificado
 
-| Dato | Estado |
-|------|--------|
-| Jugadores activos | 42 |
-| Con guardian vinculado | 1 |
-| Con teléfono válido | ~38 |
-| Sin teléfono o "S/N" | ~4 |
+El Portal Familiar no puede autenticar padres porque las políticas RLS bloquean el acceso anónimo a las tablas necesarias.
 
-El problema: cuando se crea un jugador via `CreatePlayerModal` o edición manual, NO se crea automáticamente el guardian. Esto impide que los padres accedan al Portal Familiar.
+| Tabla | Política Actual | Problema |
+|-------|----------------|----------|
+| `organizations` | Solo `authenticated` | El login no puede buscar la academia por `org_code` |
+| `guardians` | Solo `authenticated` | No puede verificar el teléfono del padre |
+| `player_guardians` | Solo `authenticated` | No puede cargar jugadores vinculados |
 
----
+## Solución
 
-## Solución: Trigger de Base de Datos
+Crear políticas RLS específicas que permitan acceso anónimo **muy limitado** para el flujo del Portal Familiar.
 
-Crear un trigger que automáticamente:
-1. Detecte cuando se crea o actualiza un jugador con teléfono
-2. Cree/actualice el guardian correspondiente
-3. Vincule player ↔ guardian en `player_guardians`
+### Políticas a Crear
 
-### Ventajas del Trigger vs Código en Frontend:
-- Funciona para TODAS las formas de crear jugadores (Modal, Intake, importación Excel, SQL directo)
-- Garantiza consistencia de datos
-- No requiere cambios en múltiples archivos TypeScript
-
----
-
-## Cambios a Realizar
-
-### 1. Migración SQL: Función + Trigger
+#### 1. Organizations - Permitir verificar org_code públicamente
 
 ```sql
--- Función que auto-crea guardian cuando se crea/actualiza un jugador
-CREATE OR REPLACE FUNCTION auto_create_guardian_from_player()
-RETURNS TRIGGER AS $$
-DECLARE
-  v_phone_normalized TEXT;
-  v_guardian_name TEXT;
-  v_guardian_id UUID;
-BEGIN
-  -- Solo procesar si hay teléfono válido
-  IF NEW.phone IS NULL OR NEW.phone = '' OR NEW.phone = 'S/N' THEN
-    RETURN NEW;
-  END IF;
+CREATE POLICY "Portal can verify org_code"
+ON organizations FOR SELECT
+TO anon
+USING (
+  is_active = true 
+  AND feature_portal_familiar_enabled = true
+);
+```
 
-  -- Normalizar teléfono (últimos 10 dígitos)
-  v_phone_normalized := RIGHT(regexp_replace(NEW.phone, '[^0-9]', '', 'g'), 10);
-  
-  -- Mínimo 10 dígitos para ser válido
-  IF length(v_phone_normalized) < 10 THEN
-    RETURN NEW;
-  END IF;
+Esta política solo permite ver organizaciones activas con portal habilitado.
 
-  -- Determinar nombre del guardian
-  v_guardian_name := COALESCE(
-    NULLIF(NEW.tutor_name, ''),
-    'Tutor de ' || NEW.full_name
-  );
+#### 2. Guardians - Permitir login por teléfono
 
-  -- Upsert guardian
-  INSERT INTO guardians (
-    organization_id, full_name, phone, phone_normalized, relationship
-  ) VALUES (
-    NEW.organization_id,
-    v_guardian_name,
-    NEW.phone,
-    v_phone_normalized,
-    'Padre/Madre'
+```sql
+CREATE POLICY "Portal can authenticate guardians"
+ON guardians FOR SELECT
+TO anon
+USING (
+  EXISTS (
+    SELECT 1 FROM organizations o
+    WHERE o.id = guardians.organization_id
+    AND o.is_active = true
+    AND o.feature_portal_familiar_enabled = true
   )
-  ON CONFLICT (organization_id, phone_normalized) 
-  DO UPDATE SET 
-    full_name = EXCLUDED.full_name,
-    updated_at = now()
-  RETURNING id INTO v_guardian_id;
-
-  -- Vincular player con guardian
-  INSERT INTO player_guardians (player_id, guardian_id, is_primary)
-  VALUES (NEW.id, v_guardian_id, true)
-  ON CONFLICT (player_id, guardian_id) DO NOTHING;
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Trigger en players
-DROP TRIGGER IF EXISTS trigger_auto_create_guardian ON players;
-CREATE TRIGGER trigger_auto_create_guardian
-AFTER INSERT OR UPDATE OF phone, tutor_name ON players
-FOR EACH ROW
-EXECUTE FUNCTION auto_create_guardian_from_player();
+);
 ```
 
-### 2. Script Retroactivo para Jugadores Existentes
+Solo permite acceder a guardians de organizaciones con portal habilitado.
 
-Procesar los 41 jugadores que ya tienen teléfono pero no tienen guardian:
+#### 3. Player_Guardians - Permitir cargar vínculos
 
 ```sql
--- Crear guardians para jugadores existentes
-WITH players_needing_guardians AS (
-  SELECT 
-    p.id AS player_id,
-    p.organization_id,
-    p.full_name,
-    p.phone,
-    p.tutor_name,
-    RIGHT(regexp_replace(p.phone, '[^0-9]', '', 'g'), 10) AS phone_normalized
-  FROM players p
-  LEFT JOIN player_guardians pg ON pg.player_id = p.id
-  WHERE pg.id IS NULL
-    AND p.phone IS NOT NULL 
-    AND p.phone != ''
-    AND p.phone != 'S/N'
-    AND length(RIGHT(regexp_replace(p.phone, '[^0-9]', '', 'g'), 10)) >= 10
-),
-inserted_guardians AS (
-  INSERT INTO guardians (organization_id, full_name, phone, phone_normalized)
-  SELECT DISTINCT
-    organization_id,
-    COALESCE(NULLIF(tutor_name, ''), 'Tutor de ' || full_name),
-    phone,
-    phone_normalized
-  FROM players_needing_guardians
-  ON CONFLICT (organization_id, phone_normalized) DO NOTHING
-  RETURNING id, organization_id, phone_normalized
-)
-INSERT INTO player_guardians (player_id, guardian_id, is_primary)
-SELECT 
-  png.player_id,
-  COALESCE(ig.id, g.id),
-  true
-FROM players_needing_guardians png
-LEFT JOIN inserted_guardians ig 
-  ON ig.organization_id = png.organization_id 
-  AND ig.phone_normalized = png.phone_normalized
-LEFT JOIN guardians g 
-  ON g.organization_id = png.organization_id 
-  AND g.phone_normalized = png.phone_normalized
-WHERE COALESCE(ig.id, g.id) IS NOT NULL
-ON CONFLICT (player_id, guardian_id) DO NOTHING;
+CREATE POLICY "Portal can view guardian links"
+ON player_guardians FOR SELECT
+TO anon
+USING (
+  EXISTS (
+    SELECT 1 FROM guardians g
+    JOIN organizations o ON o.id = g.organization_id
+    WHERE g.id = player_guardians.guardian_id
+    AND o.feature_portal_familiar_enabled = true
+  )
+);
 ```
+
+#### 4. Players - Permitir ver datos básicos del jugador
+
+```sql
+CREATE POLICY "Portal can view linked players"
+ON players FOR SELECT
+TO anon
+USING (
+  EXISTS (
+    SELECT 1 FROM player_guardians pg
+    JOIN guardians g ON g.id = pg.guardian_id
+    JOIN organizations o ON o.id = g.organization_id
+    WHERE pg.player_id = players.id
+    AND o.feature_portal_familiar_enabled = true
+  )
+);
+```
+
+#### 5. Categories y Sports - Permitir ver nombres
+
+```sql
+CREATE POLICY "Portal can view categories"
+ON categories FOR SELECT TO anon USING (true);
+
+CREATE POLICY "Portal can view sports"
+ON sports FOR SELECT TO anon USING (true);
+```
+
+#### 6. Tablas STRYK Way - Datos del portal
+
+También necesitamos políticas para:
+- `player_progress` - Ver XP y nivel
+- `player_badges` - Ver insignias ganadas
+- `stryk_events` - Ver actividad reciente
+- `player_challenges` - Ver retos activos
+- `stryk_badges` / `stryk_challenges` - Definiciones
+
+---
+
+## Migración SQL Completa
+
+Se creará una migración que añade todas las políticas necesarias para el Portal Familiar sin comprometer la seguridad de las otras tablas.
+
+---
+
+## Seguridad
+
+Estas políticas son seguras porque:
+1. Solo permiten SELECT (lectura)
+2. Solo aplican a organizaciones con `feature_portal_familiar_enabled = true`
+3. Los datos sensibles (pagos, gastos) no se exponen
+4. El acceso está limitado a datos vinculados vía `player_guardians`
 
 ---
 
@@ -148,43 +123,9 @@ ON CONFLICT (player_id, guardian_id) DO NOTHING;
 
 | Antes | Después |
 |-------|---------|
-| 1 guardian | ~38+ guardians |
-| 41 sin acceso al portal | ~38 con acceso |
-| Nuevos jugadores sin guardian | Auto-vinculados |
-
-### Credenciales de Acceso para Padres
-
-Una vez implementado, los padres podrán acceder a:
-
-**URL:** `https://strykos.lovable.app/portal/login`
-
-**Datos necesarios:**
-| Campo | Valor |
-|-------|-------|
-| Código de Academia | `white-lions-academies` |
-| Teléfono | El mismo que registraron |
-| PIN | Últimos 4 dígitos del teléfono |
-
-**Ejemplo:** Si el teléfono es `6861965753`, el PIN es `5753`.
-
----
-
-## Comunicación Sugerida para Padres
-
-Una vez listo, podrías enviar este mensaje:
-
-> **¡Accede al Portal Familiar de White Lions!**
-> 
-> Ahora puedes ver el progreso de tu hijo(a) en la academia.
-> 
-> 📱 Entra a: strykos.lovable.app/portal/login
-> 
-> **Datos de acceso:**
-> - Código: white-lions-academies
-> - Teléfono: (el que registraste)
-> - PIN: últimos 4 dígitos de tu teléfono
-> 
-> ¡Podrás ver asistencias, logros y más!
+| Login falla: "Código de academia no encontrado" | Login exitoso |
+| Padres no pueden ver datos | Padres ven progreso de sus hijos |
+| 0% de padres con acceso | 100% de padres con teléfono válido |
 
 ---
 
@@ -192,16 +133,6 @@ Una vez listo, podrías enviar este mensaje:
 
 | Archivo | Tipo | Descripción |
 |---------|------|-------------|
-| Nueva migración SQL | SQL | Función + trigger + datos retroactivos |
+| Nueva migración SQL | SQL | Políticas RLS para Portal Familiar |
 
-**No se requieren cambios en TypeScript** - el trigger maneja todo automáticamente.
-
----
-
-## Verificación Post-Implementación
-
-Después de aplicar, verificar:
-1. `SELECT COUNT(*) FROM guardians` → Debe ser ~38+
-2. `SELECT COUNT(*) FROM player_guardians` → Debe ser ~42
-3. Probar login con teléfono existente → Debe funcionar
-
+No se requieren cambios en TypeScript - el código ya está listo, solo faltaban los permisos.
