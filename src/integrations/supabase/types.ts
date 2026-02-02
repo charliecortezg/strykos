@@ -1225,6 +1225,61 @@ export type Database = {
           },
         ]
       }
+      player_challenges: {
+        Row: {
+          challenge_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          organization_id: string
+          player_id: string
+          progress: number
+          updated_at: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          organization_id: string
+          player_id: string
+          progress?: number
+          updated_at?: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          organization_id?: string
+          player_id?: string
+          progress?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_challenges_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "stryk_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_challenges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_challenges_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_guardians: {
         Row: {
           created_at: string | null
