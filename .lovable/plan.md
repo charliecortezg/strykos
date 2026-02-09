@@ -1,141 +1,99 @@
 
 
-# Plan: A3 (Partidos Importantes), A6 (Asistencia Director), A7 (Reporte Mensual)
+# Plan: Terminal de Fichaje como POS integrado con planes
+
+## Resumen
+
+Actualmente el terminal de fichaje calcula los montos usando tarifas fijas del `IntakeSettings` (inscripcion $400, mensualidad futbol $450, etc.), ignorando el precio real del plan seleccionado. Esto genera una desconexion entre los planes creados por el admin y lo que cobra el fichaje.
+
+El cambio principal es: **los planes son la fuente de verdad del precio**. El terminal muestra el desglose segun los planes seleccionados, no segun tarifas hardcodeadas.
 
 ---
 
-## A3 - Clasificacion de Partidos Importantes con XP Extra
+## Que cambia
 
-### Base de datos
-- Agregar 2 columnas a `matches`:
-  - `importance` text NOT NULL DEFAULT 'regular' (valores: regular, importante, eliminacion, final)
-  - `xp_multiplier` numeric NOT NULL DEFAULT 1.0
+### 1. Terminal de Fichaje: seleccion multi-plan con precios reales
 
-### Frontend
+**Actualmente:** Un solo campo `planId` (select unico). El total se calcula con `calculateIntakeFees()` basado en sport + promo, no en el plan.
 
-**CreateMatchFlow.tsx**
-- Agregar selector de "Importancia" que aparece cuando `matchType` es `liga` o `torneo`
-- Opciones: Regular (1.0x), Importante (1.5x), Eliminacion (2.0x), Final (2.5x)
-- El `xp_multiplier` se calcula automaticamente segun la combinacion de `match_type` + `importance`
-- Pasar `importance` y `xp_multiplier` al hook `useCreateMatch`
+**Nuevo comportamiento:**
+- El campo de plan pasa de ser un select unico a un **selector multi-plan con checkboxes**
+- Cada plan seleccionado muestra su nombre y precio
+- El total se calcula sumando los precios de los planes seleccionados
+- **Minimo 1 plan obligatorio** para continuar
+- El desglose en la seccion de pago muestra cada plan como linea separada (como un ticket de venta)
+- La promo "Fichaje en Cancha" aplica como descuento sobre el plan mensual de futbol (si existe entre los seleccionados)
 
-**useCreateMatch.ts**
-- Agregar `importance` y `xp_multiplier` a `CreateMatchData` y al INSERT
+**Ejemplo visual del desglose:**
+```text
+Inscripcion (Anual)         $400
+Entrenamiento - Mensualidad $500
+                     Total: $900
+```
 
-**MatchCard.tsx**
-- Mostrar badge de importancia (estrella/fuego/corona) cuando no es "regular"
+O con promo activa:
+```text
+Inscripcion (Anual)         $400
+Entrenamiento - Mensualidad $300  PROMO
+                     Total: $700
+```
 
-**LoadResultsModal.tsx**
-- Mostrar badge de importancia del partido en el header
+### 2. Datos guardados en intake_requests
 
-**Tipos (matches.ts)**
-- Agregar `importance` y `xp_multiplier` a la interfaz `Match`
+**Actualmente:** `plan_id` (uuid unico), `registration_fee`, `monthly_fee`, `total_amount`
 
-### Tabla de multiplicadores
+**Cambio de datos:**
+- Nuevo campo `plan_ids` (uuid array) para guardar multiples planes seleccionados
+- `registration_fee` y `monthly_fee` se mantienen por retrocompatibilidad pero se calculan del desglose de planes
+- `total_amount` = suma de todos los planes seleccionados (con descuentos aplicados)
 
-| match_type | importance | xp_multiplier |
-|-----------|-----------|---------------|
-| amistoso | regular | 1.0 |
-| liga | regular | 1.5 |
-| liga | importante | 2.0 |
-| torneo | regular | 1.5 |
-| torneo | eliminacion | 2.0 |
-| cualquiera | final | 2.5 |
+### 3. Admin Dashboard: ya tiene lo necesario
 
----
+El admin **ya tiene** las herramientas para modificar precios:
+- Tab "Planes": `PlansModule` con CRUD completo (crear, editar precio, activar/desactivar, eliminar)
+- Tab "Configuracion/Cobranza": `IntakeSettingsPanel` para tarifas de fichajes y promos
 
-## A6 - Vista de Asistencia para Director
-
-### Nuevo componente: `DirectorAttendanceView.tsx`
-Vista de solo lectura que permite al director ver la asistencia de cualquier categoria en cualquier fecha:
-- Selector de categoria (todas las categorias de la org)
-- Selector de fecha (libre, no bloqueado como el del entrenador)
-- Lista de jugadores con su status de asistencia y semaforo de rendimiento
-- KPIs: % asistencia del dia, total presentes/ausentes
-- Alerta si algun jugador tiene < 50% asistencia en las ultimas 4 semanas
-
-### Nuevo hook: `useDirectorAttendance.ts`
-- Recibe `categoryId` y `date`
-- Obtiene asistencia de la tabla `attendance` (solo lectura)
-- Calcula stats del dia
-- Query adicional para obtener tasa de asistencia de las ultimas 4 semanas por jugador (para alertas)
-
-### Integracion en DirectorDeportivoDashboard
-- Agregar nueva tab "Asistencia" con icono CheckCircle
-- El componente usa las categorias del hook `useCategories` (no limitadas al trainer)
+Lo unico que falta es agregar el `IntakeSettingsPanel` tambien dentro del tab de Fichajes como acceso rapido, para que sea mas intuitivo.
 
 ---
 
-## A7 - Reporte Mensual de Nuevos Alumnos
+## Detalle tecnico
 
-### Base de datos
-- Crear tabla `monthly_reports`:
-  - id uuid PK
-  - organization_id uuid NOT NULL
-  - report_month date NOT NULL
-  - new_players_count integer
-  - churned_count integer
-  - snapshot jsonb (datos completos del reporte)
-  - generated_by uuid
-  - created_at timestamptz
-  - UNIQUE(organization_id, report_month)
-- RLS: SELECT para org_owner + director_deportivo + administrativo
+### Migracion SQL
+- Agregar columna `plan_ids uuid[]` a `intake_requests`
+- Mantener `plan_id` existente por retrocompatibilidad (se llena con el primer plan)
 
-### Edge Function: `monthly-report/index.ts`
-- Recibe `organizationId` y `month` (YYYY-MM)
-- Calcula:
-  - Nuevos jugadores (onboarded_at en el mes)
-  - Bajas (offboarded_at en el mes)
-  - Crecimiento neto
-  - Desglose por categoria
-  - Total activos al cierre del mes
-- Guarda en `monthly_reports`
-- Opcionalmente envia email via Resend a org_owner y director_deportivo
+### Archivos a modificar
 
-### Frontend
-
-**Nuevo componente: `MonthlyReportSection.tsx`**
-- Boton "Generar Reporte" con selector de mes
-- Muestra el ultimo reporte generado con cards de KPIs:
-  - Nuevos alumnos
-  - Bajas
-  - Crecimiento neto
-  - Desglose por categoria (tabla simple)
-- Si ya existe reporte para ese mes, lo muestra directamente
-
-**Nuevo hook: `useMonthlyReports.ts`**
-- Lista reportes existentes
-- Mutation para generar nuevo reporte (llama al edge function)
-
-**Integracion**
-- Agregar en OrgOwnerDashboard despues de LifecycleBillingSection
-- Agregar tab "Reportes" en DirectorDeportivoDashboard (o dentro del tab existente de Reportes)
-
----
-
-## Orden de implementacion
-
-1. Migration SQL: columnas en `matches` + tabla `monthly_reports` + RLS
-2. Tipos TypeScript: actualizar `Match` interface
-3. A3: CreateMatchFlow + useCreateMatch + MatchCard + LoadResultsModal
-4. A6: useDirectorAttendance + DirectorAttendanceView + tab en DirectorDashboard
-5. A7: Edge function monthly-report + useMonthlyReports + MonthlyReportSection + integracion dashboards
-
-## Archivos a crear/modificar
-
-| Archivo | Accion |
+| Archivo | Cambio |
 |---------|--------|
-| Migration SQL | Columnas matches + tabla monthly_reports + RLS |
-| `src/types/matches.ts` | Agregar importance y xp_multiplier a Match |
-| `src/hooks/useCreateMatch.ts` | Agregar importance y xp_multiplier |
-| `src/components/matches/CreateMatchFlow.tsx` | Selector de importancia |
-| `src/components/matches/MatchCard.tsx` | Badge de importancia |
-| `src/components/matches/LoadResultsModal.tsx` | Badge de importancia |
-| `src/hooks/useDirectorAttendance.ts` | Nuevo hook |
-| `src/components/attendance/DirectorAttendanceView.tsx` | Nuevo componente |
-| `src/pages/dashboard/DirectorDeportivoDashboard.tsx` | Tab Asistencia |
-| `supabase/functions/monthly-report/index.ts` | Nueva edge function |
-| `src/hooks/useMonthlyReports.ts` | Nuevo hook |
-| `src/components/reports/MonthlyReportSection.tsx` | Nuevo componente |
-| `src/pages/dashboard/OrgOwnerDashboard.tsx` | Integrar MonthlyReportSection |
+| Migracion SQL | Agregar `plan_ids uuid[]` a `intake_requests` |
+| `src/components/fichajes/IntakeTerminal.tsx` | Cambiar `planId: string` a `selectedPlanIds: string[]`. Selector multi-plan con checkboxes. Calcular total sumando precios de planes seleccionados. Desglose tipo ticket en seccion de pago. Logica de promo sobre plan mensual futbol |
+| `src/hooks/useIntake.ts` | Actualizar `CreateIntakeData` para aceptar `planIds: string[]`. Guardar en `plan_ids` y `plan_id` (primer elemento). Calcular `total_amount` desde planes |
+| `src/pages/dashboard/AdministrativoDashboard.tsx` | Agregar `IntakeSettingsPanel` como sub-seccion dentro del tab "Fichajes" para acceso rapido a configuracion de precios |
 
+### Logica del total
+
+```text
+total = suma de (plan.price para cada plan seleccionado)
+
+Si promo activa Y isPitchSigning:
+  - Buscar plan con periodicity='monthly' y sport=futbol entre seleccionados
+  - Aplicar precio promo en lugar de precio original de ESE plan
+```
+
+### Flujo del usuario en el terminal
+
+1. Selecciona deporte
+2. Ve lista de planes activos del deporte con checkboxes y precios
+3. Marca al menos 1 plan (ej: "Inscripcion $400" + "Entrenamiento $500")
+4. En la seccion de pago ve el desglose tipo ticket
+5. El boton de registro muestra el total calculado
+
+---
+
+## Lo que NO cambia
+- La estructura de `plans` (ya tiene `periodicity: annual` para inscripcion)
+- El `PlansModule` del admin (ya permite CRUD de planes)
+- El `IntakeSettingsPanel` (se mantiene para promo y configuracion general)
+- La logica de RPC `process_intake_and_create_entities`
