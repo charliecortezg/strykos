@@ -140,7 +140,7 @@ serve(async (req: Request): Promise<Response> => {
       .from('intake_requests')
       .select(`
         *,
-        organizations!inner(id, name, city, receipt_logo_url),
+        organizations!inner(id, name, city, receipt_logo_url, org_code, org_access_key),
         categories(id, name),
         sports(id, name),
         venues:venue_id(id, name),
@@ -194,6 +194,7 @@ serve(async (req: Request): Promise<Response> => {
     const orgName = intake.organizations?.name || 'Academia';
     const cityName = intake.organizations?.city || '';
     const logoUrl = intake.organizations?.receipt_logo_url || '';
+    const orgCode = `${intake.organizations?.org_code || '---'} / ${intake.organizations?.org_access_key || '---'}`;
     
     const toRecipients = hasValidGuardianEmail ? [guardianEmail!] : [adminEmail];
     const bccRecipients = (hasValidGuardianEmail && hasValidAdminEmail) ? [adminEmail] : undefined;
@@ -329,15 +330,42 @@ serve(async (req: Request): Promise<Response> => {
       </td>
     </tr>
 
-    <!-- BOTÓN: PORTAL FAMILIAR -->
+    <!-- PORTAL FAMILIAR CON CREDENCIALES -->
     <tr>
-      <td style="padding:20px 30px 5px;text-align:center;">
-        <p style="color:#6b7280;font-size:13px;margin:0 0 12px;">
-          🏆 Accede al portal para ver el progreso y estadísticas de tu jugador:
-        </p>
-        <a href="https://strykos.lovable.app/portal/login" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#1a2e4a,#2563eb);color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;letter-spacing:0.3px;">
-          📊 VER PORTAL FAMILIAR
-        </a>
+      <td style="padding:20px 30px 5px;">
+        <div style="background:linear-gradient(135deg,#0f1b2d 0%,#1a2e4a 100%);border-radius:12px;padding:25px;text-align:center;">
+          <h3 style="color:#c9a84c;font-size:16px;margin:0 0 8px;font-weight:700;">📊 Portal Familiar STRYK</h3>
+          <p style="color:#e5e7eb;font-size:13px;margin:0 0 20px;line-height:1.5;">
+            Accede al portal para ver el progreso y estadísticas de tu jugador. Usa las siguientes credenciales:
+          </p>
+          
+          <table width="100%" style="border-collapse:collapse;margin-bottom:20px;">
+            <tr>
+              <td style="padding:10px 12px;text-align:left;border-bottom:1px solid rgba(201,168,76,0.2);">
+                <span style="color:#9ca3af;font-size:11px;display:block;margin-bottom:2px;">📱 Teléfono registrado</span>
+                <span style="color:#ffffff;font-size:16px;font-weight:700;letter-spacing:0.5px;">${intake.guardian_phone}</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 12px;text-align:left;border-bottom:1px solid rgba(201,168,76,0.2);">
+                <span style="color:#9ca3af;font-size:11px;display:block;margin-bottom:2px;">🔑 PIN de acceso (últimos 4 dígitos de tu teléfono)</span>
+                <span style="color:#c9a84c;font-size:22px;font-weight:800;letter-spacing:4px;">${intake.guardian_phone.replace(/\D/g,'').slice(-4)}</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 12px;text-align:left;">
+                <span style="color:#9ca3af;font-size:11px;display:block;margin-bottom:2px;">🏛️ Código de Academia</span>
+                <div style="background:rgba(255,255,255,0.1);border:1px dashed #c9a84c;border-radius:6px;padding:8px 12px;margin-top:4px;display:inline-block;">
+                  <span style="color:#ffffff;font-size:18px;font-weight:700;letter-spacing:1px;">${intake.organizations?.name ? '' : ''}${orgCode}</span>
+                </div>
+              </td>
+            </tr>
+          </table>
+
+          <a href="https://strykos.lovable.app/portal/login" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4a030);color:#0f1b2d;padding:14px 40px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:0.5px;">
+            INGRESAR AL PORTAL →
+          </a>
+        </div>
       </td>
     </tr>
 
