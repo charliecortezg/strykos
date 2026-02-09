@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { format, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FileBarChart, TrendingUp, TrendingDown, Users, Loader2 } from 'lucide-react';
+import {
+  FileBarChart, TrendingUp, TrendingDown, Users, Loader2,
+  DollarSign, Percent, Download, ArrowDownRight,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useMonthlyReports } from '@/hooks/useMonthlyReports';
 import { cn } from '@/lib/utils';
+import * as XLSX from 'xlsx';
 
 function getMonthOptions() {
   const options: { value: string; label: string }[] = [];
@@ -22,6 +26,10 @@ function getMonthOptions() {
   return options;
 }
 
+function formatCurrency(amount: number) {
+  return `$${amount.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+
 export function MonthlyReportSection() {
   const { reports, isLoading, generateReport } = useMonthlyReports();
   const monthOptions = getMonthOptions();
@@ -33,6 +41,43 @@ export function MonthlyReportSection() {
 
   const snapshot = currentReport?.snapshot as any;
   const categoryBreakdown = snapshot?.category_breakdown || [];
+
+  const handleExportExcel = () => {
+    if (!currentReport || !snapshot) return;
+
+    const monthLabel = monthOptions.find(o => o.value === selectedMonth)?.label || selectedMonth;
+
+    // KPIs sheet
+    const kpiData = [
+      { Métrica: 'Nuevos', Valor: currentReport.new_players_count },
+      { Métrica: 'Bajas', Valor: currentReport.churned_count },
+      { Métrica: 'Neto', Valor: currentReport.new_players_count - currentReport.churned_count },
+      { Métrica: 'Activos', Valor: snapshot.total_active || 0 },
+      { Métrica: 'Ingresos', Valor: snapshot.total_ingresos || 0 },
+      { Métrica: 'Egresos', Valor: snapshot.total_egresos || 0 },
+      { Métrica: 'Churn %', Valor: `${snapshot.churn_rate || 0}%` },
+      { Métrica: '% Asistencia', Valor: `${snapshot.attendance_rate || 0}%` },
+      { Métrica: '% Cobranza', Valor: `${snapshot.collection_rate || 0}%` },
+    ];
+
+    // Category breakdown sheet
+    const catData = categoryBreakdown.map((cat: any) => ({
+      Categoría: cat.name,
+      Nuevos: cat.new,
+      Bajas: cat.churned,
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const wsKPIs = XLSX.utils.json_to_sheet(kpiData);
+    XLSX.utils.book_append_sheet(wb, wsKPIs, 'KPIs');
+
+    if (catData.length > 0) {
+      const wsCat = XLSX.utils.json_to_sheet(catData);
+      XLSX.utils.book_append_sheet(wb, wsCat, 'Por Categoría');
+    }
+
+    XLSX.writeFile(wb, `Reporte_Mensual_${selectedMonth}.xlsx`);
+  };
 
   return (
     <Card>
@@ -68,6 +113,17 @@ export function MonthlyReportSection() {
               )}
               {currentReport ? 'Regenerar' : 'Generar'}
             </Button>
+            {currentReport && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleExportExcel}
+                className="gap-1.5"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Excel</span>
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -85,7 +141,7 @@ export function MonthlyReportSection() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* KPI Cards */}
+            {/* Row 1: Players KPIs */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Card className="p-4 text-center">
                 <TrendingUp className="w-5 h-5 text-success mx-auto mb-1" />
@@ -118,6 +174,35 @@ export function MonthlyReportSection() {
                 <Users className="w-5 h-5 text-primary mx-auto mb-1" />
                 <p className="text-2xl font-bold">{snapshot?.total_active || '—'}</p>
                 <p className="text-xs text-muted-foreground">Activos</p>
+              </Card>
+            </div>
+
+            {/* Row 2: Financial & Operational KPIs */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <Card className="p-4 text-center">
+                <DollarSign className="w-5 h-5 text-success mx-auto mb-1" />
+                <p className="text-xl font-bold text-success">{formatCurrency(snapshot?.total_ingresos || 0)}</p>
+                <p className="text-xs text-muted-foreground">Ingresos</p>
+              </Card>
+              <Card className="p-4 text-center">
+                <ArrowDownRight className="w-5 h-5 text-destructive mx-auto mb-1" />
+                <p className="text-xl font-bold text-destructive">{formatCurrency(snapshot?.total_egresos || 0)}</p>
+                <p className="text-xs text-muted-foreground">Egresos</p>
+              </Card>
+              <Card className="p-4 text-center">
+                <TrendingDown className="w-5 h-5 text-warning mx-auto mb-1" />
+                <p className="text-xl font-bold">{snapshot?.churn_rate || 0}%</p>
+                <p className="text-xs text-muted-foreground">Churn</p>
+              </Card>
+              <Card className="p-4 text-center">
+                <Percent className="w-5 h-5 text-primary mx-auto mb-1" />
+                <p className="text-xl font-bold">{snapshot?.attendance_rate || 0}%</p>
+                <p className="text-xs text-muted-foreground">Asistencia</p>
+              </Card>
+              <Card className="p-4 text-center">
+                <DollarSign className="w-5 h-5 text-primary mx-auto mb-1" />
+                <p className="text-xl font-bold">{snapshot?.collection_rate || 0}%</p>
+                <p className="text-xs text-muted-foreground">Cobranza</p>
               </Card>
             </div>
 
