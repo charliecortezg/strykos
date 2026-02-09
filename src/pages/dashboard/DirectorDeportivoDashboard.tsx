@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, ClipboardList, BarChart3, MapPin, CreditCard, UserCheck, Trophy, UserPlus, HeartPulse } from 'lucide-react';
+import { Users, ClipboardList, BarChart3, MapPin, CreditCard, UserCheck, Trophy, UserPlus, HeartPulse, CheckCircle } from 'lucide-react';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
 import { IntakeSettingsPanel } from '@/components/fichajes/IntakeSettingsPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +11,7 @@ import { CategoriesTable } from '@/components/categories/CategoriesTable';
 import { PlayersTable } from '@/components/players/PlayersTable';
 import { VenuesTable } from '@/components/venues/VenuesTable';
 import { OperationalReports } from '@/components/reports/OperationalReports';
+import { DirectorAttendanceView } from '@/components/attendance/DirectorAttendanceView';
 import { FinanceModule } from '@/components/payments/FinanceModule';
 import { TrainersModule } from '@/components/trainers/TrainersModule';
 import { MatchHistoryModule } from '@/components/matches/MatchHistoryModule';
@@ -146,6 +147,10 @@ export default function DirectorDeportivoDashboard() {
               <BarChart3 className="w-4 h-4" />
               Reportes
             </TabsTrigger>
+            <TabsTrigger value="asistencia" className="gap-2">
+              <CheckCircle className="w-4 h-4" />
+              Asistencia
+            </TabsTrigger>
             <TabsTrigger value="fichajes" className="gap-2">
               <UserPlus className="w-4 h-4" />
               Fichajes
@@ -182,6 +187,10 @@ export default function DirectorDeportivoDashboard() {
 
           <TabsContent value="reportes">
             <OperationalReports />
+          </TabsContent>
+
+          <TabsContent value="asistencia">
+            <DirectorAttendanceView />
           </TabsContent>
 
           <TabsContent value="fichajes">

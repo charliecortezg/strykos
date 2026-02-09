@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Trophy, Users, MapPin, Calendar, ChevronRight, Check, X, UserPlus, Search } from 'lucide-react';
+import { Trophy, Users, MapPin, Calendar, ChevronRight, Check, X, UserPlus, Search, Star } from 'lucide-react';
+import { type MatchImportance, getXpMultiplier, importanceLabels } from '@/types/matches';
 import { 
   Drawer, 
   DrawerContent, 
@@ -52,6 +53,7 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
   const [matchDate, setMatchDate] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
   const [rivalName, setRivalName] = useState('');
   const [matchType, setMatchType] = useState<'liga' | 'torneo' | 'amistoso'>('amistoso');
+  const [importance, setImportance] = useState<MatchImportance>('regular');
   
   // Attendance state - default ALL to ABSENT (ausente)
   const [playerAttendance, setPlayerAttendance] = useState<PlayerAttendance[]>([]);
@@ -117,6 +119,8 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
     loadGuests();
   }, [organization?.id, categoryId]);
 
+  const xpMultiplier = getXpMultiplier(matchType, importance);
+
   const handleSubmit = () => {
     if (!categoryId || !rivalName.trim()) return;
 
@@ -130,10 +134,12 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
       match_date: matchDate,
       rival_name: rivalName.trim(),
       match_type: matchType,
-      status: 'programado', // Start as SCHEDULED, not finished
+      status: 'programado',
       goals_for: 0,
       goals_against: 0,
       notes: matchNotes || undefined,
+      importance,
+      xp_multiplier: xpMultiplier,
       players: playerAttendance.map(p => ({
         player_id: p.player_id,
         attended: p.attended,
@@ -157,6 +163,7 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
     setMatchDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
     setRivalName('');
     setMatchType('amistoso');
+    setImportance('regular');
     setPlayerAttendance([]);
     setStep('info');
     setShowGuestSearch(false);
@@ -296,6 +303,30 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
                   />
                 </div>
               </div>
+
+              {/* Importance (only for liga/torneo) */}
+              {(matchType === 'liga' || matchType === 'torneo') && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-1.5">
+                    <Star className="w-4 h-4 text-warning" />
+                    Importancia
+                  </Label>
+                  <Select value={importance} onValueChange={(v) => setImportance(v as MatchImportance)}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="regular" className="py-3">Regular (×{getXpMultiplier(matchType, 'regular')})</SelectItem>
+                      <SelectItem value="importante" className="py-3">⭐ Importante (×{getXpMultiplier(matchType, 'importante')})</SelectItem>
+                      <SelectItem value="eliminacion" className="py-3">🔥 Eliminación (×{getXpMultiplier(matchType, 'eliminacion')})</SelectItem>
+                      <SelectItem value="final" className="py-3">👑 Final (×{getXpMultiplier(matchType, 'final')})</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Multiplicador XP: ×{xpMultiplier}
+                  </p>
+                </div>
+              )}
 
               {/* Field/Campo */}
               <div className="space-y-2">
@@ -456,7 +487,15 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Tipo:</span>
-                    <Badge variant="outline">{matchType === 'liga' ? 'Liga' : matchType === 'torneo' ? 'Torneo' : 'Amistoso'}</Badge>
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant="outline">{matchType === 'liga' ? 'Liga' : matchType === 'torneo' ? 'Torneo' : 'Amistoso'}</Badge>
+                      {importance !== 'regular' && (
+                        <Badge variant="secondary" className="gap-1">
+                          {importance === 'importante' ? '⭐' : importance === 'eliminacion' ? '🔥' : '👑'}
+                          {importanceLabels[importance]}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Fecha:</span>

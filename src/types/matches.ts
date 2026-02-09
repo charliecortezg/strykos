@@ -1,3 +1,27 @@
+export type MatchImportance = 'regular' | 'importante' | 'eliminacion' | 'final';
+
+export function getXpMultiplier(matchType: string, importance: MatchImportance): number {
+  if (importance === 'final') return 2.5;
+  if (importance === 'eliminacion') return 2.0;
+  if (importance === 'importante') return 2.0;
+  if (matchType === 'liga' || matchType === 'torneo') return 1.5;
+  return 1.0;
+}
+
+export const importanceLabels: Record<MatchImportance, string> = {
+  regular: 'Regular',
+  importante: 'Importante',
+  eliminacion: 'Eliminación',
+  final: 'Final',
+};
+
+export const importanceIcons: Record<MatchImportance, string> = {
+  regular: '',
+  importante: '⭐',
+  eliminacion: '🔥',
+  final: '👑',
+};
+
 export interface Match {
   id: string;
   organization_id: string;
@@ -12,6 +36,8 @@ export interface Match {
   goals_against: number;
   notes: string | null;
   technical_notes: string | null;
+  importance: MatchImportance;
+  xp_multiplier: number;
   created_by: string | null;
   last_edited_by: string | null;
   last_edited_at: string | null;

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import type { MatchImportance } from '@/types/matches';
 
 interface CreateMatchData {
   category_id: string;
@@ -13,6 +14,8 @@ interface CreateMatchData {
   goals_for: number;
   goals_against: number;
   notes?: string;
+  importance?: MatchImportance;
+  xp_multiplier?: number;
   players: {
     player_id: string;
     attended: boolean;
@@ -49,6 +52,8 @@ export function useCreateMatch() {
           goals_for: data.goals_for,
           goals_against: data.goals_against,
           notes: data.notes,
+          importance: data.importance || 'regular',
+          xp_multiplier: data.xp_multiplier || 1.0,
           created_by: user.id,
         })
         .select()
