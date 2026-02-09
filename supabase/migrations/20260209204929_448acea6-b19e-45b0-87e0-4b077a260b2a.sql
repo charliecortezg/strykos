@@ -1,0 +1,1 @@
+ALTER TABLE public.intake_requests ADD COLUMN plan_ids uuid[] DEFAULT '{}';

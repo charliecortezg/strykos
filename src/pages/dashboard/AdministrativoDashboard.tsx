@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CreditCard, Users, DollarSign, Settings, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
+import { IntakeSettingsPanel } from '@/components/fichajes/IntakeSettingsPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FinanceModule } from '@/components/payments/FinanceModule';
 import { PlayersTable } from '@/components/players/PlayersTable';
@@ -72,7 +73,7 @@ export default function AdministrativoDashboard() {
           </TabsContent>
 
           <TabsContent value="fichajes">
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold">Historial de Fichajes</h2>
@@ -86,6 +87,11 @@ export default function AdministrativoDashboard() {
                 </Button>
               </div>
               <IntakeHistory />
+
+              {/* Quick access to pricing settings */}
+              <div className="pt-4">
+                <IntakeSettingsPanel />
+              </div>
             </div>
           </TabsContent>
         </Tabs>

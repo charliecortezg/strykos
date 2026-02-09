@@ -390,6 +390,7 @@ export type Database = {
           payment_id: string | null
           payment_method: string
           plan_id: string | null
+          plan_ids: string[] | null
           player_age: number | null
           player_birth_date: string
           player_id: string | null
@@ -428,6 +429,7 @@ export type Database = {
           payment_id?: string | null
           payment_method: string
           plan_id?: string | null
+          plan_ids?: string[] | null
           player_age?: number | null
           player_birth_date: string
           player_id?: string | null
@@ -466,6 +468,7 @@ export type Database = {
           payment_id?: string | null
           payment_method?: string
           plan_id?: string | null
+          plan_ids?: string[] | null
           player_age?: number | null
           player_birth_date?: string
           player_id?: string | null

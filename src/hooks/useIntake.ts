@@ -74,7 +74,7 @@ export interface CreateIntakeData {
   sportId: string;
   categoryId?: string;
   venueId?: string;
-  planId?: string;
+  planIds: string[];
   paymentMethod: 'efectivo' | 'transferencia' | 'tarjeta' | 'otro';
   registrationFee: number;
   monthlyFee: number;
@@ -260,7 +260,8 @@ export function useCreateIntake() {
           sport_id: data.sportId || null,
           category_id: data.categoryId || null,
           venue_id: data.venueId || null,
-          plan_id: data.planId || null,
+          plan_id: data.planIds[0] || null,
+          plan_ids: data.planIds,
           payment_method: data.paymentMethod,
           registration_fee: data.registrationFee,
           monthly_fee: data.monthlyFee,
