@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DateInput } from './DateInput';
 import { CameraCapture } from './CameraCapture';
@@ -12,8 +13,10 @@ import { TransferQRDisplay } from './TransferQRDisplay';
 import { useIntakeSettings, useCreateIntake, calculateIntakeFees, CreateIntakeData } from '@/hooks/useIntake';
 import { useSports } from '@/hooks/useSports';
 import { useCategories } from '@/hooks/useCategories';
+import { useVenues } from '@/hooks/useVenues';
+import { usePlans } from '@/hooks/usePlans';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronDown, ChevronUp, User, Users, Trophy, CreditCard, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, User, Users, Trophy, CreditCard, Check, AlertCircle, Loader2, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +33,9 @@ interface FormData {
   guardianOccupation: string;
   sportId: string;
   categoryId: string;
+  venueId: string;
+  planId: string;
+  isPitchSigning: boolean;
   paymentMethod: PaymentMethod;
   evidenceFile: File | null;
 }
@@ -44,6 +50,9 @@ const initialFormData: FormData = {
   guardianOccupation: '',
   sportId: '',
   categoryId: '',
+  venueId: '',
+  planId: '',
+  isPitchSigning: false,
   paymentMethod: 'efectivo',
   evidenceFile: null,
 };
@@ -53,6 +62,8 @@ export function IntakeTerminal() {
   const { settings, isLoading: settingsLoading } = useIntakeSettings();
   const { sports } = useSports();
   const { categories } = useCategories();
+  const { activeVenues: venues } = useVenues();
+  const { plans } = usePlans();
   const { createIntake, isCreating } = useCreateIntake();
 
   const [step, setStep] = useState<Step>('form');
@@ -66,17 +77,30 @@ export function IntakeTerminal() {
   const [createdPlayerId, setCreatedPlayerId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Calculate fees based on sport
+  // Determine if sport is soccer (for promo toggle)
   const selectedSport = sports.find(s => s.id === formData.sportId);
+  const isSoccer = selectedSport
+    ? (selectedSport.name.toLowerCase().includes('fut') || selectedSport.name.toLowerCase().includes('soccer'))
+    : false;
+
+  // Calculate fees based on sport + pitch signing
   const fees = settings && selectedSport
-    ? calculateIntakeFees(selectedSport.name, true, settings)
-    : { registrationFee: 500, monthlyFee: 450, promoApplied: false };
+    ? calculateIntakeFees(selectedSport.name, formData.isPitchSigning, settings)
+    : { registrationFee: 400, monthlyFee: 450, promoApplied: false };
 
   const totalAmount = fees.registrationFee + fees.monthlyFee;
 
   // Filter categories by selected sport
   const filteredCategories = categories.filter(c => 
     c.is_active && (!formData.sportId || c.sport_id === formData.sportId)
+  );
+
+  // Filter venues by selected sport (venues linked via categories or all if no sport filter on venues)
+  const filteredVenues = venues;
+
+  // Filter plans by selected sport
+  const filteredPlans = plans.filter(p => 
+    p.is_active && (!formData.sportId || !p.sport_id || p.sport_id === formData.sportId)
   );
 
   // Auto-open next section when current is complete
@@ -132,6 +156,8 @@ export function IntakeTerminal() {
         guardianOccupation: formData.guardianOccupation || undefined,
         sportId: formData.sportId,
         categoryId: formData.categoryId || undefined,
+        venueId: formData.venueId || undefined,
+        planId: formData.planId || undefined,
         paymentMethod: formData.paymentMethod,
         registrationFee: fees.registrationFee,
         monthlyFee: fees.monthlyFee,
@@ -278,7 +304,7 @@ export function IntakeTerminal() {
                     placeholder="Nombre del jugador"
                     value={formData.playerName}
                     onChange={(e) => setFormData(prev => ({ ...prev, playerName: e.target.value }))}
-                    className="mt-1.5"
+                    className="mt-1.5 h-12"
                   />
                 </div>
                 <DateInput
@@ -333,11 +359,11 @@ export function IntakeTerminal() {
                     placeholder="Nombre completo"
                     value={formData.guardianName}
                     onChange={(e) => setFormData(prev => ({ ...prev, guardianName: e.target.value }))}
-                    className="mt-1.5"
+                    className="mt-1.5 h-12"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="guardianPhone">Teléfono *</Label>
+                  <Label htmlFor="guardianPhone">WhatsApp *</Label>
                   <Input
                     id="guardianPhone"
                     type="tel"
@@ -345,18 +371,28 @@ export function IntakeTerminal() {
                     placeholder="10 dígitos"
                     value={formData.guardianPhone}
                     onChange={(e) => setFormData(prev => ({ ...prev, guardianPhone: e.target.value }))}
-                    className="mt-1.5"
+                    className="mt-1.5 h-12"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="guardianEmail">Email (opcional)</Label>
+                  <Label htmlFor="guardianEmail">Email (para recibo)</Label>
                   <Input
                     id="guardianEmail"
                     type="email"
                     placeholder="correo@ejemplo.com"
                     value={formData.guardianEmail}
                     onChange={(e) => setFormData(prev => ({ ...prev, guardianEmail: e.target.value }))}
-                    className="mt-1.5"
+                    className="mt-1.5 h-12"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="guardianOccupation">Ocupación (opcional)</Label>
+                  <Input
+                    id="guardianOccupation"
+                    placeholder="Ej: Ingeniero, Comerciante..."
+                    value={formData.guardianOccupation}
+                    onChange={(e) => setFormData(prev => ({ ...prev, guardianOccupation: e.target.value }))}
+                    className="mt-1.5 h-12"
                   />
                 </div>
               </CardContent>
@@ -364,7 +400,7 @@ export function IntakeTerminal() {
           </Card>
         </Collapsible>
 
-        {/* Section 3: Sport & Category */}
+        {/* Section 3: Sport, Venue & Category */}
         <Collapsible open={openSections.sport} onOpenChange={() => toggleSection('sport')}>
           <Card className={cn(isSportValid && 'border-success/30')}>
             <CollapsibleTrigger asChild>
@@ -381,7 +417,7 @@ export function IntakeTerminal() {
                         <Trophy className="w-4 h-4 text-muted-foreground" />
                       )}
                     </div>
-                    <CardTitle className="text-base">Deporte y Categoría</CardTitle>
+                    <CardTitle className="text-base">Deporte, Sede y Categoría</CardTitle>
                   </div>
                   {openSections.sport ? (
                     <ChevronUp className="w-5 h-5 text-muted-foreground" />
@@ -393,6 +429,7 @@ export function IntakeTerminal() {
             </CollapsibleTrigger>
             <CollapsibleContent>
               <CardContent className="px-4 pb-4 pt-0 space-y-4">
+                {/* Sport */}
                 <div>
                   <Label>Deporte *</Label>
                   <Select
@@ -400,10 +437,13 @@ export function IntakeTerminal() {
                     onValueChange={(value) => setFormData(prev => ({ 
                       ...prev, 
                       sportId: value,
-                      categoryId: '' // Reset category when sport changes
+                      categoryId: '',
+                      venueId: '',
+                      planId: '',
+                      isPitchSigning: false,
                     }))}
                   >
-                    <SelectTrigger className="mt-1.5">
+                    <SelectTrigger className="mt-1.5 h-12">
                       <SelectValue placeholder="Seleccionar deporte" />
                     </SelectTrigger>
                     <SelectContent>
@@ -415,6 +455,49 @@ export function IntakeTerminal() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Pitch Signing Toggle - Only for Soccer */}
+                {formData.sportId && isSoccer && settings?.promo_active && (
+                  <div className="flex items-center justify-between rounded-lg border border-border p-3 bg-muted/30">
+                    <div className="space-y-0.5">
+                      <Label className="text-sm font-medium">Fichaje en Cancha</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Aplica promo: mensualidad a ${settings.promo_fee || 300}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.isPitchSigning}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isPitchSigning: checked }))}
+                    />
+                  </div>
+                )}
+
+                {/* Venue */}
+                {formData.sportId && filteredVenues.length > 0 && (
+                  <div>
+                    <Label className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5" />
+                      Sede (opcional)
+                    </Label>
+                    <Select
+                      value={formData.venueId}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, venueId: value }))}
+                    >
+                      <SelectTrigger className="mt-1.5 h-12">
+                        <SelectValue placeholder="Seleccionar sede" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredVenues.map(venue => (
+                          <SelectItem key={venue.id} value={venue.id}>
+                            {venue.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Category */}
                 {formData.sportId && (
                   <div>
                     <Label>Categoría (opcional)</Label>
@@ -422,13 +505,35 @@ export function IntakeTerminal() {
                       value={formData.categoryId}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, categoryId: value }))}
                     >
-                      <SelectTrigger className="mt-1.5">
+                      <SelectTrigger className="mt-1.5 h-12">
                         <SelectValue placeholder="Se asignará después" />
                       </SelectTrigger>
                       <SelectContent>
                         {filteredCategories.map(cat => (
                           <SelectItem key={cat.id} value={cat.id}>
                             {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Plan */}
+                {formData.sportId && filteredPlans.length > 0 && (
+                  <div>
+                    <Label>Plan (opcional)</Label>
+                    <Select
+                      value={formData.planId}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, planId: value }))}
+                    >
+                      <SelectTrigger className="mt-1.5 h-12">
+                        <SelectValue placeholder="Sin plan específico" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredPlans.map(plan => (
+                          <SelectItem key={plan.id} value={plan.id}>
+                            {plan.name} — ${plan.price}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -479,12 +584,12 @@ export function IntakeTerminal() {
                     <span className="text-muted-foreground">
                       Mensualidad
                       {fees.promoApplied && (
-                        <Badge variant="secondary" className="ml-2 text-xs">PROMO</Badge>
+                        <Badge variant="secondary" className="ml-2 text-xs">PROMO 🔥</Badge>
                       )}
                     </span>
                     <span>${fees.monthlyFee}</span>
                   </div>
-                  <div className="border-t pt-2 flex justify-between font-semibold">
+                  <div className="border-t pt-2 flex justify-between font-semibold text-lg">
                     <span>Total</span>
                     <span className="text-primary">${totalAmount}</span>
                   </div>
@@ -501,7 +606,7 @@ export function IntakeTerminal() {
                       evidenceFile: null
                     }))}
                   >
-                    <SelectTrigger className="mt-1.5">
+                    <SelectTrigger className="mt-1.5 h-12">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -547,7 +652,7 @@ export function IntakeTerminal() {
         <Button
           onClick={handleSubmit}
           disabled={!isFormValid || isCreating}
-          className="w-full h-12 text-base"
+          className="w-full h-14 text-base font-semibold"
           size="lg"
         >
           {isCreating ? (
