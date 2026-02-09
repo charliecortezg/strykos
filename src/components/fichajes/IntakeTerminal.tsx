@@ -77,6 +77,18 @@ export function IntakeTerminal() {
   const [createdPlayerId, setCreatedPlayerId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Filter sports to only show Futbol
+  const filteredSports = sports.filter(s => 
+    s.name.toLowerCase().includes('fut') || s.name.toLowerCase().includes('soccer')
+  );
+
+  // Auto-select Futbol when it's the only sport
+  useEffect(() => {
+    if (filteredSports.length === 1 && !formData.sportId) {
+      setFormData(prev => ({ ...prev, sportId: filteredSports[0].id }));
+    }
+  }, [filteredSports.length, formData.sportId]);
+
   // Determine if sport is soccer (for promo toggle)
   const selectedSport = sports.find(s => s.id === formData.sportId);
   const isSoccer = selectedSport
@@ -447,7 +459,7 @@ export function IntakeTerminal() {
                       <SelectValue placeholder="Seleccionar deporte" />
                     </SelectTrigger>
                     <SelectContent>
-                      {sports.map(sport => (
+                      {filteredSports.map(sport => (
                         <SelectItem key={sport.id} value={sport.id}>
                           {sport.name}
                         </SelectItem>
