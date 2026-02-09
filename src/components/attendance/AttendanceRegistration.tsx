@@ -22,7 +22,7 @@ const ABSENCE_REASONS = [
   { value: 'enfermedad', label: 'Enfermedad / Lesión' },
 ];
 
-type PerformanceFilter = 'all' | 'challenge';
+type PerformanceFilter = 'all' | 'outstanding' | 'challenge';
 
 export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrationProps) {
   const { playersWithAttendance, isLoading, saveAttendance, hasExistingAttendance, performanceStats, traceabilityInfo } = useTrainingAttendance(categoryId, date);
@@ -89,6 +89,7 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
       present: present.length,
       absent: localPlayers.filter(p => p.status === 'ausente' || p.status === 'justificado').length,
       justified: localPlayers.filter(p => p.status === 'justificado').length,
+      outstanding: present.filter(p => p.performance_status === 'outstanding').length,
       excellent: present.filter(p => p.performance_status === 'excellent' || !p.performance_status).length,
       focus: present.filter(p => p.performance_status === 'focus').length,
       challenge: present.filter(p => p.performance_status === 'challenge').length,
@@ -99,6 +100,9 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
   const filteredPlayers = useMemo(() => {
     if (performanceFilter === 'challenge') {
       return localPlayers.filter(p => p.performance_status === 'challenge');
+    }
+    if (performanceFilter === 'outstanding') {
+      return localPlayers.filter(p => p.performance_status === 'outstanding');
     }
     return localPlayers;
   }, [localPlayers, performanceFilter]);
@@ -156,32 +160,52 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground font-medium">Rendimiento:</span>
             <PerformanceStats 
+              outstanding={localStats.outstanding}
               excellent={localStats.excellent} 
               focus={localStats.focus} 
               challenge={localStats.challenge}
               showHelp
             />
           </div>
-          {/* Quick Filter for Challenge */}
-          <Button
-            type="button"
-            variant={performanceFilter === 'challenge' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setPerformanceFilter(prev => prev === 'challenge' ? 'all' : 'challenge')}
-            className={cn(
-              'h-8 text-xs gap-1.5',
-              performanceFilter === 'challenge' && 'bg-destructive hover:bg-destructive/90'
-            )}
-          >
-            <Filter className="w-3.5 h-3.5" />
-            <div className="w-2.5 h-2.5 rounded-full bg-destructive border border-white/50" />
-            <span className="hidden sm:inline">Reto</span>
-            {localStats.challenge > 0 && (
-              <Badge variant="secondary" className="h-5 px-1.5 text-[10px] ml-1">
-                {localStats.challenge}
-              </Badge>
-            )}
-          </Button>
+          {/* Quick Filters for Outstanding and Challenge */}
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant={performanceFilter === 'outstanding' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setPerformanceFilter(prev => prev === 'outstanding' ? 'all' : 'outstanding')}
+              className={cn(
+                'h-8 text-xs gap-1.5',
+                performanceFilter === 'outstanding' && 'bg-blue-500 hover:bg-blue-600'
+              )}
+            >
+              <div className="w-2.5 h-2.5 rounded-full bg-blue-500 border border-white/50" />
+              <span className="hidden sm:inline">MVP</span>
+              {localStats.outstanding > 0 && (
+                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] ml-1">
+                  {localStats.outstanding}
+                </Badge>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant={performanceFilter === 'challenge' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setPerformanceFilter(prev => prev === 'challenge' ? 'all' : 'challenge')}
+              className={cn(
+                'h-8 text-xs gap-1.5',
+                performanceFilter === 'challenge' && 'bg-destructive hover:bg-destructive/90'
+              )}
+            >
+              <div className="w-2.5 h-2.5 rounded-full bg-destructive border border-white/50" />
+              <span className="hidden sm:inline">Reto</span>
+              {localStats.challenge > 0 && (
+                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] ml-1">
+                  {localStats.challenge}
+                </Badge>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Global Actions - Large touch targets with explicit button type */}
@@ -236,6 +260,15 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
         )}
 
         {/* Filter active indicator */}
+        {performanceFilter === 'outstanding' && (
+          <Badge 
+            variant="outline" 
+            className="mt-2 bg-blue-500/10 text-blue-600 border-blue-500/30 w-full justify-center gap-2"
+          >
+            <div className="w-2 h-2 rounded-full bg-blue-500" />
+            Mostrando solo Sobresalientes ({filteredPlayers.length})
+          </Badge>
+        )}
         {performanceFilter === 'challenge' && (
           <Badge 
             variant="outline" 
@@ -249,7 +282,7 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
 
       {/* Players List - Mobile optimized cards */}
       <div className="space-y-3">
-        {filteredPlayers.length === 0 && performanceFilter === 'challenge' ? (
+        {filteredPlayers.length === 0 && performanceFilter !== 'all' ? (
           <Card className="p-8 text-center">
             <div className="w-12 h-12 rounded-full bg-success/10 mx-auto mb-4 flex items-center justify-center">
               <Check className="w-6 h-6 text-success" />
@@ -328,13 +361,14 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
                         onClick={(e) => {
                           e.stopPropagation();
                           const current = player.performance_status || 'excellent';
-                          const cycle: PerformanceStatus[] = ['excellent', 'focus', 'challenge'];
+                          const cycle: PerformanceStatus[] = ['outstanding', 'excellent', 'focus', 'challenge'];
                           const nextIndex = (cycle.indexOf(current) + 1) % cycle.length;
                           updatePlayerPerformance(player.player_id, cycle[nextIndex]);
                         }}
                         className={cn(
                           'ml-2 w-6 h-6 rounded-full ring-2 ring-white/50 cursor-pointer',
                           'active:scale-90 transition-transform',
+                          player.performance_status === 'outstanding' && 'bg-blue-500',
                           player.performance_status === 'excellent' && 'bg-success-foreground',
                           player.performance_status === 'focus' && 'bg-warning',
                           player.performance_status === 'challenge' && 'bg-destructive'
