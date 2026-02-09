@@ -144,7 +144,7 @@ export function IntakeTerminal() {
   // Validation
   const isPlayerValid = formData.playerName.trim() !== '' && formData.playerBirthDate && formData.playerAge !== null;
   const isGuardianValid = formData.guardianName.trim() !== '' && formData.guardianPhone.trim().length >= 10;
-  const isSportValid = formData.sportId !== '';
+  const isSportValid = formData.sportId !== '' && formData.planId !== '';
   const isPaymentValid = formData.paymentMethod === 'efectivo' 
     ? formData.evidenceFile !== null 
     : true;
@@ -533,15 +533,15 @@ export function IntakeTerminal() {
                 )}
 
                 {/* Plan */}
-                {formData.sportId && filteredPlans.length > 0 && (
+                {formData.sportId && (
                   <div>
-                    <Label>Plan (opcional)</Label>
+                    <Label>Plan *</Label>
                     <Select
                       value={formData.planId}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, planId: value }))}
                     >
                       <SelectTrigger className="mt-1.5 h-12">
-                        <SelectValue placeholder="Sin plan específico" />
+                        <SelectValue placeholder="Seleccionar plan" />
                       </SelectTrigger>
                       <SelectContent>
                         {filteredPlans.map(plan => (
@@ -551,6 +551,9 @@ export function IntakeTerminal() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {filteredPlans.length === 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">No hay planes activos configurados</p>
+                    )}
                   </div>
                 )}
               </CardContent>
