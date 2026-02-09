@@ -77,10 +77,11 @@ export function IntakeTerminal() {
   const [createdPlayerId, setCreatedPlayerId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Filter sports to only show Futbol
-  const filteredSports = sports.filter(s => 
-    s.name.toLowerCase().includes('fut') || s.name.toLowerCase().includes('soccer')
-  );
+  // Filter sports to only show Futbol (accent-insensitive)
+  const filteredSports = sports.filter(s => {
+    const normalized = s.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return normalized.includes('fut') || normalized.includes('soccer');
+  });
 
   // Auto-select Futbol when it's the only sport
   useEffect(() => {
