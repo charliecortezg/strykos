@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,17 +6,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DateInput } from './DateInput';
 import { CameraCapture } from './CameraCapture';
 import { TransferQRDisplay } from './TransferQRDisplay';
-import { useIntakeSettings, useCreateIntake, calculateIntakeFees, CreateIntakeData } from '@/hooks/useIntake';
+import { useIntakeSettings, useCreateIntake, CreateIntakeData } from '@/hooks/useIntake';
 import { useSports } from '@/hooks/useSports';
 import { useCategories } from '@/hooks/useCategories';
 import { useVenues } from '@/hooks/useVenues';
 import { usePlans } from '@/hooks/usePlans';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronDown, ChevronUp, User, Users, Trophy, CreditCard, Check, AlertCircle, Loader2, MapPin } from 'lucide-react';
+import { ChevronDown, ChevronUp, User, Users, Trophy, CreditCard, Check, AlertCircle, Loader2, MapPin, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -34,7 +35,7 @@ interface FormData {
   sportId: string;
   categoryId: string;
   venueId: string;
-  planId: string;
+  selectedPlanIds: string[];
   isPitchSigning: boolean;
   paymentMethod: PaymentMethod;
   evidenceFile: File | null;
@@ -51,7 +52,7 @@ const initialFormData: FormData = {
   sportId: '',
   categoryId: '',
   venueId: '',
-  planId: '',
+  selectedPlanIds: [],
   isPitchSigning: false,
   paymentMethod: 'efectivo',
   evidenceFile: null,
@@ -96,25 +97,62 @@ export function IntakeTerminal() {
     ? (selectedSport.name.toLowerCase().includes('fut') || selectedSport.name.toLowerCase().includes('soccer'))
     : false;
 
-  // Calculate fees based on sport + pitch signing
-  const fees = settings && selectedSport
-    ? calculateIntakeFees(selectedSport.name, formData.isPitchSigning, settings)
-    : { registrationFee: 400, monthlyFee: 450, promoApplied: false };
-
-  const totalAmount = fees.registrationFee + fees.monthlyFee;
-
   // Filter categories by selected sport
   const filteredCategories = categories.filter(c => 
     c.is_active && (!formData.sportId || c.sport_id === formData.sportId)
   );
 
-  // Filter venues by selected sport (venues linked via categories or all if no sport filter on venues)
+  // Filter venues
   const filteredVenues = venues;
 
   // Filter plans by selected sport
   const filteredPlans = plans.filter(p => 
     p.is_active && (!formData.sportId || !p.sport_id || p.sport_id === formData.sportId)
   );
+
+  // Calculate ticket breakdown from selected plans
+  const ticketBreakdown = useMemo(() => {
+    const lines: { planId: string; name: string; periodicity: string; originalPrice: number; finalPrice: number; isPromo: boolean }[] = [];
+    
+    for (const planId of formData.selectedPlanIds) {
+      const plan = plans.find(p => p.id === planId);
+      if (!plan) continue;
+
+      let finalPrice = plan.price;
+      let isPromo = false;
+
+      // Apply promo on monthly soccer plan if pitch signing is active
+      if (
+        formData.isPitchSigning &&
+        settings?.promo_active &&
+        isSoccer &&
+        plan.periodicity === 'monthly'
+      ) {
+        finalPrice = settings.promo_fee || plan.price;
+        isPromo = true;
+      }
+
+      const periodicityLabel = plan.periodicity === 'annual' ? 'Anual' 
+        : plan.periodicity === 'monthly' ? 'Mensual' 
+        : plan.periodicity === 'quarterly' ? 'Trimestral'
+        : plan.periodicity === 'semester' ? 'Semestral'
+        : plan.periodicity;
+
+      lines.push({
+        planId: plan.id,
+        name: plan.name,
+        periodicity: periodicityLabel,
+        originalPrice: plan.price,
+        finalPrice,
+        isPromo,
+      });
+    }
+
+    const total = lines.reduce((sum, l) => sum + l.finalPrice, 0);
+    const hasPromo = lines.some(l => l.isPromo);
+
+    return { lines, total, hasPromo };
+  }, [formData.selectedPlanIds, formData.isPitchSigning, plans, settings, isSoccer]);
 
   // Auto-open next section when current is complete
   useEffect(() => {
@@ -144,7 +182,7 @@ export function IntakeTerminal() {
   // Validation
   const isPlayerValid = formData.playerName.trim() !== '' && formData.playerBirthDate && formData.playerAge !== null;
   const isGuardianValid = formData.guardianName.trim() !== '' && formData.guardianPhone.trim().length >= 10;
-  const isSportValid = formData.sportId !== '' && formData.planId !== '';
+  const isSportValid = formData.sportId !== '' && formData.selectedPlanIds.length >= 1;
   const isPaymentValid = formData.paymentMethod === 'efectivo' 
     ? formData.evidenceFile !== null 
     : true;
@@ -155,8 +193,28 @@ export function IntakeTerminal() {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
+  const togglePlan = (planId: string) => {
+    setFormData(prev => {
+      const isSelected = prev.selectedPlanIds.includes(planId);
+      return {
+        ...prev,
+        selectedPlanIds: isSelected
+          ? prev.selectedPlanIds.filter(id => id !== planId)
+          : [...prev.selectedPlanIds, planId],
+      };
+    });
+  };
+
   const handleSubmit = async () => {
     if (!isFormValid || !settings) return;
+
+    // Calculate registration and monthly fees from breakdown for retrocompatibility
+    const registrationFee = ticketBreakdown.lines
+      .filter(l => l.periodicity === 'Anual')
+      .reduce((sum, l) => sum + l.finalPrice, 0);
+    const monthlyFee = ticketBreakdown.lines
+      .filter(l => l.periodicity === 'Mensual')
+      .reduce((sum, l) => sum + l.finalPrice, 0);
 
     try {
       const data: CreateIntakeData = {
@@ -170,12 +228,12 @@ export function IntakeTerminal() {
         sportId: formData.sportId,
         categoryId: formData.categoryId || undefined,
         venueId: formData.venueId || undefined,
-        planId: formData.planId || undefined,
+        planIds: formData.selectedPlanIds,
         paymentMethod: formData.paymentMethod,
-        registrationFee: fees.registrationFee,
-        monthlyFee: fees.monthlyFee,
-        totalAmount,
-        promoApplied: fees.promoApplied,
+        registrationFee,
+        monthlyFee,
+        totalAmount: ticketBreakdown.total,
+        promoApplied: ticketBreakdown.hasPromo,
         evidenceFile: formData.evidenceFile || undefined,
       };
 
@@ -229,7 +287,7 @@ export function IntakeTerminal() {
                 {formData.playerName} ha sido registrado exitosamente.
               </p>
             </div>
-            {fees.promoApplied && (
+            {ticketBreakdown.hasPromo && (
               <Badge className="bg-success/10 text-success border-success/20">
                 🎉 Promo aplicada
               </Badge>
@@ -413,7 +471,7 @@ export function IntakeTerminal() {
           </Card>
         </Collapsible>
 
-        {/* Section 3: Sport, Venue & Category */}
+        {/* Section 3: Sport, Venue, Category & Plans */}
         <Collapsible open={openSections.sport} onOpenChange={() => toggleSection('sport')}>
           <Card className={cn(isSportValid && 'border-success/30')}>
             <CollapsibleTrigger asChild>
@@ -430,7 +488,7 @@ export function IntakeTerminal() {
                         <Trophy className="w-4 h-4 text-muted-foreground" />
                       )}
                     </div>
-                    <CardTitle className="text-base">Deporte, Sede y Categoría</CardTitle>
+                    <CardTitle className="text-base">Deporte, Sede y Plan</CardTitle>
                   </div>
                   {openSections.sport ? (
                     <ChevronUp className="w-5 h-5 text-muted-foreground" />
@@ -452,7 +510,7 @@ export function IntakeTerminal() {
                       sportId: value,
                       categoryId: '',
                       venueId: '',
-                      planId: '',
+                      selectedPlanIds: [],
                       isPitchSigning: false,
                     }))}
                   >
@@ -475,7 +533,7 @@ export function IntakeTerminal() {
                     <div className="space-y-0.5">
                       <Label className="text-sm font-medium">Fichaje en Cancha</Label>
                       <p className="text-xs text-muted-foreground">
-                        Aplica promo: mensualidad a ${settings.promo_fee || 300}
+                        Aplica promo en mensualidad: ${settings.promo_fee || 300}
                       </p>
                     </div>
                     <Switch
@@ -532,27 +590,88 @@ export function IntakeTerminal() {
                   </div>
                 )}
 
-                {/* Plan */}
+                {/* Multi-Plan Selection */}
                 {formData.sportId && (
-                  <div>
-                    <Label>Plan *</Label>
-                    <Select
-                      value={formData.planId}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, planId: value }))}
-                    >
-                      <SelectTrigger className="mt-1.5 h-12">
-                        <SelectValue placeholder="Seleccionar plan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filteredPlans.map(plan => (
-                          <SelectItem key={plan.id} value={plan.id}>
-                            {plan.name} — ${plan.price}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {filteredPlans.length === 0 && (
-                      <p className="text-xs text-muted-foreground mt-1">No hay planes activos configurados</p>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1.5">
+                      <Receipt className="w-3.5 h-3.5" />
+                      Planes * <span className="text-xs text-muted-foreground font-normal">(mínimo 1)</span>
+                    </Label>
+                    
+                    {filteredPlans.length === 0 ? (
+                      <p className="text-xs text-muted-foreground p-3 bg-muted/30 rounded-lg">
+                        No hay planes activos configurados para este deporte.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {filteredPlans.map(plan => {
+                          const isSelected = formData.selectedPlanIds.includes(plan.id);
+                          const periodicityLabel = plan.periodicity === 'annual' ? 'Anual' 
+                            : plan.periodicity === 'monthly' ? 'Mensual' 
+                            : plan.periodicity === 'quarterly' ? 'Trimestral'
+                            : plan.periodicity === 'semester' ? 'Semestral'
+                            : plan.periodicity;
+
+                          // Show promo price if applicable
+                          let displayPrice = plan.price;
+                          let showPromo = false;
+                          if (
+                            formData.isPitchSigning &&
+                            settings?.promo_active &&
+                            isSoccer &&
+                            plan.periodicity === 'monthly' &&
+                            isSelected
+                          ) {
+                            displayPrice = settings.promo_fee || plan.price;
+                            showPromo = true;
+                          }
+
+                          return (
+                            <div
+                              key={plan.id}
+                              className={cn(
+                                'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
+                                isSelected 
+                                  ? 'border-primary bg-primary/5' 
+                                  : 'border-border bg-muted/20 hover:bg-muted/40'
+                              )}
+                              onClick={() => togglePlan(plan.id)}
+                            >
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => togglePlan(plan.id)}
+                                className="pointer-events-none"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className={cn('text-sm font-medium', isSelected && 'text-primary')}>
+                                  {plan.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">{periodicityLabel}</p>
+                              </div>
+                              <div className="text-right shrink-0">
+                                {showPromo ? (
+                                  <div>
+                                    <span className="text-xs line-through text-muted-foreground">${plan.price}</span>
+                                    <span className="text-sm font-semibold text-success ml-1">${displayPrice}</span>
+                                    <Badge variant="secondary" className="ml-1 text-[10px] px-1 py-0">PROMO</Badge>
+                                  </div>
+                                ) : (
+                                  <span className={cn('text-sm font-semibold', isSelected ? 'text-primary' : 'text-foreground')}>
+                                    ${plan.price}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {formData.selectedPlanIds.length === 0 && formData.sportId && (
+                      <p className="text-xs text-destructive flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        Selecciona al menos 1 plan para continuar
+                      </p>
                     )}
                   </div>
                 )}
@@ -590,25 +709,39 @@ export function IntakeTerminal() {
             </CollapsibleTrigger>
             <CollapsibleContent>
               <CardContent className="px-4 pb-4 pt-0 space-y-4">
-                {/* Fees Summary */}
+                {/* Ticket Breakdown */}
                 <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Inscripción</span>
-                    <span>${fees.registrationFee}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      Mensualidad
-                      {fees.promoApplied && (
-                        <Badge variant="secondary" className="ml-2 text-xs">PROMO 🔥</Badge>
-                      )}
-                    </span>
-                    <span>${fees.monthlyFee}</span>
-                  </div>
-                  <div className="border-t pt-2 flex justify-between font-semibold text-lg">
-                    <span>Total</span>
-                    <span className="text-primary">${totalAmount}</span>
-                  </div>
+                  {ticketBreakdown.lines.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      Selecciona al menos un plan arriba
+                    </p>
+                  ) : (
+                    <>
+                      {ticketBreakdown.lines.map((line) => (
+                        <div key={line.planId} className="flex justify-between text-sm">
+                          <span className="text-muted-foreground truncate mr-2">
+                            {line.name}
+                            <span className="text-xs ml-1">({line.periodicity})</span>
+                          </span>
+                          <span className="shrink-0 flex items-center gap-1">
+                            {line.isPromo && (
+                              <>
+                                <span className="line-through text-xs text-muted-foreground">${line.originalPrice}</span>
+                                <Badge variant="secondary" className="text-[10px] px-1 py-0">PROMO 🔥</Badge>
+                              </>
+                            )}
+                            <span className={line.isPromo ? 'text-success font-medium' : ''}>
+                              ${line.finalPrice}
+                            </span>
+                          </span>
+                        </div>
+                      ))}
+                      <div className="border-t pt-2 flex justify-between font-semibold text-lg">
+                        <span>Total</span>
+                        <span className="text-primary">${ticketBreakdown.total}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Payment Method */}
@@ -678,7 +811,7 @@ export function IntakeTerminal() {
             </>
           ) : (
             <>
-              Registrar Fichaje — ${totalAmount}
+              Registrar Fichaje — ${ticketBreakdown.total}
             </>
           )}
         </Button>
