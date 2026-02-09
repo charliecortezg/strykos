@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, ClipboardList, BarChart3, MapPin, CreditCard, UserCheck, Trophy, UserPlus } from 'lucide-react';
+import { Users, ClipboardList, BarChart3, MapPin, CreditCard, UserCheck, Trophy, UserPlus, HeartPulse } from 'lucide-react';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
 import { IntakeSettingsPanel } from '@/components/fichajes/IntakeSettingsPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,6 +18,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { usePlayers } from '@/hooks/usePlayers';
 import { useVenues } from '@/hooks/useVenues';
 import { useTrainersWithCategories } from '@/hooks/useTrainersWithCategories';
+import { LifecycleBillingSection } from '@/components/dashboard/LifecycleBillingSection';
 
 export default function DirectorDeportivoDashboard() {
   const navigate = useNavigate();
@@ -149,6 +150,10 @@ export default function DirectorDeportivoDashboard() {
               <UserPlus className="w-4 h-4" />
               Fichajes
             </TabsTrigger>
+            <TabsTrigger value="lifecycle" className="gap-2">
+              <HeartPulse className="w-4 h-4" />
+              Lifecycle
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="jugadores">
@@ -198,6 +203,10 @@ export default function DirectorDeportivoDashboard() {
               {/* Settings Panel */}
               <IntakeSettingsPanel />
             </div>
+          </TabsContent>
+
+          <TabsContent value="lifecycle">
+            <LifecycleBillingSection />
           </TabsContent>
         </Tabs>
       </main>

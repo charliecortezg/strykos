@@ -16,24 +16,35 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Call the database function to reset payment status
-    const { data, error } = await supabase.rpc('reset_monthly_payment_status')
+    // Step 1: Reset payment status (existing logic)
+    const { data: resetData, error: resetError } = await supabase.rpc('reset_monthly_payment_status')
 
-    if (error) {
-      console.error('Error resetting payment status:', error)
+    if (resetError) {
+      console.error('Error resetting payment status:', resetError)
       return new Response(
-        JSON.stringify({ error: error.message }),
+        JSON.stringify({ error: resetError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log(`Monthly payment reset completed. Affected rows: ${data}`)
+    console.log(`Monthly payment reset completed. Affected rows: ${resetData}`)
+
+    // Step 2: Check billing overdue and auto-deactivate
+    const { data: overdueData, error: overdueError } = await supabase.rpc('check_billing_overdue')
+
+    if (overdueError) {
+      console.error('Error checking billing overdue:', overdueError)
+      // Don't fail the whole function - log and continue
+    } else {
+      console.log(`Billing overdue check completed. Auto-deactivated: ${overdueData}`)
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Payment status reset completed',
-        affected_rows: data 
+        message: 'Monthly reset and billing check completed',
+        payment_reset_rows: resetData,
+        auto_deactivated: overdueData ?? 0,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

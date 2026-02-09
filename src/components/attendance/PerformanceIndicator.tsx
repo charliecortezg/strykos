@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import { HelpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-export type PerformanceStatus = 'excellent' | 'focus' | 'challenge';
+export type PerformanceStatus = 'outstanding' | 'excellent' | 'focus' | 'challenge';
 
 interface PerformanceIndicatorProps {
   status: PerformanceStatus;
@@ -12,6 +12,12 @@ interface PerformanceIndicatorProps {
 }
 
 const PERFORMANCE_CONFIG = {
+  outstanding: {
+    label: 'Sobresaliente',
+    description: 'Rendimiento excepcional — MVP del día',
+    bgColor: 'bg-blue-500',
+    ringColor: 'ring-blue-500/30',
+  },
   excellent: {
     label: 'Excelente',
     description: 'Actitud y desempeño ejemplar',
@@ -32,7 +38,7 @@ const PERFORMANCE_CONFIG = {
   },
 } as const;
 
-const CYCLE_ORDER: PerformanceStatus[] = ['excellent', 'focus', 'challenge'];
+const CYCLE_ORDER: PerformanceStatus[] = ['outstanding', 'excellent', 'focus', 'challenge'];
 
 export function PerformanceIndicator({ 
   status, 
@@ -87,16 +93,21 @@ export function PerformanceIndicator({
 
 // Stats display component for header with help tooltip
 interface PerformanceStatsProps {
+  outstanding: number;
   excellent: number;
   focus: number;
   challenge: number;
   showHelp?: boolean;
 }
 
-export function PerformanceStats({ excellent, focus, challenge, showHelp = false }: PerformanceStatsProps) {
+export function PerformanceStats({ outstanding, excellent, focus, challenge, showHelp = false }: PerformanceStatsProps) {
   return (
     <TooltipProvider delayDuration={300}>
       <div className="flex items-center gap-3 text-sm">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-blue-500" />
+          <span className="font-medium">{outstanding}</span>
+        </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-success" />
           <span className="font-medium">{excellent}</span>
@@ -119,6 +130,12 @@ export function PerformanceStats({ excellent, focus, challenge, showHelp = false
             <TooltipContent side="bottom" align="end" className="max-w-[280px] p-3">
               <p className="font-semibold mb-2">Semáforo de Rendimiento</p>
               <div className="space-y-2 text-xs">
+                <div className="flex items-start gap-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="font-medium">Sobresaliente:</span> Rendimiento excepcional — MVP del día.
+                  </div>
+                </div>
                 <div className="flex items-start gap-2">
                   <div className="w-3 h-3 rounded-full bg-success mt-0.5 flex-shrink-0" />
                   <div>

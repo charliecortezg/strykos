@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { User, Calendar, CreditCard, CheckCircle, XCircle, AlertCircle, Trophy, Target, Banknote, ArrowRightLeft, Receipt } from 'lucide-react';
+import { User, Calendar, CreditCard, CheckCircle, XCircle, AlertCircle, Trophy, Target, Banknote, ArrowRightLeft, Receipt, Clock } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ import { usePayments } from '@/hooks/usePayments';
 import { PAYMENT_STATUS_LABELS, ATTENDANCE_STATUS_LABELS, type Player, type Payment } from '@/types/categories';
 import { getMatchResult } from '@/types/matches';
 import { cn } from '@/lib/utils';
+import { PlayerTimeline } from './PlayerTimeline';
 
 interface PlayerProfileModalProps {
   open: boolean;
@@ -140,10 +141,11 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
           {/* Tabs - inside scrollable area */}
           <div className="p-4 sm:p-6">
             <Tabs defaultValue="asistencia" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-4">
+              <TabsList className="grid w-full grid-cols-5 mb-4">
                 <TabsTrigger value="asistencia" className="text-xs sm:text-sm">Asistencia</TabsTrigger>
                 <TabsTrigger value="partidos" className="text-xs sm:text-sm">Partidos</TabsTrigger>
                 <TabsTrigger value="pagos" className="text-xs sm:text-sm">Pagos</TabsTrigger>
+                <TabsTrigger value="timeline" className="text-xs sm:text-sm">Timeline</TabsTrigger>
                 <TabsTrigger value="info" className="text-xs sm:text-sm">Info</TabsTrigger>
               </TabsList>
 
@@ -445,6 +447,10 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
                   Cuota mensual: <span className="font-semibold text-foreground">${player.monthly_fee}</span>
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="timeline">
+              <PlayerTimeline playerId={player.id} />
             </TabsContent>
 
             <TabsContent value="info">

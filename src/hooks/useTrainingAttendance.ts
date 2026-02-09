@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AttendanceStatus } from '@/types/categories';
 import { toast } from 'sonner';
 
-export type PerformanceStatus = 'excellent' | 'focus' | 'challenge';
+export type PerformanceStatus = 'outstanding' | 'excellent' | 'focus' | 'challenge';
 
 export interface PlayerAttendanceRecord {
   player_id: string;
@@ -172,7 +172,8 @@ export function useTrainingAttendance(categoryId: string | null, date: string) {
   });
 
   // Calculate performance stats
-  const performanceStats: PerformanceStats = {
+  const performanceStats: PerformanceStats & { outstanding: number } = {
+    outstanding: playersWithAttendance.filter(p => p.performance_status === 'outstanding').length,
     excellent: playersWithAttendance.filter(p => p.status === 'presente' && (p.performance_status === 'excellent' || !p.performance_status)).length,
     focus: playersWithAttendance.filter(p => p.performance_status === 'focus').length,
     challenge: playersWithAttendance.filter(p => p.performance_status === 'challenge').length,

@@ -12,6 +12,7 @@ import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist
 import { FounderKPISection } from '@/components/dashboard/FounderKPISection';
 import { PlanLimitBanner } from '@/components/dashboard/PlanLimitBanner';
 import { BillingConfigurationPanel } from '@/components/billing/BillingConfigurationPanel';
+import { LifecycleBillingSection } from '@/components/dashboard/LifecycleBillingSection';
 import { IntakeSettingsPanel } from '@/components/fichajes/IntakeSettingsPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -252,6 +253,9 @@ export default function OrgOwnerDashboard() {
 
         {/* Founder KPIs Section */}
         <FounderKPISection />
+
+        {/* Lifecycle & Billing Section */}
+        <LifecycleBillingSection />
 
         {/* Role Cards */}
         <h2 className="text-xl font-display font-semibold text-foreground mb-4">

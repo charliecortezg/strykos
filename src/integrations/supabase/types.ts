@@ -91,6 +91,48 @@ export type Database = {
           },
         ]
       }
+      billing_events_log: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          meta: Json
+          organization_id: string
+          player_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          meta?: Json
+          organization_id: string
+          player_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          meta?: Json
+          organization_id?: string
+          player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_events_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_events_log_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -1319,6 +1361,108 @@ export type Database = {
           },
         ]
       }
+      player_lifecycle_log: {
+        Row: {
+          created_at: string
+          event_type: string
+          from_status: string | null
+          id: string
+          organization_id: string
+          player_id: string
+          reason: string | null
+          to_status: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          from_status?: string | null
+          id?: string
+          organization_id: string
+          player_id: string
+          reason?: string | null
+          to_status?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          from_status?: string | null
+          id?: string
+          organization_id?: string
+          player_id?: string
+          reason?: string | null
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_lifecycle_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_lifecycle_log_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_offboarding: {
+        Row: {
+          churn_detail: string | null
+          churn_reason: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          nps_score: number | null
+          organization_id: string
+          player_id: string
+          started_at: string
+          would_return: boolean | null
+        }
+        Insert: {
+          churn_detail?: string | null
+          churn_reason?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          nps_score?: number | null
+          organization_id: string
+          player_id: string
+          started_at?: string
+          would_return?: boolean | null
+        }
+        Update: {
+          churn_detail?: string | null
+          churn_reason?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          nps_score?: number | null
+          organization_id?: string
+          player_id?: string
+          started_at?: string
+          would_return?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_offboarding_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_offboarding_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_progress: {
         Row: {
           last_event_at: string | null
@@ -1372,6 +1516,7 @@ export type Database = {
       }
       players: {
         Row: {
+          billing_status: string
           category_id: string | null
           created_at: string
           date_of_birth: string | null
@@ -1381,7 +1526,11 @@ export type Database = {
           is_active: boolean
           is_scholarship: boolean
           is_trial: boolean
+          last_paid_month: string | null
+          lifecycle_status: string
           monthly_fee: number | null
+          offboarded_at: string | null
+          onboarded_at: string | null
           organization_id: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           phone: string | null
@@ -1393,6 +1542,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          billing_status?: string
           category_id?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -1402,7 +1552,11 @@ export type Database = {
           is_active?: boolean
           is_scholarship?: boolean
           is_trial?: boolean
+          last_paid_month?: string | null
+          lifecycle_status?: string
           monthly_fee?: number | null
+          offboarded_at?: string | null
+          onboarded_at?: string | null
           organization_id: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone?: string | null
@@ -1414,6 +1568,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          billing_status?: string
           category_id?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -1423,7 +1578,11 @@ export type Database = {
           is_active?: boolean
           is_scholarship?: boolean
           is_trial?: boolean
+          last_paid_month?: string | null
+          lifecycle_status?: string
           monthly_fee?: number | null
+          offboarded_at?: string | null
+          onboarded_at?: string | null
           organization_id?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone?: string | null
@@ -2024,6 +2183,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_billing_overdue: { Args: never; Returns: number }
       generate_access_key: { Args: never; Returns: string }
       generate_intake_idempotency_key: {
         Args: {
@@ -2103,7 +2263,11 @@ export type Database = {
       }
     }
     Enums: {
-      attendance_performance_status: "excellent" | "focus" | "challenge"
+      attendance_performance_status:
+        | "excellent"
+        | "focus"
+        | "challenge"
+        | "outstanding"
       attendance_status: "presente" | "ausente" | "justificado"
       org_role:
         | "org_owner"
@@ -2252,7 +2416,12 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      attendance_performance_status: ["excellent", "focus", "challenge"],
+      attendance_performance_status: [
+        "excellent",
+        "focus",
+        "challenge",
+        "outstanding",
+      ],
       attendance_status: ["presente", "ausente", "justificado"],
       org_role: [
         "org_owner",
