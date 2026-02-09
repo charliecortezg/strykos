@@ -693,6 +693,7 @@ export type Database = {
           goals_against: number
           goals_for: number
           id: string
+          importance: string
           last_edited_at: string | null
           last_edited_by: string | null
           match_date: string
@@ -705,6 +706,7 @@ export type Database = {
           trainer_id: string | null
           updated_at: string
           venue_id: string | null
+          xp_multiplier: number
         }
         Insert: {
           category_id: string
@@ -713,6 +715,7 @@ export type Database = {
           goals_against?: number
           goals_for?: number
           id?: string
+          importance?: string
           last_edited_at?: string | null
           last_edited_by?: string | null
           match_date: string
@@ -725,6 +728,7 @@ export type Database = {
           trainer_id?: string | null
           updated_at?: string
           venue_id?: string | null
+          xp_multiplier?: number
         }
         Update: {
           category_id?: string
@@ -733,6 +737,7 @@ export type Database = {
           goals_against?: number
           goals_for?: number
           id?: string
+          importance?: string
           last_edited_at?: string | null
           last_edited_by?: string | null
           match_date?: string
@@ -745,6 +750,7 @@ export type Database = {
           trainer_id?: string | null
           updated_at?: string
           venue_id?: string | null
+          xp_multiplier?: number
         }
         Relationships: [
           {
@@ -787,6 +793,54 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_reports: {
+        Row: {
+          churned_count: number
+          created_at: string
+          generated_by: string | null
+          id: string
+          new_players_count: number
+          organization_id: string
+          report_month: string
+          snapshot: Json
+        }
+        Insert: {
+          churned_count?: number
+          created_at?: string
+          generated_by?: string | null
+          id?: string
+          new_players_count?: number
+          organization_id: string
+          report_month: string
+          snapshot?: Json
+        }
+        Update: {
+          churned_count?: number
+          created_at?: string
+          generated_by?: string | null
+          id?: string
+          new_players_count?: number
+          organization_id?: string
+          report_month?: string
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_reports_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

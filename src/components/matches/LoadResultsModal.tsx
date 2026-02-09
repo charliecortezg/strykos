@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Match, MatchPlayer, getMatchResult } from '@/types/matches';
+import { Match, MatchPlayer, getMatchResult, importanceIcons, importanceLabels } from '@/types/matches';
 import { useMatchPlayers } from '@/hooks/useMatches';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -203,10 +203,15 @@ export function LoadResultsModal({
             <Target className="w-5 h-5 text-primary" />
             Cargar Resultado
           </DrawerTitle>
-          <div className="text-sm text-muted-foreground mt-1">
-            {match.category?.name} vs {match.rival_name}
-            <span className="mx-2">•</span>
-            {format(new Date(match.match_date), "dd MMM yyyy", { locale: es })}
+          <div className="text-sm text-muted-foreground mt-1 flex items-center gap-1 flex-wrap">
+            <span>{match.category?.name} vs {match.rival_name}</span>
+            {match.importance && match.importance !== 'regular' && (
+              <Badge variant="outline" className="text-[10px] gap-0.5 bg-warning/10 text-warning border-warning/20">
+                {importanceIcons[match.importance]} {importanceLabels[match.importance]}
+              </Badge>
+            )}
+            <span className="mx-1">•</span>
+            <span>{format(new Date(match.match_date), "dd MMM yyyy", { locale: es })}</span>
           </div>
         </DrawerHeader>
 

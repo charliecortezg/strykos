@@ -4,7 +4,7 @@ import { MapPin, Eye, Target, Trash2, Calendar, User, ShieldCheck } from 'lucide
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Match, getMatchResult } from '@/types/matches';
+import { Match, getMatchResult, importanceIcons, importanceLabels } from '@/types/matches';
 import { cn } from '@/lib/utils';
 
 interface MatchCardProps {
@@ -96,6 +96,11 @@ export function MatchCard({
               >
                 {matchTypeLabels[match.match_type] || match.match_type}
               </Badge>
+              {match.importance && match.importance !== 'regular' && (
+                <span className="text-xs shrink-0" title={importanceLabels[match.importance]}>
+                  {importanceIcons[match.importance]}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="truncate">{match.category?.name}</span>
@@ -191,6 +196,11 @@ export function MatchCard({
           <Badge variant="secondary" className="text-xs">
             {matchTypeLabels[match.match_type] || match.match_type}
           </Badge>
+          {match.importance && match.importance !== 'regular' && (
+            <Badge variant="outline" className="text-xs gap-1 bg-warning/10 text-warning border-warning/20">
+              {importanceIcons[match.importance]} {importanceLabels[match.importance]}
+            </Badge>
+          )}
           <Badge variant="outline" className={cn("text-xs", statusInfo.className)}>
             {statusInfo.label}
           </Badge>

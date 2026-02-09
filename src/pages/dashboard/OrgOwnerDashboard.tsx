@@ -13,6 +13,7 @@ import { FounderKPISection } from '@/components/dashboard/FounderKPISection';
 import { PlanLimitBanner } from '@/components/dashboard/PlanLimitBanner';
 import { BillingConfigurationPanel } from '@/components/billing/BillingConfigurationPanel';
 import { LifecycleBillingSection } from '@/components/dashboard/LifecycleBillingSection';
+import { MonthlyReportSection } from '@/components/reports/MonthlyReportSection';
 import { IntakeSettingsPanel } from '@/components/fichajes/IntakeSettingsPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -256,6 +257,11 @@ export default function OrgOwnerDashboard() {
 
         {/* Lifecycle & Billing Section */}
         <LifecycleBillingSection />
+
+        {/* Monthly Report */}
+        <div className="mt-8">
+          <MonthlyReportSection />
+        </div>
 
         {/* Role Cards */}
         <h2 className="text-xl font-display font-semibold text-foreground mb-4">
