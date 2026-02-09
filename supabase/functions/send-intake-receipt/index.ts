@@ -329,14 +329,14 @@ serve(async (req: Request): Promise<Response> => {
       </td>
     </tr>
 
-    <!-- BOTÓN: GUÍA DE NUTRICIÓN (placeholder) -->
+    <!-- BOTÓN: PORTAL FAMILIAR -->
     <tr>
       <td style="padding:20px 30px 5px;text-align:center;">
         <p style="color:#6b7280;font-size:13px;margin:0 0 12px;">
-          Descarga nuestra guía de nutrición deportiva para optimizar el rendimiento de tu pequeño atleta:
+          🏆 Accede al portal para ver el progreso y estadísticas de tu jugador:
         </p>
-        <a href="#" style="display:inline-block;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;letter-spacing:0.3px;">
-          📥 DESCARGAR GUÍA DE NUTRICIÓN
+        <a href="https://strykos.lovable.app/portal/login" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#1a2e4a,#2563eb);color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;letter-spacing:0.3px;">
+          📊 VER PORTAL FAMILIAR
         </a>
       </td>
     </tr>

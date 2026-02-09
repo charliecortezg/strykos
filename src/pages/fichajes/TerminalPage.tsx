@@ -1,16 +1,17 @@
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { IntakeTerminal } from '@/components/fichajes/IntakeTerminal';
 import { useAuth } from '@/contexts/AuthContext';
+import { getDashboardPath } from '@/lib/auth-routing';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 export default function TerminalPage() {
-  const { organization } = useAuth();
+  const { organization, activeRole, roles } = useAuth();
   const navigate = useNavigate();
 
   const handleBack = () => {
-    navigate(-1);
+    navigate(getDashboardPath(activeRole, roles));
   };
 
   return (
