@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, CheckCircle, Trophy, ClipboardList, UserPlus } from 'lucide-react';
+import { Users, CheckCircle, Trophy, ClipboardList, UserPlus, ClipboardCheck } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { TrainerMatchesModule } from '@/components/matches/TrainerMatchesModule'
 import { TrainingAttendanceModule } from '@/components/attendance/TrainingAttendanceModule';
 import { usePlayers } from '@/hooks/usePlayers';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
+import { EvaluationsModule } from '@/components/evaluations/EvaluationsModule';
 
 export default function EntrenadorDashboard() {
   const navigate = useNavigate();
@@ -95,7 +96,7 @@ export default function EntrenadorDashboard() {
 
             {/* Tabs - Priority Order: Asistencia, Partidos, Jugadores */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="w-full grid grid-cols-4 mb-4 h-12">
+              <TabsList className="w-full grid grid-cols-5 mb-4 h-12">
                 <TabsTrigger value="asistencia" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <CheckCircle className="w-4 h-4" />
                   <span className="hidden xs:inline">Asistencia</span>
@@ -113,6 +114,11 @@ export default function EntrenadorDashboard() {
                 <TabsTrigger value="fichajes" className="gap-1.5 text-xs sm:text-sm">
                   <UserPlus className="w-4 h-4" />
                   <span className="hidden sm:inline">Fichajes</span>
+                </TabsTrigger>
+                <TabsTrigger value="evaluaciones" className="gap-1.5 text-xs sm:text-sm">
+                  <ClipboardCheck className="w-4 h-4" />
+                  <span className="hidden sm:inline">Evaluaciones</span>
+                  <span className="sm:hidden">Eval</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -184,6 +190,10 @@ export default function EntrenadorDashboard() {
                   </div>
                   <IntakeHistory />
                 </div>
+              </TabsContent>
+
+              <TabsContent value="evaluaciones" className="mt-0">
+                <EvaluationsModule categories={categories} />
               </TabsContent>
             </Tabs>
           </>

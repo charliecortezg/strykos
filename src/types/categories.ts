@@ -79,6 +79,7 @@ export interface Player {
   is_scholarship: boolean;
   is_active: boolean;
   is_trial: boolean;
+  date_of_birth: string | null;
   created_at: string;
   updated_at: string;
   // Joined data

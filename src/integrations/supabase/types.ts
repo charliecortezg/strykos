@@ -207,6 +207,231 @@ export type Database = {
           },
         ]
       }
+      evaluation_achievements: {
+        Row: {
+          achievement_key: string
+          created_at: string
+          evaluation_id: string
+          id: string
+          xp_bonus: number
+        }
+        Insert: {
+          achievement_key: string
+          created_at?: string
+          evaluation_id: string
+          id?: string
+          xp_bonus?: number
+        }
+        Update: {
+          achievement_key?: string
+          created_at?: string
+          evaluation_id?: string
+          id?: string
+          xp_bonus?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_achievements_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluation_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          created_by: string | null
+          evaluation_id: string
+          id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          created_by?: string | null
+          evaluation_id: string
+          id?: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          created_by?: string | null
+          evaluation_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_comments_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluation_rubrics: {
+        Row: {
+          age_group: string
+          band_max: number
+          band_min: number
+          bullets: Json
+          id: string
+          stat_key: string
+        }
+        Insert: {
+          age_group: string
+          band_max: number
+          band_min: number
+          bullets?: Json
+          id?: string
+          stat_key: string
+        }
+        Update: {
+          age_group?: string
+          band_max?: number
+          band_min?: number
+          bullets?: Json
+          id?: string
+          stat_key?: string
+        }
+        Relationships: []
+      }
+      evaluation_scores: {
+        Row: {
+          created_at: string
+          evaluation_id: string
+          id: string
+          score: number
+          stat_key: string
+        }
+        Insert: {
+          created_at?: string
+          evaluation_id: string
+          id?: string
+          score?: number
+          stat_key: string
+        }
+        Update: {
+          created_at?: string
+          evaluation_id?: string
+          id?: string
+          score?: number
+          stat_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_scores_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluation_weights: {
+        Row: {
+          age_group: string
+          created_at: string
+          id: string
+          organization_id: string
+          weights: Json
+        }
+        Insert: {
+          age_group: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          weights?: Json
+        }
+        Update: {
+          age_group?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          weights?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_weights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluations: {
+        Row: {
+          age_group: string
+          category_id: string
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          id: string
+          organization_id: string
+          overall_score: number | null
+          period: string
+          player_id: string
+          previous_overall: number | null
+          recorded_by: string | null
+          status: string
+        }
+        Insert: {
+          age_group: string
+          category_id: string
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          id?: string
+          organization_id: string
+          overall_score?: number | null
+          period: string
+          player_id: string
+          previous_overall?: number | null
+          recorded_by?: string | null
+          status?: string
+        }
+        Update: {
+          age_group?: string
+          category_id?: string
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          id?: string
+          organization_id?: string
+          overall_score?: number | null
+          period?: string
+          player_id?: string
+          previous_overall?: number | null
+          recorded_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluations_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluations_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
@@ -2259,6 +2484,10 @@ export type Database = {
         Returns: boolean
       }
       is_category_trainer: { Args: { _category_id: string }; Returns: boolean }
+      is_evaluation_category_trainer: {
+        Args: { p_category_id: string }
+        Returns: boolean
+      }
       is_platform_admin: { Args: never; Returns: boolean }
       next_receipt_folio: {
         Args: { p_org_id: string }
