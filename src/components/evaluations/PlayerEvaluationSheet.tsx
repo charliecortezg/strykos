@@ -84,7 +84,9 @@ export function PlayerEvaluationSheet({
                       {bullets.length > 0 && (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                            <span className="inline-flex cursor-help">
+                              <Info className="w-3.5 h-3.5 text-muted-foreground" />
+                            </span>
                           </TooltipTrigger>
                           <TooltipContent side="left" className="max-w-[240px]">
                             <ul className="text-xs space-y-0.5">
