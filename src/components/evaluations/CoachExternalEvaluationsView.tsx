@@ -6,20 +6,16 @@ import { EventModeScreen } from '@/components/assessment/EventModeScreen';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Clock, CheckCircle2, Play, AlertTriangle } from 'lucide-react';
+import { Clock, CheckCircle2, Play } from 'lucide-react';
 
 export function CoachExternalEvaluationsView() {
-  const { allOrganizations } = useAuth();
+  const { organization } = useAuth();
   const [eventMode, setEventMode] = useState(false);
 
-  // Find assessment lab org
-  const assessmentLabOrg = allOrganizations.find(
-    o => o.organization.organization_mode === 'evaluation_only'
-  );
-  const assessmentLabOrgId = assessmentLabOrg?.organization.id || null;
+  const orgId = organization?.id || null;
 
-  const { autoEvent, pendingPlayers, completedPlayers, isLoading } = useAutoEvent(assessmentLabOrgId);
-  const { unreadCount, markAllRead } = useCoachNotifications(assessmentLabOrgId);
+  const { autoEvent, pendingPlayers, completedPlayers, isLoading } = useAutoEvent(orgId);
+  const { unreadCount, markAllRead } = useCoachNotifications(orgId);
 
   // Mark notifications as read when this view mounts
   useEffect(() => {
@@ -30,18 +26,6 @@ export function CoachExternalEvaluationsView() {
 
   const totalPlayers = pendingPlayers.length + completedPlayers.length;
   const progressPercent = totalPlayers > 0 ? Math.round((completedPlayers.length / totalPlayers) * 100) : 0;
-
-  if (!assessmentLabOrg) {
-    return (
-      <div className="stryk-card p-8 text-center">
-        <AlertTriangle className="w-10 h-10 text-warning mx-auto mb-3" />
-        <h3 className="font-semibold text-foreground mb-1">Sin acceso a Assessment Lab</h3>
-        <p className="text-sm text-muted-foreground">
-          No tienes acceso a evaluaciones externas. Solicita al Director Deportivo que te agregue.
-        </p>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
