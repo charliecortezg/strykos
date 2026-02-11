@@ -14,13 +14,9 @@ interface EvaluationsTabsWrapperProps {
 }
 
 export function EvaluationsTabsWrapper({ internalView, externalView, showBadge }: EvaluationsTabsWrapperProps) {
-  const { allOrganizations } = useAuth();
-
-  const assessmentLabOrg = allOrganizations.find(
-    o => o.organization.organization_mode === 'evaluation_only'
-  );
-  const assessmentLabOrgId = assessmentLabOrg?.organization.id || null;
-  const { unreadCount } = useCoachNotifications(assessmentLabOrgId);
+  const { organization } = useAuth();
+  const orgId = organization?.id || null;
+  const { unreadCount } = useCoachNotifications(orgId);
 
   const displayBadge = showBadge && unreadCount > 0;
 

@@ -24,42 +24,33 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export function DirectorExternalEvaluationsView() {
-  const { allOrganizations, organization, switchOrganization } = useAuth();
+  const { organization } = useAuth();
   const { toast } = useToast();
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingOpen, setPendingOpen] = useState(true);
   const [evaluatedOpen, setEvaluatedOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Find assessment lab org
-  const assessmentLabOrg = allOrganizations.find(
-    o => o.organization.organization_mode === 'evaluation_only'
-  );
-  const assessmentLabOrgId = assessmentLabOrg?.organization.id || null;
-  const academyOrgId = organization?.id || null;
+  const orgId = organization?.id || null;
 
   const { autoEvent, pendingPlayers, completedPlayers, isLoading, addPlayerToEvent, closeEvent, notifyCoaches } =
-    useAutoEvent(assessmentLabOrgId);
+    useAutoEvent(orgId);
 
   const totalPlayers = pendingPlayers.length + completedPlayers.length;
   const progressPercent = totalPlayers > 0 ? Math.round((completedPlayers.length / totalPlayers) * 100) : 0;
 
   const handleAddPlayer = async (data: { full_name: string; age_group: AgeGroup; parent_email: string; parent_phone?: string }) => {
-    if (!assessmentLabOrgId || !academyOrgId || !autoEvent) return;
+    if (!orgId || !autoEvent) return;
     setIsSubmitting(true);
 
     try {
-      // Switch to assessment lab org for insert
-      await switchOrganization(assessmentLabOrgId);
-
-      // Create external player
       const midAge = data.age_group === '6-7' ? 7 : data.age_group === '8-9' ? 9 : 11;
       const birthYear = new Date().getFullYear() - midAge;
 
       const { data: player, error: playerError } = await supabase
         .from('players')
         .insert({
-          organization_id: assessmentLabOrgId,
+          organization_id: orgId,
           full_name: data.full_name,
           date_of_birth: `${birthYear}-01-01`,
           parent_email: data.parent_email,
@@ -75,10 +66,8 @@ export function DirectorExternalEvaluationsView() {
 
       if (playerError) throw playerError;
 
-      // Add to event
       await addPlayerToEvent.mutateAsync(player.id);
 
-      // Notify coaches
       const monthKey = new Date().toISOString().slice(0, 7);
       await notifyCoaches.mutateAsync({
         event_id: autoEvent.id,
@@ -90,21 +79,17 @@ export function DirectorExternalEvaluationsView() {
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
-      // Switch back to academy org
-      if (academyOrgId) {
-        await switchOrganization(academyOrgId);
-      }
       setIsSubmitting(false);
     }
   };
 
-  if (!assessmentLabOrg) {
+  if (!orgId) {
     return (
       <div className="stryk-card p-8 text-center">
         <AlertTriangle className="w-10 h-10 text-warning mx-auto mb-3" />
-        <h3 className="font-semibold text-foreground mb-1">Sin acceso a Assessment Lab</h3>
+        <h3 className="font-semibold text-foreground mb-1">Sin organización activa</h3>
         <p className="text-sm text-muted-foreground">
-          No tienes acceso a una organización de tipo Assessment Lab. Solicita al administrador que te agregue.
+          No se detectó una organización activa. Recarga la página e intenta de nuevo.
         </p>
       </div>
     );
