@@ -13,6 +13,7 @@ export type OrganizationType =
   | 'federativa'
   | 'club_social'
   | 'otro';
+export type OrganizationMode = 'academy' | 'evaluation_only';
 export type SubscriptionPlan = 'freemium' | 'starter' | 'professional' | 'enterprise';
 
 export interface Organization {
@@ -21,6 +22,7 @@ export interface Organization {
   org_code: string;
   org_access_key: string;
   organization_type: OrganizationType;
+  organization_mode: OrganizationMode;
   approximate_students: number;
   primary_sport: string;
   city: string;
@@ -28,6 +30,7 @@ export interface Organization {
   phone: string;
   plan: SubscriptionPlan;
   is_active: boolean;
+  onboarding_completed?: boolean;
   created_at: string;
   updated_at: string;
 }

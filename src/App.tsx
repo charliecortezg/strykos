@@ -20,6 +20,7 @@ import OrgOwnerDashboard from "./pages/dashboard/OrgOwnerDashboard";
 import DirectorDeportivoDashboard from "./pages/dashboard/DirectorDeportivoDashboard";
 import EntrenadorDashboard from "./pages/dashboard/EntrenadorDashboard";
 import AdministrativoDashboard from "./pages/dashboard/AdministrativoDashboard";
+import AssessmentLabDashboard from "./pages/dashboard/AssessmentLabDashboard";
 // Fichajes (Intake) Pages
 import TerminalPage from "./pages/fichajes/TerminalPage";
 import HistorialPage from "./pages/fichajes/HistorialPage";
@@ -127,6 +128,12 @@ function AcademyRoutes() {
         <Route path="/dashboard/administrativo" element={
           <ProtectedRoute allowedRoles={['administrativo']}>
             <AdministrativoDashboard />
+          </ProtectedRoute>
+        } />
+        {/* Assessment Lab Route */}
+        <Route path="/dashboard/assessment-lab" element={
+          <ProtectedRoute allowedRoles={['entrenador', 'director_deportivo', 'org_owner']}>
+            <AssessmentLabDashboard />
           </ProtectedRoute>
         } />
         {/* Fichajes Routes */}
