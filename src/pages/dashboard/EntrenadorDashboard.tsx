@@ -12,6 +12,8 @@ import { TrainingAttendanceModule } from '@/components/attendance/TrainingAttend
 import { usePlayers } from '@/hooks/usePlayers';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
 import { EvaluationsModule } from '@/components/evaluations/EvaluationsModule';
+import { CoachExternalEvaluationsView } from '@/components/evaluations/CoachExternalEvaluationsView';
+import { EvaluationsTabsWrapper } from '@/components/evaluations/EvaluationsTabsWrapper';
 import { useFeatureFlags } from '@/hooks/useStrykWay';
 
 export default function EntrenadorDashboard() {
@@ -198,7 +200,11 @@ export default function EntrenadorDashboard() {
 
               {feature_evaluations_enabled && (
                 <TabsContent value="evaluaciones" className="mt-0">
-                  <EvaluationsModule categories={categories} />
+                  <EvaluationsTabsWrapper
+                    internalView={<EvaluationsModule categories={categories} />}
+                    externalView={<CoachExternalEvaluationsView />}
+                    showBadge
+                  />
                 </TabsContent>
               )}
             </Tabs>

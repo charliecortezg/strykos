@@ -207,6 +207,51 @@ export type Database = {
           },
         ]
       }
+      coach_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          payload: Json
+          read_at: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          payload?: Json
+          read_at?: string | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          payload?: Json
+          read_at?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evaluation_achievements: {
         Row: {
           achievement_key: string
@@ -2678,6 +2723,26 @@ export type Database = {
       }
       generate_org_code: { Args: { org_name: string }; Returns: string }
       get_current_org_id: { Args: never; Returns: string }
+      get_or_create_monthly_event: {
+        Args: { p_org_id: string }
+        Returns: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          created_by: string | null
+          event_date: string | null
+          id: string
+          organization_id: string
+          status: string
+          title: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "evaluation_events"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_intake_access: { Args: never; Returns: boolean }
       has_org_role: {
         Args: { _role: Database["public"]["Enums"]["org_role"] }
