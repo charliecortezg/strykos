@@ -21,6 +21,8 @@ import { useVenues } from '@/hooks/useVenues';
 import { useTrainersWithCategories } from '@/hooks/useTrainersWithCategories';
 import { LifecycleBillingSection } from '@/components/dashboard/LifecycleBillingSection';
 import { DirectorEvaluationsView } from '@/components/evaluations/DirectorEvaluationsView';
+import { DirectorExternalEvaluationsView } from '@/components/evaluations/DirectorExternalEvaluationsView';
+import { EvaluationsTabsWrapper } from '@/components/evaluations/EvaluationsTabsWrapper';
 import { useFeatureFlags } from '@/hooks/useStrykWay';
 
 export default function DirectorDeportivoDashboard() {
@@ -229,7 +231,10 @@ export default function DirectorDeportivoDashboard() {
 
           {feature_evaluations_enabled && (
             <TabsContent value="evaluaciones">
-              <DirectorEvaluationsView />
+              <EvaluationsTabsWrapper
+                internalView={<DirectorEvaluationsView />}
+                externalView={<DirectorExternalEvaluationsView />}
+              />
             </TabsContent>
           )}
         </Tabs>
