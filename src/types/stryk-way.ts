@@ -158,6 +158,7 @@ export interface StrykFeatureFlags {
   feature_portal_familiar_enabled: boolean;
   feature_studio_pro_enabled: boolean;
   feature_analytics_enabled: boolean;
+  feature_evaluations_enabled: boolean;
 }
 
 // Form types

@@ -9,6 +9,7 @@ export function useFeatureFlags(): StrykFeatureFlags & { isLoading: boolean } {
     feature_portal_familiar_enabled: (organization as any)?.feature_portal_familiar_enabled ?? false,
     feature_studio_pro_enabled: (organization as any)?.feature_studio_pro_enabled ?? false,
     feature_analytics_enabled: (organization as any)?.feature_analytics_enabled ?? false,
+    feature_evaluations_enabled: (organization as any)?.feature_evaluations_enabled ?? false,
     isLoading,
   };
 }

@@ -1,0 +1,1 @@
+ALTER TABLE public.organizations ADD COLUMN feature_evaluations_enabled boolean NOT NULL DEFAULT false;

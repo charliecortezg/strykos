@@ -1367,6 +1367,7 @@ export type Database = {
           country: string
           created_at: string | null
           feature_analytics_enabled: boolean
+          feature_evaluations_enabled: boolean
           feature_portal_familiar_enabled: boolean
           feature_stryk_way_enabled: boolean
           feature_studio_pro_enabled: boolean
@@ -1395,6 +1396,7 @@ export type Database = {
           country: string
           created_at?: string | null
           feature_analytics_enabled?: boolean
+          feature_evaluations_enabled?: boolean
           feature_portal_familiar_enabled?: boolean
           feature_stryk_way_enabled?: boolean
           feature_studio_pro_enabled?: boolean
@@ -1423,6 +1425,7 @@ export type Database = {
           country?: string
           created_at?: string | null
           feature_analytics_enabled?: boolean
+          feature_evaluations_enabled?: boolean
           feature_portal_familiar_enabled?: boolean
           feature_stryk_way_enabled?: boolean
           feature_studio_pro_enabled?: boolean
