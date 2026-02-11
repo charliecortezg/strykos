@@ -62,6 +62,8 @@ export interface Category {
   trainer?: { id: string; full_name: string } | null;
 }
 
+export type PlayerType = 'internal' | 'external';
+
 export interface Player {
   id: string;
   organization_id: string;
@@ -80,6 +82,9 @@ export interface Player {
   is_active: boolean;
   is_trial: boolean;
   date_of_birth: string | null;
+  player_type: PlayerType;
+  parent_email: string | null;
+  parent_phone: string | null;
   created_at: string;
   updated_at: string;
   // Joined data

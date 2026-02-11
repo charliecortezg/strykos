@@ -271,6 +271,174 @@ export type Database = {
           },
         ]
       }
+      evaluation_delivery: {
+        Row: {
+          created_at: string
+          delivery_status: string
+          error_message: string | null
+          evaluation_id: string
+          id: string
+          last_attempt_at: string | null
+          organization_id: string
+          recipient_email: string | null
+        }
+        Insert: {
+          created_at?: string
+          delivery_status?: string
+          error_message?: string | null
+          evaluation_id: string
+          id?: string
+          last_attempt_at?: string | null
+          organization_id: string
+          recipient_email?: string | null
+        }
+        Update: {
+          created_at?: string
+          delivery_status?: string
+          error_message?: string | null
+          evaluation_id?: string
+          id?: string
+          last_attempt_at?: string | null
+          organization_id?: string
+          recipient_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_delivery_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_delivery_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluation_event_players: {
+        Row: {
+          created_at: string
+          evaluated_at: string | null
+          evaluated_by: string | null
+          event_id: string
+          id: string
+          organization_id: string
+          player_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          evaluated_at?: string | null
+          evaluated_by?: string | null
+          event_id: string
+          id?: string
+          organization_id: string
+          player_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          evaluated_at?: string | null
+          evaluated_by?: string | null
+          event_id?: string
+          id?: string
+          organization_id?: string
+          player_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_event_players_evaluated_by_fkey"
+            columns: ["evaluated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_event_players_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_event_players_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_event_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluation_events: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          created_by: string | null
+          event_date: string | null
+          id: string
+          organization_id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          event_date?: string | null
+          id?: string
+          organization_id: string
+          status?: string
+          title: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          event_date?: string | null
+          id?: string
+          organization_id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_events_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluation_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evaluation_rubrics: {
         Row: {
           age_group: string
@@ -369,6 +537,7 @@ export type Database = {
           closed_at: string | null
           closed_by: string | null
           created_at: string
+          event_id: string | null
           id: string
           organization_id: string
           overall_score: number | null
@@ -384,6 +553,7 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
+          event_id?: string | null
           id?: string
           organization_id: string
           overall_score?: number | null
@@ -399,6 +569,7 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
+          event_id?: string | null
           id?: string
           organization_id?: string
           overall_score?: number | null
@@ -414,6 +585,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_events"
             referencedColumns: ["id"]
           },
           {
@@ -1814,10 +1992,13 @@ export type Database = {
           offboarded_at: string | null
           onboarded_at: string | null
           organization_id: string
+          parent_email: string | null
+          parent_phone: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           phone: string | null
           plan: string | null
           plan_id: string | null
+          player_type: string
           position: string | null
           sport_id: string | null
           tutor_name: string | null
@@ -1840,10 +2021,13 @@ export type Database = {
           offboarded_at?: string | null
           onboarded_at?: string | null
           organization_id: string
+          parent_email?: string | null
+          parent_phone?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone?: string | null
           plan?: string | null
           plan_id?: string | null
+          player_type?: string
           position?: string | null
           sport_id?: string | null
           tutor_name?: string | null
@@ -1866,10 +2050,13 @@ export type Database = {
           offboarded_at?: string | null
           onboarded_at?: string | null
           organization_id?: string
+          parent_email?: string | null
+          parent_phone?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           phone?: string | null
           plan?: string | null
           plan_id?: string | null
+          player_type?: string
           position?: string | null
           sport_id?: string | null
           tutor_name?: string | null
@@ -1908,6 +2095,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_organization_id: string | null
           created_at: string | null
           email: string
           full_name: string
@@ -1919,6 +2107,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          active_organization_id?: string | null
           created_at?: string | null
           email: string
           full_name: string
@@ -1930,6 +2119,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          active_organization_id?: string | null
           created_at?: string | null
           email?: string
           full_name?: string
@@ -1941,6 +2131,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_active_organization_id_fkey"
+            columns: ["active_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_organization_id_fkey"
             columns: ["organization_id"]
@@ -2507,6 +2704,7 @@ export type Database = {
         Args: { p_intake_request_id: string }
         Returns: Json
       }
+      reset_active_organization: { Args: never; Returns: undefined }
       reset_monthly_payment_status: { Args: never; Returns: number }
       search_players: {
         Args: {
@@ -2536,6 +2734,10 @@ export type Database = {
           player_tutor_name: string
           player_updated_at: string
         }[]
+      }
+      switch_organization: {
+        Args: { target_org_id: string }
+        Returns: undefined
       }
       unaccent: { Args: { "": string }; Returns: string }
       user_belongs_to_org: { Args: { _org_id: string }; Returns: boolean }

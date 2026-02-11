@@ -6,6 +6,7 @@ import { Logo } from '@/components/brand/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { RoleSwitch } from '@/components/dashboard/RoleSwitch';
+import { OrgSwitcher } from '@/components/dashboard/OrgSwitcher';
 import {
   Sheet,
   SheetContent,
@@ -81,7 +82,8 @@ export function DashboardHeader() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <OrgSwitcher />
           <RoleSwitch />
           
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg">
