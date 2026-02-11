@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Lock } from 'lucide-react';
 import { useFeatureFlags } from '@/hooks/useStrykWay';
 
-type FeatureName = 'stryk_way' | 'portal_familiar' | 'studio_pro' | 'analytics';
+type FeatureName = 'stryk_way' | 'portal_familiar' | 'studio_pro' | 'analytics' | 'evaluations';
 
 interface FeatureGateProps {
   feature: FeatureName;
@@ -15,6 +15,7 @@ const featureKeyMap: Record<FeatureName, keyof ReturnType<typeof useFeatureFlags
   portal_familiar: 'feature_portal_familiar_enabled',
   studio_pro: 'feature_studio_pro_enabled',
   analytics: 'feature_analytics_enabled',
+  evaluations: 'feature_evaluations_enabled',
 };
 
 const featureLabels: Record<FeatureName, string> = {
@@ -22,6 +23,7 @@ const featureLabels: Record<FeatureName, string> = {
   portal_familiar: 'Portal Familiar',
   studio_pro: 'Studio Pro',
   analytics: 'Analytics',
+  evaluations: 'Evaluaciones WLA',
 };
 
 export function FeatureGate({ feature, children, fallback }: FeatureGateProps) {

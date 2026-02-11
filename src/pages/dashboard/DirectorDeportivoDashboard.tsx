@@ -21,6 +21,7 @@ import { useVenues } from '@/hooks/useVenues';
 import { useTrainersWithCategories } from '@/hooks/useTrainersWithCategories';
 import { LifecycleBillingSection } from '@/components/dashboard/LifecycleBillingSection';
 import { DirectorEvaluationsView } from '@/components/evaluations/DirectorEvaluationsView';
+import { useFeatureFlags } from '@/hooks/useStrykWay';
 
 export default function DirectorDeportivoDashboard() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export default function DirectorDeportivoDashboard() {
   const { venues } = useVenues();
   const { trainers } = useTrainersWithCategories();
   const [activeTab, setActiveTab] = useState('jugadores');
+  const { feature_evaluations_enabled } = useFeatureFlags();
 
   const activeCategories = categories.filter(c => c.is_active).length;
   const activePlayers = players.filter(p => p.is_active).length;
@@ -160,10 +162,12 @@ export default function DirectorDeportivoDashboard() {
               <HeartPulse className="w-4 h-4" />
               Lifecycle
             </TabsTrigger>
-            <TabsTrigger value="evaluaciones" className="gap-2">
-              <ClipboardCheck className="w-4 h-4" />
-              Evaluaciones
-            </TabsTrigger>
+            {feature_evaluations_enabled && (
+              <TabsTrigger value="evaluaciones" className="gap-2">
+                <ClipboardCheck className="w-4 h-4" />
+                Evaluaciones
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="jugadores">
@@ -223,9 +227,11 @@ export default function DirectorDeportivoDashboard() {
             <LifecycleBillingSection />
           </TabsContent>
 
-          <TabsContent value="evaluaciones">
-            <DirectorEvaluationsView />
-          </TabsContent>
+          {feature_evaluations_enabled && (
+            <TabsContent value="evaluaciones">
+              <DirectorEvaluationsView />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
     </div>

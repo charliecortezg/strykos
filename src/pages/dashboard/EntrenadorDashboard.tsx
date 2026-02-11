@@ -12,6 +12,7 @@ import { TrainingAttendanceModule } from '@/components/attendance/TrainingAttend
 import { usePlayers } from '@/hooks/usePlayers';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
 import { EvaluationsModule } from '@/components/evaluations/EvaluationsModule';
+import { useFeatureFlags } from '@/hooks/useStrykWay';
 
 export default function EntrenadorDashboard() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export default function EntrenadorDashboard() {
   const { players } = usePlayers();
   // Asistencia is the default - it's the most frequent action for trainers
   const [activeTab, setActiveTab] = useState('asistencia');
+  const { feature_evaluations_enabled } = useFeatureFlags();
 
   // Filter players to only show those in trainer's categories
   const trainerCategoryIds = categories.map(c => c.id);
@@ -96,7 +98,7 @@ export default function EntrenadorDashboard() {
 
             {/* Tabs - Priority Order: Asistencia, Partidos, Jugadores */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="w-full grid grid-cols-5 mb-4 h-12">
+              <TabsList className={`w-full grid mb-4 h-12 ${feature_evaluations_enabled ? 'grid-cols-5' : 'grid-cols-4'}`}>
                 <TabsTrigger value="asistencia" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <CheckCircle className="w-4 h-4" />
                   <span className="hidden xs:inline">Asistencia</span>
@@ -115,11 +117,13 @@ export default function EntrenadorDashboard() {
                   <UserPlus className="w-4 h-4" />
                   <span className="hidden sm:inline">Fichajes</span>
                 </TabsTrigger>
-                <TabsTrigger value="evaluaciones" className="gap-1.5 text-xs sm:text-sm">
-                  <ClipboardCheck className="w-4 h-4" />
-                  <span className="hidden sm:inline">Evaluaciones</span>
-                  <span className="sm:hidden">Eval</span>
-                </TabsTrigger>
+                {feature_evaluations_enabled && (
+                  <TabsTrigger value="evaluaciones" className="gap-1.5 text-xs sm:text-sm">
+                    <ClipboardCheck className="w-4 h-4" />
+                    <span className="hidden sm:inline">Evaluaciones</span>
+                    <span className="sm:hidden">Eval</span>
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               <TabsContent value="asistencia" className="mt-0">
@@ -192,9 +196,11 @@ export default function EntrenadorDashboard() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="evaluaciones" className="mt-0">
-                <EvaluationsModule categories={categories} />
-              </TabsContent>
+              {feature_evaluations_enabled && (
+                <TabsContent value="evaluaciones" className="mt-0">
+                  <EvaluationsModule categories={categories} />
+                </TabsContent>
+              )}
             </Tabs>
           </>
         )}

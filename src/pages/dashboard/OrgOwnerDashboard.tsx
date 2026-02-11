@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, ClipboardList, Briefcase, Settings, ChevronDown, ChevronUp, UserPlus, Sparkles } from 'lucide-react';
+import { Users, ClipboardList, Briefcase, Settings, ChevronDown, ChevronUp, UserPlus, Sparkles, ClipboardCheck } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { RoleCard } from '@/components/dashboard/RoleCard';
 import { CreateUserModal } from '@/components/dashboard/CreateUserModal';
@@ -37,7 +37,8 @@ export default function OrgOwnerDashboard() {
   const navigate = useNavigate();
   const { organization, user } = useAuth();
   const { toast } = useToast();
-  const { feature_stryk_way_enabled } = useFeatureFlags();
+  const { feature_stryk_way_enabled, feature_evaluations_enabled } = useFeatureFlags();
+  const [isActivatingEvals, setIsActivatingEvals] = useState(false);
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [categoriesCount, setCategoriesCount] = useState<number>(0);
   const [playersCount, setPlayersCount] = useState<number>(0);
@@ -393,6 +394,57 @@ export default function OrgOwnerDashboard() {
                   <Badge variant="default" className="bg-success">Activo</Badge>
                 ) : (
                   <Badge variant="secondary">No activado</Badge>
+                )}
+              </div>
+            </CardHeader>
+        </Card>
+        </div>
+
+        {/* Evaluaciones WLA Section */}
+        <div className="mt-8">
+          <h2 className="text-xl font-display font-semibold text-foreground mb-4">
+            Evaluaciones WLA
+          </h2>
+          <Card className="hover:border-primary/50 transition-colors">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <ClipboardCheck className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Evaluaciones WLA</CardTitle>
+                    <CardDescription>
+                      Evaluaciones mensuales con 6 stats universales (0–20) por jugador
+                    </CardDescription>
+                  </div>
+                </div>
+                {feature_evaluations_enabled ? (
+                  <Badge variant="default" className="bg-success">Activo</Badge>
+                ) : (
+                  <Button
+                    size="sm"
+                    disabled={isActivatingEvals}
+                    onClick={async () => {
+                      if (!organization) return;
+                      setIsActivatingEvals(true);
+                      try {
+                        const { error } = await supabase
+                          .from('organizations')
+                          .update({ feature_evaluations_enabled: true } as any)
+                          .eq('id', organization.id);
+                        if (error) throw error;
+                        toast({ title: 'Evaluaciones WLA activadas', description: 'El módulo de evaluaciones ya está disponible para tu equipo.' });
+                        window.location.reload();
+                      } catch {
+                        toast({ title: 'Error', description: 'No se pudo activar. Intenta de nuevo.', variant: 'destructive' });
+                      } finally {
+                        setIsActivatingEvals(false);
+                      }
+                    }}
+                  >
+                    {isActivatingEvals ? 'Activando...' : 'Activar Evaluaciones'}
+                  </Button>
                 )}
               </div>
             </CardHeader>
