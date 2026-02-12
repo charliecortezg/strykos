@@ -175,7 +175,7 @@ export function usePlayerMembershipProgress(playerId: string | null) {
       
       const { data: player } = await supabase
         .from('players')
-        .select('organization_id, membership_stage, block_id, block_start_date, block_end_date')
+        .select('organization_id, membership_stage, block_id, block_start_date, block_end_date, eligible_for_progression')
         .eq('id', playerId)
         .single();
 
@@ -239,6 +239,7 @@ export function usePlayerMembershipProgress(playerId: string | null) {
         currentStage: player.membership_stage || 'none',
         blockStartDate: player.block_start_date,
         blockEndDate: player.block_end_date,
+        eligibleForProgression: player.eligible_for_progression || false,
         eval_count,
         attendance_pct,
         days_remaining,
@@ -253,6 +254,7 @@ export function usePlayerMembershipProgress(playerId: string | null) {
     currentStage: blocks?.currentStage || 'none',
     blockStartDate: blocks?.blockStartDate || null,
     blockEndDate: blocks?.blockEndDate || null,
+    eligibleForProgression: blocks?.eligibleForProgression || false,
     eval_count: blocks?.eval_count || 0,
     attendance_pct: blocks?.attendance_pct || 0,
     days_remaining: blocks?.days_remaining || 0,
