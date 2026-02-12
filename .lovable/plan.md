@@ -1,40 +1,52 @@
 
 
-# Plan: Asignar Bloque FOUNDATION a Todos los Jugadores Activos
+# Plan: Arreglar Navegacion y Agregar Logout en Vista del Jugador
 
-## Resumen
+## Problema
 
-Ejecutar una migracion SQL que asigne el bloque FOUNDATION a todos los jugadores internos existentes que aun no tienen bloque asignado. Tambien ajustar el trigger de insercion para que cubra jugadores con `lifecycle_status = 'prospect'` (no solo `active`), evitando que este problema se repita.
+Hay dos problemas en la pantalla del jugador:
 
----
+1. **La flecha de regreso no funciona**: Al hacer clic en la flecha, navega a `/portal`, pero como el tutor solo tiene un jugador vinculado, el `PortalDashboard` lo redirige automaticamente de vuelta a `/portal/jugador/:id`, creando un bucle infinito.
 
-## Cambios
+2. **No hay boton de cerrar sesion**: La pantalla del jugador no tiene un boton de "Salir" como si lo tiene el `PortalDashboard`.
 
-### 1. Migracion SQL unica
+## Solucion
 
-La migracion hara tres cosas:
+### Archivo a modificar: `src/pages/portal/PortalPlayerView.tsx`
 
-**A) Actualizar el trigger de insercion** para que tambien asigne bloque cuando un jugador entra como `prospect` (actualmente solo lo hace para `active`, pero los jugadores entran como `prospect` desde la central de fichaje).
+**Cambio 1 - Flecha de regreso inteligente:**
+- Si el tutor tiene mas de 1 jugador vinculado: la flecha navega a `/portal` (para que pueda seleccionar otro jugador).
+- Si el tutor tiene solo 1 jugador: la flecha no se muestra, ya que no hay a donde regresar (el dashboard lo redireccionaria de vuelta).
 
-**B) Actualizar el trigger de cambio de lifecycle** para cubrir la transicion `prospect -> active` (no solo `inactive -> active`), asignando bloque si el jugador no tiene uno.
+**Cambio 2 - Agregar boton "Salir" (logout):**
+- Agregar un boton de "Salir" en el header, al lado derecho, similar al que ya existe en `PortalDashboard`.
+- Al hacer clic, ejecuta `logout()` del contexto y redirige a `/portal/login`.
 
-**C) Asignacion masiva retroactiva**: Llamar `assign_default_membership_block()` para cada jugador interno existente que tenga `membership_stage = 'none'`, sin importar si es `active` o `prospect`. Esto les asignara FOUNDATION con fecha de inicio = hoy y fecha de fin = hoy + 3 meses.
+### Resultado visual del header
 
-### 2. Resultado esperado
+```text
+Tutor con 1 jugador:
+[Sparkles] Axel Fernando Ch...          [Salir]
 
-- Los 48 jugadores actuales apareceran en el bloque "Fundacion"
-- La card del Portal del Jugador mostrara el progreso en lugar del mensaje "El camino formativo aun no ha sido activado"
-- Futuros jugadores creados desde fichaje (que entran como `prospect`) tambien recibiran bloque automaticamente
+Tutor con 2+ jugadores:
+[<-] [Sparkles] Axel Fernando Ch...     [Salir]
+```
 
 ## Seccion tecnica
 
-### Sin cambios en frontend
+### Cambios especificos en `PortalPlayerView.tsx`
 
-Solo se ejecuta una migracion SQL. Los componentes `MembershipHeroCard` y `MembershipTimeline` ya estan preparados para mostrar los datos una vez existan en la base de datos.
+1. Importar `LogOut` de lucide-react y `useNavigate`
+2. Obtener `logout` del contexto `usePortalAuth()`
+3. Condicionar la flecha de regreso: solo mostrar si `linkedPlayers.length > 1`
+4. Agregar boton de logout en el header:
 
-### Archivos a modificar
+```text
+<Button variant="ghost" size="sm" onClick={handleLogout}>
+  <LogOut /> Salir
+</Button>
+```
 
-| Archivo | Cambio |
-|---------|--------|
-| Nueva migracion SQL | Actualizar triggers + asignacion masiva retroactiva |
+Donde `handleLogout` llama a `logout()` y `navigate('/portal/login')`.
 
+No se modifican otros archivos. No hay cambios en backend.
