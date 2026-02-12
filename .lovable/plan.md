@@ -1,152 +1,40 @@
 
 
-# Plan: Rediseno del Portal del Jugador - Sistema de Trayectoria
+# Plan: Asignar Bloque FOUNDATION a Todos los Jugadores Activos
 
 ## Resumen
 
-Transformar el dashboard del jugador de un "panel de datos" a un "sistema de trayectoria formativa", colocando el Camino White Lions como elemento principal y reorganizando los modulos existentes sin eliminar funcionalidades.
+Ejecutar una migracion SQL que asigne el bloque FOUNDATION a todos los jugadores internos existentes que aun no tienen bloque asignado. Tambien ajustar el trigger de insercion para que cubra jugadores con `lifecycle_status = 'prospect'` (no solo `active`), evitando que este problema se repita.
 
 ---
 
-## Nuevo orden de la pantalla
+## Cambios
 
-```text
-+----------------------------------+
-| Header (sin cambios)             |
-+----------------------------------+
-| 1. MembershipHeroCard (NUEVO)    |
-|    - Bloque actual destacado     |
-|    - Estado del jugador          |
-|    - Progreso visual             |
-|    - Microcopy emocional         |
-+----------------------------------+
-| 2. MembershipTimeline (MEJORADO) |
-|    - Horizontal desktop          |
-|    - Con tooltips por bloque     |
-+----------------------------------+
-| 3. ProgressCard (existente)      |
-|    - Nivel, XP, Racha            |
-+----------------------------------+
-| 4. PlayerCard (existente)        |
-|    - Radar + OVR + Badges        |
-+----------------------------------+
-| 5. Tabs: Retos | Logros | Act.  |
-|    - Con contexto de bloque      |
-+----------------------------------+
-```
+### 1. Migracion SQL unica
 
----
+La migracion hara tres cosas:
 
-## Cambios por componente
+**A) Actualizar el trigger de insercion** para que tambien asigne bloque cuando un jugador entra como `prospect` (actualmente solo lo hace para `active`, pero los jugadores entran como `prospect` desde la central de fichaje).
 
-### 1. Nuevo: `MembershipHeroCard`
+**B) Actualizar el trigger de cambio de lifecycle** para cubrir la transicion `prospect -> active` (no solo `inactive -> active`), asignando bloque si el jugador no tiene uno.
 
-Archivo: `src/components/membership/MembershipHeroCard.tsx`
+**C) Asignacion masiva retroactiva**: Llamar `assign_default_membership_block()` para cada jugador interno existente que tenga `membership_stage = 'none'`, sin importar si es `active` o `prospect`. Esto les asignara FOUNDATION con fecha de inicio = hoy y fecha de fin = hoy + 3 meses.
 
-Card destacada con fondo diferenciado (gradiente suave azul/primario). Contenido:
+### 2. Resultado esperado
 
-- Icono de etapa + nombre del bloque (ej: "Fundacion")
-- "Mes 2 de 3" calculado desde block_start_date
-- Fechas inicio y fin
-- Barra de progreso prominente (porcentaje temporal del bloque)
-- Evaluaciones completadas: "2/3"
-- Asistencia: "72% (min. 60%)"
-- Estado con indicador de color:
-  - Verde: "En progreso" (dentro de rango, requisitos yendo bien)
-  - Amarillo: "En revision" (block_end_date se acerca y faltan requisitos)
-  - Rojo: "No elegible" (block_end_date paso y no cumplio)
-  - Morado: "Elegible para progresion" (eligible_for_progression = true)
-- Microcopy emocional: "Esta avanzando hacia Desarrollo." o "Completa 1 evaluacion mas para avanzar."
-
-Fallback: si `membership_stage === 'none'` o no hay bloques, mostrar card minimalista: "El camino formativo aun no ha sido activado."
-
-### 2. Mejorar: `MembershipTimeline`
-
-Archivo: `src/components/membership/MembershipTimeline.tsx`
-
-Cambios:
-- Agregar `Tooltip` (Radix) en cada circulo de bloque mostrando: nombre, duracion, requisitos
-- Responsive: en movil (< 768px) cambiar a layout vertical con linea conectora
-
-### 3. Eliminar: `BlockProgressCard` de la pagina
-
-El contenido de `BlockProgressCard` (evaluaciones, asistencia, fecha de corte) se integra dentro de `MembershipHeroCard`. Ya no se renderiza por separado en `PortalPlayerView`.
-
-### 4. Mejorar: Tabs con contexto de bloque
-
-En `PortalPlayerView.tsx`:
-
-**Tab Retos:**
-- Agregar subtitulo: "Retos activos del bloque {blockName}" cuando hay bloque activo
-- Sin filtrado real por bloque (los retos ya son globales), solo contexto visual
-
-**Tab Logros:**
-- Separar en dos secciones: "Logros del bloque actual" y "Todos los logros"
-- Pasar `currentBlockId` a `BadgesGrid` para que marque visualmente cuales se ganaron en el bloque actual (comparando `earned_at` dentro del rango de fechas del bloque)
-
-**Tab Actividad:**
-- Agregar toggle/filtro simple: "Este bloque" | "Todo el historial"
-- Filtrar events por `created_at` dentro del rango [block_start_date, block_end_date]
-
----
-
-## Archivos a crear
-
-| Archivo | Descripcion |
-|---------|-------------|
-| `src/components/membership/MembershipHeroCard.tsx` | Card principal del camino formativo con estado, progreso y microcopy |
-
-## Archivos a modificar
-
-| Archivo | Cambio |
-|---------|--------|
-| `src/components/membership/MembershipTimeline.tsx` | Agregar tooltips con Radix Tooltip, layout vertical en movil |
-| `src/pages/portal/PortalPlayerView.tsx` | Reordenar: HeroCard > Timeline > ProgressCard > PlayerCard > Tabs. Eliminar BlockProgressCard separado. Agregar contexto de bloque a tabs. Agregar filtro actividad por bloque. |
-| `src/components/portal/BadgesGrid.tsx` | Aceptar prop opcional `blockDateRange` para separar badges del bloque actual vs historicos |
-| `src/components/portal/ActivityFeed.tsx` | Aceptar prop opcional `filterDateRange` para filtrar eventos |
-| `src/components/portal/ChallengesActive.tsx` | Aceptar prop opcional `blockLabel` para mostrar subtitulo contextual |
-
-## Lo que NO cambia
-
-- `ProgressCard` (solo se mueve de posicion)
-- `PlayerCard` (solo se mueve de posicion)
-- `useMembershipBlocks.ts` / `usePlayerMembershipProgress` (ya tiene todos los datos necesarios)
-- Hooks del portal (`usePlayerProgress`, `usePlayerBadges`, etc.)
-- Backend, RLS, edge functions
+- Los 48 jugadores actuales apareceran en el bloque "Fundacion"
+- La card del Portal del Jugador mostrara el progreso en lugar del mensaje "El camino formativo aun no ha sido activado"
+- Futuros jugadores creados desde fichaje (que entran como `prospect`) tambien recibiran bloque automaticamente
 
 ## Seccion tecnica
 
-### Calculo de estado del jugador
+### Sin cambios en frontend
 
-```text
-if eligible_for_progression = true:
-  estado = "elegible" (morado)
-else if block_end_date < hoy AND (evals < min OR attendance < min):
-  estado = "no_elegible" (rojo)
-else if days_remaining <= 14 AND (evals < min OR attendance < min):
-  estado = "en_revision" (amarillo)
-else:
-  estado = "en_progreso" (verde)
-```
+Solo se ejecuta una migracion SQL. Los componentes `MembershipHeroCard` y `MembershipTimeline` ya estan preparados para mostrar los datos una vez existan en la base de datos.
 
-### Calculo de "Mes X de Y"
+### Archivos a modificar
 
-```text
-monthsElapsed = differenceInMonths(today, block_start_date) + 1
-totalMonths = block.duration_months
-display = "Mes {min(monthsElapsed, totalMonths)} de {totalMonths}"
-```
-
-### Responsive (MembershipTimeline)
-
-- Desktop (>= 768px): horizontal con flechas (como esta ahora)
-- Movil (< 768px): vertical con linea conectora izquierda, cada bloque como fila
-
-### Tooltips de bloques
-
-Usar `@radix-ui/react-tooltip` (ya instalado). Contenido:
-- Nombre del bloque
-- Duracion: "3 meses"
-- Evaluaciones minimas: 3
-- Asistencia minima: 60%
+| Archivo | Cambio |
+|---------|--------|
+| Nueva migracion SQL | Actualizar triggers + asignacion masiva retroactiva |
 
