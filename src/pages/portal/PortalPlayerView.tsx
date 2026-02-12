@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,8 +15,13 @@ import type { RadarAttributes } from '@/types/stryk-way';
 export default function PortalPlayerView() {
   const { playerId } = useParams<{ playerId: string }>();
   const navigate = useNavigate();
-  const { linkedPlayers, organizationName } = usePortalAuth();
+  const { linkedPlayers, organizationName, logout } = usePortalAuth();
   const [activityFilter, setActivityFilter] = useState<'block' | 'all'>('all');
+
+  const handleLogout = () => {
+    logout();
+    navigate('/portal/login');
+  };
 
   // Check if player is linked
   const player = linkedPlayers.find(p => p.id === playerId);
@@ -71,15 +76,21 @@ export default function PortalPlayerView() {
       {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center gap-4 px-4">
-          <Link to="/portal">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
+          {linkedPlayers.length > 1 && (
+            <Link to="/portal">
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+          )}
           <div className="flex items-center gap-2 flex-1">
             <Sparkles className="h-5 w-5 text-primary" />
             <span className="font-semibold truncate">{player.full_name}</span>
           </div>
+          <Button variant="ghost" size="sm" onClick={handleLogout}>
+            <LogOut className="h-4 w-4" />
+            Salir
+          </Button>
         </div>
       </header>
 
