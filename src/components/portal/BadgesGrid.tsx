@@ -12,6 +12,7 @@ interface BadgesGridProps {
   earnedBadges: EarnedBadge[];
   lockedBadges: StrykBadge[];
   showLocked?: boolean;
+  blockDateRange?: { start: string; end: string } | null;
 }
 
 const ICON_MAP: Record<string, typeof Trophy> = {
@@ -41,17 +42,39 @@ const RARITY_GLOW: Record<BadgeRarity, string> = {
   legendary: 'shadow-amber-200/50 shadow-lg',
 };
 
-export function BadgesGrid({ earnedBadges, lockedBadges, showLocked = true }: BadgesGridProps) {
+export function BadgesGrid({ earnedBadges, lockedBadges, showLocked = true, blockDateRange }: BadgesGridProps) {
+  // Separate badges by block date range if provided
+  const blockBadges = blockDateRange
+    ? earnedBadges.filter(eb => eb.earned_at >= blockDateRange.start && eb.earned_at <= blockDateRange.end)
+    : [];
+  const otherBadges = blockDateRange
+    ? earnedBadges.filter(eb => eb.earned_at < blockDateRange.start || eb.earned_at > blockDateRange.end)
+    : earnedBadges;
+
   return (
     <div className="space-y-4">
-      {/* Earned Badges */}
-      {earnedBadges.length > 0 && (
+      {/* Block badges */}
+      {blockDateRange && blockBadges.length > 0 && (
         <div>
           <h3 className="text-sm font-medium text-muted-foreground mb-3">
-            Logros desbloqueados ({earnedBadges.length})
+            Logros del bloque actual ({blockBadges.length})
           </h3>
           <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3">
-            {earnedBadges.map(({ id, badge, earned_at }) => (
+            {blockBadges.map(({ id, badge, earned_at }) => (
+              <BadgeItem key={id} badge={badge} earnedAt={earned_at} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* All / other earned badges */}
+      {otherBadges.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">
+            {blockDateRange ? `Logros anteriores (${otherBadges.length})` : `Logros desbloqueados (${otherBadges.length})`}
+          </h3>
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3">
+            {otherBadges.map(({ id, badge, earned_at }) => (
               <BadgeItem key={id} badge={badge} earnedAt={earned_at} />
             ))}
           </div>

@@ -1,5 +1,6 @@
-import { CheckCircle, Circle, ArrowRight } from 'lucide-react';
+import { CheckCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { MembershipBlock } from '@/hooks/useMembershipBlocks';
 
 interface MembershipTimelineProps {
@@ -39,57 +40,111 @@ export function MembershipTimeline({ blocks, currentStage }: MembershipTimelineP
   const currentIdx = STAGE_ORDER.indexOf(currentStage);
 
   return (
-    <div className="flex items-center justify-between gap-1 sm:gap-2 w-full overflow-x-auto py-2">
-      {blocks.map((block, index) => {
-        const stageIdx = STAGE_ORDER.indexOf(block.code);
-        const isCompleted = currentIdx > stageIdx;
-        const isCurrent = block.code === currentStage;
-        const isFuture = currentIdx < stageIdx;
-        const colors = BLOCK_COLORS[block.code] || BLOCK_COLORS.FOUNDATION;
+    <TooltipProvider delayDuration={200}>
+      {/* Desktop: horizontal */}
+      <div className="hidden md:flex items-center justify-between gap-1 sm:gap-2 w-full py-2">
+        {blocks.map((block, index) => {
+          const stageIdx = STAGE_ORDER.indexOf(block.code);
+          const isCompleted = currentIdx > stageIdx;
+          const isCurrent = block.code === currentStage;
+          const isFuture = currentIdx < stageIdx;
+          const colors = BLOCK_COLORS[block.code] || BLOCK_COLORS.FOUNDATION;
 
-        return (
-          <div key={block.id} className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
-            <div
-              className={cn(
-                'flex flex-col items-center gap-1 flex-1 min-w-0',
+          return (
+            <div key={block.id} className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-col items-center gap-1 flex-1 min-w-0 cursor-default">
+                    <div
+                      className={cn(
+                        'w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 transition-all',
+                        isCurrent && colors.active,
+                        isCompleted && colors.completed,
+                        isFuture && 'bg-muted/50 text-muted-foreground border-muted-foreground/20',
+                      )}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+                      ) : (
+                        <span className="text-lg">{BLOCK_ICONS[block.code]}</span>
+                      )}
+                    </div>
+                    <span
+                      className={cn(
+                        'text-[10px] sm:text-xs font-medium text-center truncate w-full',
+                        isCurrent && 'text-foreground font-semibold',
+                        isCompleted && 'text-muted-foreground',
+                        isFuture && 'text-muted-foreground/60',
+                      )}
+                    >
+                      {block.name}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs space-y-0.5">
+                  <p className="font-semibold">{block.name}</p>
+                  <p>Duración: {block.duration_months} meses</p>
+                  <p>Evaluaciones mín: {block.min_evaluations}</p>
+                  <p>Asistencia mín: {block.min_attendance_pct}%</p>
+                </TooltipContent>
+              </Tooltip>
+              {index < blocks.length - 1 && (
+                <ArrowRight
+                  className={cn(
+                    'w-4 h-4 shrink-0 mt-[-16px]',
+                    currentIdx > index ? 'text-primary' : 'text-muted-foreground/30',
+                  )}
+                />
               )}
-            >
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Mobile: vertical */}
+      <div className="md:hidden flex flex-col relative pl-6 py-2">
+        {/* Vertical line */}
+        <div className="absolute left-[18px] top-4 bottom-4 w-0.5 bg-muted-foreground/20" />
+        {blocks.map((block) => {
+          const stageIdx = STAGE_ORDER.indexOf(block.code);
+          const isCompleted = currentIdx > stageIdx;
+          const isCurrent = block.code === currentStage;
+          const isFuture = currentIdx < stageIdx;
+          const colors = BLOCK_COLORS[block.code] || BLOCK_COLORS.FOUNDATION;
+
+          return (
+            <div key={block.id} className="flex items-center gap-3 py-2 relative">
               <div
                 className={cn(
-                  'w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 transition-all',
+                  'w-9 h-9 rounded-full flex items-center justify-center border-2 shrink-0 z-10 -ml-6',
                   isCurrent && colors.active,
                   isCompleted && colors.completed,
                   isFuture && 'bg-muted/50 text-muted-foreground border-muted-foreground/20',
                 )}
               >
                 {isCompleted ? (
-                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <CheckCircle className="w-4 h-4" />
                 ) : (
-                  <span className="text-lg">{BLOCK_ICONS[block.code]}</span>
+                  <span className="text-sm">{BLOCK_ICONS[block.code]}</span>
                 )}
               </div>
-              <span
-                className={cn(
-                  'text-[10px] sm:text-xs font-medium text-center truncate w-full',
-                  isCurrent && 'text-foreground font-semibold',
+              <div className="min-w-0">
+                <p className={cn(
+                  'text-sm font-medium',
+                  isCurrent && 'font-semibold text-foreground',
                   isCompleted && 'text-muted-foreground',
                   isFuture && 'text-muted-foreground/60',
-                )}
-              >
-                {block.name}
-              </span>
+                )}>
+                  {block.name}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {block.duration_months} meses · {block.min_evaluations} evals · {block.min_attendance_pct}% asist.
+                </p>
+              </div>
             </div>
-            {index < blocks.length - 1 && (
-              <ArrowRight
-                className={cn(
-                  'w-4 h-4 shrink-0 mt-[-16px]',
-                  currentIdx > index ? 'text-primary' : 'text-muted-foreground/30',
-                )}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </TooltipProvider>
   );
 }
