@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, ClipboardList, BarChart3, MapPin, CreditCard, UserCheck, Trophy, UserPlus, HeartPulse, CheckCircle, ClipboardCheck } from 'lucide-react';
+import { Users, ClipboardList, BarChart3, MapPin, CreditCard, UserCheck, Trophy, UserPlus, HeartPulse, CheckCircle, ClipboardCheck, Layers } from 'lucide-react';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
 import { IntakeSettingsPanel } from '@/components/fichajes/IntakeSettingsPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,6 +24,7 @@ import { DirectorEvaluationsView } from '@/components/evaluations/DirectorEvalua
 import { DirectorExternalEvaluationsView } from '@/components/evaluations/DirectorExternalEvaluationsView';
 import { EvaluationsTabsWrapper } from '@/components/evaluations/EvaluationsTabsWrapper';
 import { useFeatureFlags } from '@/hooks/useStrykWay';
+import { MembershipOverview } from '@/components/membership/MembershipOverview';
 
 export default function DirectorDeportivoDashboard() {
   const navigate = useNavigate();
@@ -160,6 +161,10 @@ export default function DirectorDeportivoDashboard() {
               <UserPlus className="w-4 h-4" />
               Fichajes
             </TabsTrigger>
+            <TabsTrigger value="bloques" className="gap-2">
+              <Layers className="w-4 h-4" />
+              Bloques
+            </TabsTrigger>
             <TabsTrigger value="lifecycle" className="gap-2">
               <HeartPulse className="w-4 h-4" />
               Lifecycle
@@ -223,6 +228,10 @@ export default function DirectorDeportivoDashboard() {
               {/* Settings Panel */}
               <IntakeSettingsPanel />
             </div>
+          </TabsContent>
+
+          <TabsContent value="bloques">
+            <MembershipOverview />
           </TabsContent>
 
           <TabsContent value="lifecycle">

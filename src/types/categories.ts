@@ -85,6 +85,11 @@ export interface Player {
   player_type: PlayerType;
   parent_email: string | null;
   parent_phone: string | null;
+  membership_stage: string | null;
+  block_id: string | null;
+  block_start_date: string | null;
+  block_end_date: string | null;
+  eligible_for_progression: boolean;
   created_at: string;
   updated_at: string;
   // Joined data

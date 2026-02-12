@@ -578,6 +578,7 @@ export type Database = {
       evaluations: {
         Row: {
           age_group: string
+          block_id: string | null
           category_id: string
           closed_at: string | null
           closed_by: string | null
@@ -594,6 +595,7 @@ export type Database = {
         }
         Insert: {
           age_group: string
+          block_id?: string | null
           category_id: string
           closed_at?: string | null
           closed_by?: string | null
@@ -610,6 +612,7 @@ export type Database = {
         }
         Update: {
           age_group?: string
+          block_id?: string | null
           category_id?: string
           closed_at?: string | null
           closed_by?: string | null
@@ -625,6 +628,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "evaluations_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "membership_blocks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "evaluations_category_id_fkey"
             columns: ["category_id"]
@@ -1244,6 +1254,118 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      membership_blocks: {
+        Row: {
+          code: string
+          created_at: string
+          duration_months: number
+          id: string
+          is_active: boolean
+          min_attendance_pct: number
+          min_evaluations: number
+          min_xp: number | null
+          name: string
+          org_id: string | null
+          sequence_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          duration_months: number
+          id?: string
+          is_active?: boolean
+          min_attendance_pct?: number
+          min_evaluations?: number
+          min_xp?: number | null
+          name: string
+          org_id?: string | null
+          sequence_order: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          duration_months?: number
+          id?: string
+          is_active?: boolean
+          min_attendance_pct?: number
+          min_evaluations?: number
+          min_xp?: number | null
+          name?: string
+          org_id?: string | null
+          sequence_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_blocks_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      membership_progression_log: {
+        Row: {
+          action: string
+          created_at: string
+          from_block_id: string | null
+          id: string
+          metrics_snapshot: Json
+          org_id: string
+          player_id: string
+          to_block_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          from_block_id?: string | null
+          id?: string
+          metrics_snapshot?: Json
+          org_id: string
+          player_id: string
+          to_block_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          from_block_id?: string | null
+          id?: string
+          metrics_snapshot?: Json
+          org_id?: string
+          player_id?: string
+          to_block_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_progression_log_from_block_id_fkey"
+            columns: ["from_block_id"]
+            isOneToOne: false
+            referencedRelation: "membership_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_progression_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_progression_log_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_progression_log_to_block_id_fkey"
+            columns: ["to_block_id"]
+            isOneToOne: false
+            referencedRelation: "membership_blocks"
             referencedColumns: ["id"]
           },
         ]
@@ -2025,9 +2147,13 @@ export type Database = {
       players: {
         Row: {
           billing_status: string
+          block_end_date: string | null
+          block_id: string | null
+          block_start_date: string | null
           category_id: string | null
           created_at: string
           date_of_birth: string | null
+          eligible_for_progression: boolean
           email: string | null
           full_name: string
           id: string
@@ -2035,7 +2161,9 @@ export type Database = {
           is_scholarship: boolean
           is_trial: boolean
           last_paid_month: string | null
+          last_progression_at: string | null
           lifecycle_status: string
+          membership_stage: string
           monthly_fee: number | null
           offboarded_at: string | null
           onboarded_at: string | null
@@ -2054,9 +2182,13 @@ export type Database = {
         }
         Insert: {
           billing_status?: string
+          block_end_date?: string | null
+          block_id?: string | null
+          block_start_date?: string | null
           category_id?: string | null
           created_at?: string
           date_of_birth?: string | null
+          eligible_for_progression?: boolean
           email?: string | null
           full_name: string
           id?: string
@@ -2064,7 +2196,9 @@ export type Database = {
           is_scholarship?: boolean
           is_trial?: boolean
           last_paid_month?: string | null
+          last_progression_at?: string | null
           lifecycle_status?: string
+          membership_stage?: string
           monthly_fee?: number | null
           offboarded_at?: string | null
           onboarded_at?: string | null
@@ -2083,9 +2217,13 @@ export type Database = {
         }
         Update: {
           billing_status?: string
+          block_end_date?: string | null
+          block_id?: string | null
+          block_start_date?: string | null
           category_id?: string | null
           created_at?: string
           date_of_birth?: string | null
+          eligible_for_progression?: boolean
           email?: string | null
           full_name?: string
           id?: string
@@ -2093,7 +2231,9 @@ export type Database = {
           is_scholarship?: boolean
           is_trial?: boolean
           last_paid_month?: string | null
+          last_progression_at?: string | null
           lifecycle_status?: string
+          membership_stage?: string
           monthly_fee?: number | null
           offboarded_at?: string | null
           onboarded_at?: string | null
@@ -2111,6 +2251,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "players_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "membership_blocks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "players_category_id_fkey"
             columns: ["category_id"]
@@ -2710,7 +2857,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_default_membership_block: {
+        Args: { p_player_id: string }
+        Returns: undefined
+      }
       check_billing_overdue: { Args: never; Returns: number }
+      evaluate_membership_progression: {
+        Args: { p_as_of_date: string; p_org_id: string }
+        Returns: Json
+      }
       generate_access_key: { Args: never; Returns: string }
       generate_intake_idempotency_key: {
         Args: {

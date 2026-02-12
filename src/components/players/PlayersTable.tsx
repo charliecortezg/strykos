@@ -392,6 +392,15 @@ export function PlayersTable() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-foreground">{player.full_name}</span>
+                          {player.membership_stage && player.membership_stage !== 'none' && (
+                            <Badge variant="outline" className="text-xs capitalize">
+                              {player.membership_stage === 'FOUNDATION' ? 'Fundación' :
+                               player.membership_stage === 'DEVELOPMENT' ? 'Desarrollo' :
+                               player.membership_stage === 'PROJECTION' ? 'Proyección' :
+                               player.membership_stage === 'CONSOLIDATION' ? 'Consolidación' :
+                               player.membership_stage}
+                            </Badge>
+                          )}
                           {player.is_scholarship && (
                             <Badge variant="outline" className="text-xs">Beca</Badge>
                           )}

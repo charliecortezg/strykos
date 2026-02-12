@@ -6,6 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePortalAuth } from '@/contexts/PortalAuthContext';
 import { usePlayerProgress, usePlayerBadges, usePlayerActivity, useActiveChallenges } from '@/hooks/usePortal';
 import { ProgressCard, PlayerCard, BadgesGrid, ChallengesActive, ActivityFeed } from '@/components/portal';
+import { MembershipTimeline } from '@/components/membership/MembershipTimeline';
+import { BlockProgressCard } from '@/components/membership/BlockProgressCard';
+import { usePlayerMembershipProgress } from '@/hooks/useMembershipBlocks';
 import type { RadarAttributes } from '@/types/stryk-way';
 
 export default function PortalPlayerView() {
@@ -20,6 +23,7 @@ export default function PortalPlayerView() {
   const { earnedBadges, lockedBadges, isLoading: loadingBadges } = usePlayerBadges(playerId || null);
   const { events, isLoading: loadingActivity } = usePlayerActivity(playerId || null);
   const { activeChallenges, isLoading: loadingChallenges } = useActiveChallenges(playerId || null);
+  const membership = usePlayerMembershipProgress(playerId || null);
 
   // Redirect if player not linked
   if (!player) {
@@ -92,6 +96,25 @@ export default function PortalPlayerView() {
               radar={radar}
               topBadges={earnedBadges.slice(0, 3).map(eb => eb.badge)}
             />
+
+            {/* Membership Progress */}
+            {membership.currentStage !== 'none' && membership.blocks.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Etapa de Formación</h3>
+                <MembershipTimeline blocks={membership.blocks} currentStage={membership.currentStage} />
+                {membership.currentBlock && (
+                  <BlockProgressCard
+                    blockName={membership.currentBlock.name}
+                    evalCount={membership.eval_count}
+                    minEvaluations={membership.currentBlock.min_evaluations}
+                    attendancePct={membership.attendance_pct}
+                    minAttendancePct={membership.currentBlock.min_attendance_pct}
+                    blockEndDate={membership.blockEndDate}
+                    daysRemaining={membership.days_remaining}
+                  />
+                )}
+              </div>
+            )}
 
             {/* Tabs */}
             <Tabs defaultValue="challenges" className="mt-6">
