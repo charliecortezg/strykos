@@ -390,6 +390,23 @@ export function LoadResultsModal({
     };
   }, [hasExistingPlayers, playerStats, localAttendance]);
 
+  const TAB_ORDER = ['attendance', 'stats', 'result', 'notes'] as const;
+  const [activeTab, setActiveTab] = useState<string>(hasExistingPlayers ? 'result' : 'attendance');
+
+  // Reset active tab when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(hasExistingPlayers ? 'result' : 'attendance');
+    }
+  }, [isOpen, hasExistingPlayers]);
+
+  const goToNextTab = () => {
+    const currentIdx = TAB_ORDER.indexOf(activeTab as typeof TAB_ORDER[number]);
+    if (currentIdx < TAB_ORDER.length - 1) {
+      setActiveTab(TAB_ORDER[currentIdx + 1]);
+    }
+  };
+
   if (!match) return null;
 
   const result = getMatchResult(goalsFor, goalsAgainst);
@@ -409,7 +426,6 @@ export function LoadResultsModal({
     }
   };
 
-  const defaultTab = hasExistingPlayers ? 'result' : 'attendance';
   const isLoadingAny = loadingPlayers || loadingCategoryPlayers;
 
   // Stats source: either matchPlayers or localAttendance (present only)
@@ -441,19 +457,19 @@ export function LoadResultsModal({
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-4">
-          <Tabs defaultValue={defaultTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full grid grid-cols-4 mt-3">
               <TabsTrigger value="attendance" className="gap-1 text-xs">
                 <Users className="w-4 h-4" />
                 Asistencia
               </TabsTrigger>
-              <TabsTrigger value="result" className="gap-1 text-xs">
-                <Trophy className="w-4 h-4" />
-                Marcador
-              </TabsTrigger>
               <TabsTrigger value="stats" className="gap-1 text-xs">
                 <Target className="w-4 h-4" />
                 Stats
+              </TabsTrigger>
+              <TabsTrigger value="result" className="gap-1 text-xs">
+                <Trophy className="w-4 h-4" />
+                Marcador
               </TabsTrigger>
               <TabsTrigger value="notes" className="gap-1 text-xs">
                 <FileText className="w-4 h-4" />
@@ -615,6 +631,11 @@ export function LoadResultsModal({
                   </div>
                 </>
               )}
+
+              {/* Next button */}
+              <Button onClick={goToNextTab} className="w-full h-12 mt-4 gap-2" size="lg">
+                Siguiente →
+              </Button>
             </TabsContent>
 
             {/* ==================== RESULT TAB ==================== */}
@@ -719,6 +740,11 @@ export function LoadResultsModal({
                   </Card>
                 )}
               </div>
+
+              {/* Next button */}
+              <Button onClick={goToNextTab} className="w-full h-12 mt-4 gap-2" size="lg">
+                Siguiente →
+              </Button>
             </TabsContent>
 
             {/* ==================== STATS TAB ==================== */}
@@ -902,6 +928,11 @@ export function LoadResultsModal({
                   )}
                 </div>
               )}
+
+              {/* Next button */}
+              <Button onClick={goToNextTab} className="w-full h-12 mt-4 gap-2" size="lg">
+                Siguiente →
+              </Button>
             </TabsContent>
 
             {/* ==================== NOTES TAB ==================== */}
