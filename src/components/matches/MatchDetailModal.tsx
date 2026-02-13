@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { X, Calendar, MapPin, User, Trophy, Edit2, Save, XCircle, Clock, Shield, Target, Users } from 'lucide-react';
+import { X, Calendar, MapPin, User, Trophy, Edit2, Save, XCircle, Clock, Shield, Target, Users, Crown } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Match, MatchPlayer, getMatchResult } from '@/types/matches';
+import { PerformanceIndicator } from '@/components/attendance/PerformanceIndicator';
+import type { PerformanceStatus } from '@/components/attendance/PerformanceIndicator';
 import { useMatchPlayers } from '@/hooks/useMatches';
 import { useVenues } from '@/hooks/useVenues';
 import { useAuth } from '@/contexts/AuthContext';
@@ -348,6 +350,17 @@ export function MatchDetailModal({
               </div>
             </div>
 
+            {/* MVP Badge */}
+            {match.mvp_player_id && match.mvp_player && (
+              <div className="stryk-card p-4 flex items-center gap-3 bg-yellow-50/50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-800">
+                <Crown className="w-6 h-6 text-yellow-500 fill-yellow-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-muted-foreground">MVP del Partido</p>
+                  <p className="font-semibold">{match.mvp_player.full_name}</p>
+                </div>
+              </div>
+            )}
+
             {/* Notes Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="stryk-card p-4">
@@ -420,6 +433,7 @@ export function MatchDetailModal({
                     <TableRow className="bg-muted/50">
                       <TableHead>Jugador</TableHead>
                       <TableHead>Posición</TableHead>
+                      <TableHead className="text-center">Rendimiento</TableHead>
                       <TableHead className="text-center">Asistió</TableHead>
                       {isFutbol ? (
                         <>
@@ -434,8 +448,27 @@ export function MatchDetailModal({
                   <TableBody>
                     {(isEditing ? editedPlayers : matchPlayers).map((mp) => (
                       <TableRow key={mp.id}>
-                        <TableCell className="font-medium">{mp.player?.full_name}</TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-1.5">
+                            {match.mvp_player_id === mp.player_id && (
+                              <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
+                            )}
+                            {mp.player?.full_name}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-muted-foreground">{mp.player?.position || '—'}</TableCell>
+                        <TableCell className="text-center">
+                          {mp.attended && mp.performance ? (
+                            <PerformanceIndicator
+                              status={mp.performance as PerformanceStatus}
+                              onChange={() => {}}
+                              disabled
+                              size="sm"
+                            />
+                          ) : !mp.attended ? (
+                            <div className="w-5 h-5 min-w-[20px] rounded-full bg-destructive ring-2 ring-destructive/30 mx-auto" />
+                          ) : null}
+                        </TableCell>
                         <TableCell className="text-center">
                           {isEditing ? (
                             <Checkbox

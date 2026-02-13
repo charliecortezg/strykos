@@ -1089,6 +1089,7 @@ export type Database = {
           is_guest: boolean | null
           match_id: string
           organization_id: string
+          performance: string | null
           player_id: string
           points: number | null
           position: string | null
@@ -1103,6 +1104,7 @@ export type Database = {
           is_guest?: boolean | null
           match_id: string
           organization_id: string
+          performance?: string | null
           player_id: string
           points?: number | null
           position?: string | null
@@ -1117,6 +1119,7 @@ export type Database = {
           is_guest?: boolean | null
           match_id?: string
           organization_id?: string
+          performance?: string | null
           player_id?: string
           points?: number | null
           position?: string | null
@@ -1159,6 +1162,7 @@ export type Database = {
           last_edited_by: string | null
           match_date: string
           match_type: string
+          mvp_player_id: string | null
           notes: string | null
           organization_id: string
           rival_name: string
@@ -1181,6 +1185,7 @@ export type Database = {
           last_edited_by?: string | null
           match_date: string
           match_type?: string
+          mvp_player_id?: string | null
           notes?: string | null
           organization_id: string
           rival_name: string
@@ -1203,6 +1208,7 @@ export type Database = {
           last_edited_by?: string | null
           match_date?: string
           match_type?: string
+          mvp_player_id?: string | null
           notes?: string | null
           organization_id?: string
           rival_name?: string
@@ -1233,6 +1239,13 @@ export type Database = {
             columns: ["last_edited_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_mvp_player_id_fkey"
+            columns: ["mvp_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
             referencedColumns: ["id"]
           },
           {

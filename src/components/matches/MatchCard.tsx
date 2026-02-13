@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { MapPin, Eye, Target, Trash2, Calendar, User, ShieldCheck } from 'lucide-react';
+import { MapPin, Eye, Target, Trash2, Calendar, User, ShieldCheck, Crown } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -130,6 +130,9 @@ export function MatchCard({
                   <span className="mx-1 text-muted-foreground">-</span>
                   <span className="text-xl">{match.goals_against}</span>
                 </div>
+                {match.mvp_player_id && (
+                  <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400" />
+                )}
                 <ShieldCheck className="w-4 h-4 text-success hidden sm:block" />
               </div>
             ) : isScheduled ? (
@@ -260,9 +263,17 @@ export function MatchCard({
                 {match.goals_for} – {match.goals_against}
               </span>
             </div>
-            <div className={cn("flex items-center gap-1.5 font-medium", resultInfo.className)}>
-              <span>{resultInfo.icon}</span>
-              <span>{resultInfo.label}</span>
+            <div className="flex items-center gap-2">
+              {match.mvp_player_id && match.mvp_player && (
+                <Badge variant="outline" className="text-xs gap-1 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700">
+                  <Crown className="w-3 h-3 fill-yellow-400" />
+                  {match.mvp_player.full_name}
+                </Badge>
+              )}
+              <div className={cn("flex items-center gap-1.5 font-medium", resultInfo.className)}>
+                <span>{resultInfo.icon}</span>
+                <span>{resultInfo.label}</span>
+              </div>
             </div>
           </div>
         )}

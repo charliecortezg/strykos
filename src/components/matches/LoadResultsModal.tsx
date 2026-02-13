@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Trophy, Target, Save, Camera, FileText, Plus, Minus, Check, Upload, X, ImageIcon } from 'lucide-react';
+import { Trophy, Target, Save, Camera, FileText, Plus, Minus, Check, Upload, X, ImageIcon, Crown, ChevronDown } from 'lucide-react';
 import { 
   Drawer, 
   DrawerContent, 
@@ -16,7 +16,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Match, MatchPlayer, getMatchResult, importanceIcons, importanceLabels } from '@/types/matches';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Match, MatchPlayer, MatchPerformance, getMatchResult, importanceIcons, importanceLabels } from '@/types/matches';
+import { PerformanceIndicator, PerformanceStats } from '@/components/attendance/PerformanceIndicator';
+import type { PerformanceStatus } from '@/components/attendance/PerformanceIndicator';
 import { useMatchPlayers } from '@/hooks/useMatches';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,6 +54,9 @@ export function LoadResultsModal({
   // Player stats state
   const [playerStats, setPlayerStats] = useState<MatchPlayer[]>([]);
   
+  // MVP + Performance state
+  const [mvpPlayerId, setMvpPlayerId] = useState<string | null>(null);
+
   // Evidence state
   const [uploadedImages, setUploadedImages] = useState<{ url: string; name: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -66,6 +72,7 @@ export function LoadResultsModal({
       setGoalsAgainst(match.goals_against);
       setNotes(match.notes || '');
       setTechnicalNotes(match.technical_notes || '');
+      setMvpPlayerId(match.mvp_player_id || null);
     }
   }, [match]);
 
@@ -173,8 +180,9 @@ export function LoadResultsModal({
         goals_against: goalsAgainst,
         notes: notes,
         technical_notes: technicalNotes,
+        mvp_player_id: mvpPlayerId,
         status: 'terminado', // Mark as finished
-      }, user.id);
+      } as any, user.id);
 
       // Update player stats
       if (playerStats.length > 0) {
@@ -194,7 +202,27 @@ export function LoadResultsModal({
 
   const result = getMatchResult(goalsFor, goalsAgainst);
   const attendingPlayers = playerStats.filter(p => p.attended);
+  const absentPlayers = playerStats.filter(p => !p.attended);
 
+  // Performance stats for header
+  const perfCounts = {
+    outstanding: attendingPlayers.filter(p => (p.performance || 'excellent') === 'outstanding').length,
+    excellent: attendingPlayers.filter(p => (p.performance || 'excellent') === 'excellent').length,
+    focus: attendingPlayers.filter(p => (p.performance || 'excellent') === 'focus').length,
+    challenge: absentPlayers.length,
+  };
+
+  const handleToggleMvp = (playerId: string) => {
+    setMvpPlayerId(prev => prev === playerId ? null : playerId);
+  };
+
+  const handlePerformanceChange = (playerId: string, status: PerformanceStatus) => {
+    // Map attendance PerformanceStatus to match PerformanceStatus (exclude 'challenge')
+    const matchPerf: MatchPerformance = status === 'challenge' ? 'focus' : status;
+    setPlayerStats(prev =>
+      prev.map(p => p.player_id === playerId ? { ...p, performance: matchPerf } : p)
+    );
+  };
   return (
     <Drawer open={isOpen} onOpenChange={() => onClose()}>
       <DrawerContent className="max-h-[95vh]">
@@ -340,101 +368,145 @@ export function LoadResultsModal({
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
-              ) : attendingPlayers.length === 0 ? (
+              ) : attendingPlayers.length === 0 && absentPlayers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  No hay jugadores presentes en este partido
+                  No hay jugadores registrados en este partido
                 </div>
               ) : (
-                <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-                  {attendingPlayers.map((player) => (
-                    <Card key={player.id} className="p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{player.player?.full_name}</p>
-                          <p className="text-xs text-muted-foreground">{player.player?.position || 'Sin posición'}</p>
-                        </div>
+                <div className="space-y-3">
+                  {/* Header hint + performance stats */}
+                  {attendingPlayers.length > 0 && (
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        👑 Toca corona para MVP · Semáforo: rendimiento
+                      </p>
+                      <PerformanceStats {...perfCounts} />
+                    </div>
+                  )}
 
-                        {isFutbol ? (
-                          <div className="flex items-center gap-4">
-                            {/* Goals */}
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => updatePlayerStat(player.player_id, 'goals', Math.max(0, (player.goals || 0) - 1))}
-                              >
-                                <Minus className="w-3 h-3" />
-                              </Button>
-                              <div className="text-center w-6">
-                                <span className={cn("font-medium", (player.goals || 0) > 0 && "text-success")}>
-                                  {player.goals || 0}
-                                </span>
-                                <p className="text-[9px] text-muted-foreground">G</p>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => updatePlayerStat(player.player_id, 'goals', (player.goals || 0) + 1)}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                            </div>
-                            
-                            {/* Assists */}
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => updatePlayerStat(player.player_id, 'assists', Math.max(0, (player.assists || 0) - 1))}
-                              >
-                                <Minus className="w-3 h-3" />
-                              </Button>
-                              <div className="text-center w-6">
-                                <span className={cn("font-medium", (player.assists || 0) > 0 && "text-primary")}>
-                                  {player.assists || 0}
-                                </span>
-                                <p className="text-[9px] text-muted-foreground">A</p>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => updatePlayerStat(player.player_id, 'assists', (player.assists || 0) + 1)}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                            </div>
+                  {/* Present players */}
+                  <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+                    {attendingPlayers.map((player) => (
+                      <Card key={player.id} className={cn(
+                        "p-3",
+                        mvpPlayerId === player.player_id && "ring-2 ring-yellow-400/50 bg-yellow-50/30 dark:bg-yellow-900/10"
+                      )}>
+                        <div className="flex items-center gap-2">
+                          {/* MVP Crown */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleMvp(player.player_id)}
+                            className={cn(
+                              "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90",
+                              mvpPlayerId === player.player_id
+                                ? "bg-yellow-400/20 text-yellow-500"
+                                : "text-muted-foreground/30 hover:text-muted-foreground/60"
+                            )}
+                            aria-label={mvpPlayerId === player.player_id ? 'Quitar MVP' : 'Marcar como MVP'}
+                          >
+                            <Crown className={cn(
+                              "w-4 h-4",
+                              mvpPlayerId === player.player_id && "fill-yellow-400"
+                            )} />
+                          </button>
+
+                          {/* Performance Semaphore */}
+                          <PerformanceIndicator
+                            status={(player.performance || 'excellent') as PerformanceStatus}
+                            onChange={(status) => handlePerformanceChange(player.player_id, status)}
+                            size="sm"
+                          />
+
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{player.player?.full_name}</p>
+                            <p className="text-xs text-muted-foreground">{player.player?.position || 'Sin posición'}</p>
                           </div>
-                        ) : (
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => updatePlayerStat(player.player_id, 'points', Math.max(0, (player.points || 0) - 1))}
-                            >
-                              <Minus className="w-3 h-3" />
-                            </Button>
-                            <div className="text-center w-8">
-                              <span className="font-medium">{player.points || 0}</span>
-                              <p className="text-[9px] text-muted-foreground">Pts</p>
+
+                          {isFutbol ? (
+                            <div className="flex items-center gap-3">
+                              {/* Goals */}
+                              <div className="flex items-center gap-0.5">
+                                <Button variant="ghost" size="icon" className="h-7 w-7"
+                                  onClick={() => updatePlayerStat(player.player_id, 'goals', Math.max(0, (player.goals || 0) - 1))}
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </Button>
+                                <div className="text-center w-5">
+                                  <span className={cn("font-medium text-sm", (player.goals || 0) > 0 && "text-success")}>
+                                    {player.goals || 0}
+                                  </span>
+                                  <p className="text-[8px] text-muted-foreground">G</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className="h-7 w-7"
+                                  onClick={() => updatePlayerStat(player.player_id, 'goals', (player.goals || 0) + 1)}
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              
+                              {/* Assists */}
+                              <div className="flex items-center gap-0.5">
+                                <Button variant="ghost" size="icon" className="h-7 w-7"
+                                  onClick={() => updatePlayerStat(player.player_id, 'assists', Math.max(0, (player.assists || 0) - 1))}
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </Button>
+                                <div className="text-center w-5">
+                                  <span className={cn("font-medium text-sm", (player.assists || 0) > 0 && "text-primary")}>
+                                    {player.assists || 0}
+                                  </span>
+                                  <p className="text-[8px] text-muted-foreground">A</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className="h-7 w-7"
+                                  onClick={() => updatePlayerStat(player.player_id, 'assists', (player.assists || 0) + 1)}
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </Button>
+                              </div>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => updatePlayerStat(player.player_id, 'points', (player.points || 0) + 1)}
-                            >
-                              <Plus className="w-3 h-3" />
-                            </Button>
+                          ) : (
+                            <div className="flex items-center gap-0.5">
+                              <Button variant="ghost" size="icon" className="h-7 w-7"
+                                onClick={() => updatePlayerStat(player.player_id, 'points', Math.max(0, (player.points || 0) - 1))}
+                              >
+                                <Minus className="w-3 h-3" />
+                              </Button>
+                              <div className="text-center w-7">
+                                <span className="font-medium text-sm">{player.points || 0}</span>
+                                <p className="text-[8px] text-muted-foreground">Pts</p>
+                              </div>
+                              <Button variant="ghost" size="icon" className="h-7 w-7"
+                                onClick={() => updatePlayerStat(player.player_id, 'points', (player.points || 0) + 1)}
+                              >
+                                <Plus className="w-3 h-3" />
+                              </Button>
                           </div>
                         )}
                       </div>
                     </Card>
                   ))}
+                </div>
+
+                {/* Absent players - collapsible */}
+                {absentPlayers.length > 0 && (
+                  <Collapsible>
+                    <CollapsibleTrigger className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full py-2">
+                      <ChevronDown className="w-3 h-3" />
+                      <span>Ausentes ({absentPlayers.length})</span>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-1.5 mt-1">
+                      {absentPlayers.map((player) => (
+                        <Card key={player.id} className="p-2.5 opacity-60">
+                          <div className="flex items-center gap-2">
+                            <div className="w-5 h-5 min-w-[20px] rounded-full bg-destructive ring-2 ring-destructive/30 flex-shrink-0" />
+                            <p className="font-medium text-sm truncate flex-1">{player.player?.full_name}</p>
+                            <span className="text-xs text-muted-foreground">Ausente</span>
+                          </div>
+                        </Card>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
                 </div>
               )}
             </TabsContent>

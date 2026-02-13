@@ -20,6 +20,7 @@ export function useMatches(filters?: Partial<MatchFilters>) {
           category:categories(id, name, sport_id, sports:sports(name)),
           trainer:profiles!matches_trainer_id_fkey(id, full_name),
           venue:venues(id, name),
+          mvp_player:players!matches_mvp_player_id_fkey(id, full_name),
           created_by_profile:profiles!matches_created_by_fkey(full_name),
           last_edited_by_profile:profiles!matches_last_edited_by_fkey(full_name)
         `)
@@ -180,6 +181,7 @@ export function useMatchPlayers(matchId: string | null) {
             goals: player.goals,
             assists: player.assists,
             points: player.points,
+            performance: player.performance,
           })
           .eq('id', player.id);
         if (error) throw error;
