@@ -9,6 +9,7 @@ interface PerformanceIndicatorProps {
   onChange: (status: PerformanceStatus) => void;
   disabled?: boolean;
   size?: 'sm' | 'md';
+  cycleOrder?: PerformanceStatus[];
 }
 
 const PERFORMANCE_CONFIG = {
@@ -44,17 +45,19 @@ export function PerformanceIndicator({
   status, 
   onChange, 
   disabled = false,
-  size = 'md' 
+  size = 'md',
+  cycleOrder 
 }: PerformanceIndicatorProps) {
   const config = PERFORMANCE_CONFIG[status];
+  const order = cycleOrder || CYCLE_ORDER;
   
   const handleCycle = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (disabled) return;
     
-    const currentIndex = CYCLE_ORDER.indexOf(status);
-    const nextIndex = (currentIndex + 1) % CYCLE_ORDER.length;
-    onChange(CYCLE_ORDER[nextIndex]);
+    const currentIndex = order.indexOf(status);
+    const nextIndex = (currentIndex + 1) % order.length;
+    onChange(order[nextIndex]);
   };
 
   const sizeClasses = size === 'sm' 
