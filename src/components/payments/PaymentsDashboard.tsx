@@ -160,10 +160,11 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
       relevantPlayers = relevantPlayers.filter(p => p.category_id === selectedCategoryId);
     }
 
-    const playersAlDia = relevantPlayers.filter(p => p.payment_status === 'al_dia').length;
-    const pendingCount = relevantPlayers.filter(p => p.payment_status !== 'al_dia').length;
-    const collectionRate = relevantPlayers.length > 0 
-      ? Math.round((playersAlDia / relevantPlayers.length) * 100) 
+    const billablePlayers = relevantPlayers.filter(p => !p.is_scholarship);
+    const playersAlDia = billablePlayers.filter(p => p.payment_status === 'al_dia').length;
+    const pendingCount = billablePlayers.filter(p => p.payment_status !== 'al_dia').length;
+    const collectionRate = billablePlayers.length > 0 
+      ? Math.round((playersAlDia / billablePlayers.length) * 100) 
       : 0;
 
     return {

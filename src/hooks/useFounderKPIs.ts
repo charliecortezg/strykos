@@ -153,8 +153,8 @@ export function useFounderKPIs(): FounderKPIs {
         0
       );
       const pendingPayments = Math.max(0, expectedRevenue - monthlyRevenue);
-      const collectionRate = expectedRevenue > 0 
-        ? Math.round((monthlyRevenue / expectedRevenue) * 100) 
+      const collectionRate = nonScholarshipPlayers.length > 0 
+        ? Math.round((upToDatePlayers.length / nonScholarshipPlayers.length) * 100) 
         : 0;
 
       // Categories metrics
