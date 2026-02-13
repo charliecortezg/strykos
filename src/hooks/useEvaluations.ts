@@ -227,6 +227,16 @@ export function useEvaluations(categoryId: string | null, period: string) {
       queryClient.invalidateQueries({ queryKey: ['evaluation_scores'] });
       queryClient.invalidateQueries({ queryKey: ['evaluation_achievements'] });
       toast({ title: 'Evaluaciones cerradas', description: 'Se calcularon overalls, achievements y XP.' });
+
+      // Trigger IDP processing (fire-and-forget)
+      if (orgId && categoryId) {
+        supabase.functions.invoke('process-idp', {
+          body: { organization_id: orgId, category_id: categoryId, period },
+        }).then(res => {
+          if (res.error) console.error('[IDP] process-idp error:', res.error);
+          else console.log('[IDP] process-idp result:', res.data);
+        });
+      }
     },
     onError: (error) => {
       toast({ title: 'Error al cerrar evaluaciones', description: error.message, variant: 'destructive' });

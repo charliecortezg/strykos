@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.run-membership-progression]
 verify_jwt = false
+
+[functions.process-idp]
+verify_jwt = false
+
+[functions.send-idp-report]
+verify_jwt = false
+
+[functions.idp-maintenance]
+verify_jwt = false

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePortalAuth } from '@/contexts/PortalAuthContext';
 import { usePlayerProgress, usePlayerBadges, usePlayerActivity, useActiveChallenges } from '@/hooks/usePortal';
-import { ProgressCard, PlayerCard, BadgesGrid, ChallengesActive, ActivityFeed } from '@/components/portal';
+import { ProgressCard, PlayerCard, BadgesGrid, ChallengesActive, ActivityFeed, LastEvaluationCard, IDPCard } from '@/components/portal';
 import { MembershipTimeline } from '@/components/membership/MembershipTimeline';
 import { MembershipHeroCard } from '@/components/membership/MembershipHeroCard';
 import { usePlayerMembershipProgress } from '@/hooks/useMembershipBlocks';
@@ -114,6 +114,12 @@ export default function PortalPlayerView() {
               daysRemaining={membership.days_remaining}
               eligibleForProgression={membership.eligibleForProgression}
             />
+
+            {/* 1b. Last Evaluation */}
+            <LastEvaluationCard playerId={playerId!} />
+
+            {/* 1c. IDP */}
+            <IDPCard playerId={playerId!} />
 
             {/* 2. Membership Timeline */}
             {membership.blocks.length > 0 && (

@@ -5,3 +5,6 @@ export { PlayerCard } from './PlayerCard';
 export { BadgesGrid } from './BadgesGrid';
 export { ChallengesActive } from './ChallengesActive';
 export { ActivityFeed } from './ActivityFeed';
+export { LastEvaluationCard } from './LastEvaluationCard';
+export { IDPCard } from './IDPCard';
+export { IDPSessionModal } from './IDPSessionModal';
