@@ -766,6 +766,192 @@ export type Database = {
           },
         ]
       }
+      idp_cycles: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          ends_at: string
+          id: string
+          initial_evaluation_id: string | null
+          latest_evaluation_id: string | null
+          organization_id: string
+          plan_json: Json | null
+          plan_text: string | null
+          player_id: string
+          stage: string
+          starts_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          ends_at: string
+          id?: string
+          initial_evaluation_id?: string | null
+          latest_evaluation_id?: string | null
+          organization_id: string
+          plan_json?: Json | null
+          plan_text?: string | null
+          player_id: string
+          stage?: string
+          starts_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          ends_at?: string
+          id?: string
+          initial_evaluation_id?: string | null
+          latest_evaluation_id?: string | null
+          organization_id?: string
+          plan_json?: Json | null
+          plan_text?: string | null
+          player_id?: string
+          stage?: string
+          starts_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idp_cycles_initial_evaluation_id_fkey"
+            columns: ["initial_evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idp_cycles_latest_evaluation_id_fkey"
+            columns: ["latest_evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idp_cycles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idp_cycles_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      idp_focus_areas: {
+        Row: {
+          created_at: string
+          focus_type: string
+          id: string
+          idp_cycle_id: string
+          initial_score: number
+          organization_id: string
+          stat_key: string
+          target_score: number
+        }
+        Insert: {
+          created_at?: string
+          focus_type?: string
+          id?: string
+          idp_cycle_id: string
+          initial_score: number
+          organization_id: string
+          stat_key: string
+          target_score: number
+        }
+        Update: {
+          created_at?: string
+          focus_type?: string
+          id?: string
+          idp_cycle_id?: string
+          initial_score?: number
+          organization_id?: string
+          stat_key?: string
+          target_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idp_focus_areas_idp_cycle_id_fkey"
+            columns: ["idp_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "idp_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idp_focus_areas_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      idp_sessions: {
+        Row: {
+          completed_at: string
+          created_at: string
+          id: string
+          idp_cycle_id: string
+          organization_id: string
+          player_id: string
+          session_number: number
+          xp_awarded: number
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          idp_cycle_id: string
+          organization_id: string
+          player_id: string
+          session_number: number
+          xp_awarded?: number
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          idp_cycle_id?: string
+          organization_id?: string
+          player_id?: string
+          session_number?: number
+          xp_awarded?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idp_sessions_idp_cycle_id_fkey"
+            columns: ["idp_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "idp_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idp_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idp_sessions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       intake_documents: {
         Row: {
           bucket_id: string
@@ -2108,6 +2294,9 @@ export type Database = {
       }
       player_progress: {
         Row: {
+          idp_last_session_at: string | null
+          idp_streak_best: number
+          idp_streak_current: number
           last_event_at: string | null
           level: number
           organization_id: string
@@ -2119,6 +2308,9 @@ export type Database = {
           xp_total: number
         }
         Insert: {
+          idp_last_session_at?: string | null
+          idp_streak_best?: number
+          idp_streak_current?: number
           last_event_at?: string | null
           level?: number
           organization_id: string
@@ -2130,6 +2322,9 @@ export type Database = {
           xp_total?: number
         }
         Update: {
+          idp_last_session_at?: string | null
+          idp_streak_best?: number
+          idp_streak_current?: number
           last_event_at?: string | null
           level?: number
           organization_id?: string
