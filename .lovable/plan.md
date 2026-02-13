@@ -1,136 +1,62 @@
 
 
-# Plan: MVP del Partido + Semaforo de Rendimiento en Partidos
+# Plan: Eliminar "Pasar Lista" al Programar un Partido
 
-## Resumen
+## Problema
 
-Agregar dos funcionalidades integradas al flujo de "Cargar Resultado" sin friccion adicional para el entrenador:
+Al crear un partido nuevo (status "programado"), el flujo actual obliga al entrenador a pasar lista de asistencia. Esto no tiene sentido operativo: la lista se toma **despues** del partido, no antes. Programar un partido solo necesita los datos basicos (categoria, rival, tipo, fecha, campo).
 
-1. **Semaforo de Rendimiento por jugador** -- identico al patron de asistencias, pero aplicado al contexto de partido.
-2. **Seleccion de MVP** -- un tap en una corona dorada para marcar al mejor jugador.
+## Solucion
 
-Ambos se integran directamente en el tab "Stats" del LoadResultsModal, donde el entrenador ya esta viendo a cada jugador.
+Simplificar el `CreateMatchFlow` para que al **programar** un partido solo tenga 1 paso (datos del partido), sin pasar lista ni confirmar asistencia. La lista de asistencia ya se maneja cuando el entrenador "Carga Resultado" despues del partido (en `LoadResultsModal`).
 
----
+## Cambios
 
-## Flujo visual para el entrenador (tab Stats)
+### Archivo: `src/components/matches/CreateMatchFlow.tsx`
+
+1. **Eliminar los pasos 2 y 3** (attendance y confirm) del flujo de creacion
+2. **Eliminar el step indicator** (1 > 2 > 3) ya que solo habra 1 paso
+3. **El boton "Siguiente" se convierte en "Programar Partido"** y guarda directamente
+4. **No se envian jugadores** al crear el partido -- los jugadores se registran cuando se carga el resultado
+5. Limpiar estado y codigo muerto relacionado con attendance en este componente
+
+### Resultado
 
 ```text
-Toca la corona para MVP | Semaforo: rendimiento del partido
+ANTES (3 pasos):
+[1. Info] > [2. Pasar Lista] > [3. Confirmar] --> Guardar
 
-[Corona gris] [Circulo azul] Jugador A    [-] 2 G [+]  [-] 1 A [+]
-[Corona gris] [Circulo verde] Jugador B   [-] 0 G [+]  [-] 0 A [+]
-[CORONA ORO]  [Circulo verde] Jugador C   [-] 1 G [+]  [-] 2 A [+]
-
-Jugadores ausentes (colapsados abajo):
-              [Circulo rojo]  Jugador D   -- Ausente (automatico)
+DESPUES (1 paso):
+[Info del partido] --> Programar Partido
 ```
 
-**Cero pasos extra.** El entrenador ya esta en esta pantalla poniendo goles y asistencias. Solo agrega un tap opcional por jugador.
+El flujo completo queda asi:
 
----
+```text
+Crear partido  -->  status: "programado" (sin jugadores)
+Cargar resultado (LoadResultsModal)  -->  status: "terminado" (con lista, stats, MVP, semaforo)
+```
 
-## Semaforo de Rendimiento -- Reglas
+### Datos que se envian al programar
 
-| Color | Estado | XP Multiplicador | Descripcion |
-|-------|--------|-------------------|-------------|
-| Azul | Sobresaliente | 1.5x | Rendimiento excepcional en el partido |
-| Verde | Bueno (default) | 1.0x | Rendimiento solido, sin novedades |
-| Amarillo | Regular | 0.75x | Bajo rendimiento, necesita atencion |
-| Rojo | Ausente | 0x | No participo (automatico si attended=false) |
+- category_id, rival_name, match_type, match_date, venue_id, importance, xp_multiplier
+- status: "programado"
+- goals_for: 0, goals_against: 0
+- players: [] (array vacio -- sin lista)
 
-- Al marcar un jugador como "presente", su rendimiento inicia en **Verde** (default).
-- Al marcar como "ausente", su rendimiento se fuerza a **Rojo** automaticamente (sin XP).
-- El entrenador puede cambiar entre Azul/Verde/Amarillo con un tap (ciclo), exactamente como en asistencias.
-- El MVP recibe un bonus adicional de XP (50 XP) independiente del semaforo.
+## Seccion tecnica
 
----
+### Cambios especificos en `CreateMatchFlow.tsx`
 
-## Cambios en base de datos
+1. Eliminar tipo `FlowStep` y estado `step` -- ya no hay pasos
+2. Eliminar estados: `playerAttendance`, `showGuestSearch`, `guestSearch`, `availableGuests`
+3. Eliminar funciones: `toggleAttendance`, `markAllPresent`, `addGuestPlayer`, `removeGuestPlayer`
+4. Eliminar los bloques JSX de step "attendance" y step "confirm"
+5. Eliminar step indicator del header
+6. Cambiar `handleSubmit` para enviar `players: []`
+7. El footer solo muestra boton "Cancelar" y "Programar Partido"
 
-### Tabla `match_players` -- agregar columna
-- `performance` (text, nullable, default 'excellent') -- valores: 'outstanding', 'excellent', 'focus', null (absent)
+### Sin cambios en backend
 
-### Tabla `matches` -- agregar columna
-- `mvp_player_id` (uuid, nullable, FK a players, ON DELETE SET NULL)
-
-### Trigger SQL: `process_match_performance_xp`
-
-Al hacer UPDATE en `matches` con `status = 'terminado'`:
-
-1. Para cada `match_player` con `attended = true`:
-   - Calcular XP base del partido (ej: 30 XP) multiplicado por el multiplicador de rendimiento (1.5x, 1.0x, 0.75x)
-   - Multiplicar por el `xp_multiplier` del partido (importancia: regular, importante, eliminacion, final)
-   - Insertar en `stryk_events` con `source_type = 'match_performance'`, dedup por `(org_id, source_type, source_id, player_id)`
-
-2. Si `mvp_player_id IS NOT NULL`:
-   - Insertar evento adicional en `stryk_events` con `source_type = 'match_mvp'`, XP bonus = 50
-   - Dedup por `(org_id, 'match_mvp', match_id, player_id)`
-
-3. Jugadores con `attended = false` no reciben XP (rendimiento rojo automatico).
-
----
-
-## Cambios en frontend
-
-### 1. `LoadResultsModal.tsx` -- Tab Stats
-
-**Agregar al estado:**
-- `mvpPlayerId: string | null` -- jugador seleccionado como MVP
-- `playerPerformance: Record<string, PerformanceStatus>` -- semaforo por jugador
-
-**En cada fila de jugador presente:**
-- A la izquierda: icono Corona (Crown de lucide-react) -- tap para seleccionar/deseleccionar MVP (toggle exclusivo, solo 1)
-- Seguido: circulo de semaforo (reutilizar `PerformanceIndicator` existente con size="sm")
-- Resto: stats de goles/asistencias/puntos como estan
-
-**Jugadores ausentes:**
-- Mostrar en seccion separada colapsada al fondo con circulo rojo y texto "Ausente"
-
-**Al guardar (handleSave):**
-- Enviar `mvp_player_id` al update del match
-- Enviar `performance` en cada match_player update
-
-### 2. `MatchCard.tsx` -- Indicadores visuales
-
-- Si el match tiene `mvp_player_id`: mostrar icono de corona pequeno junto al score
-- Resumen de semaforo (conteos azul/verde/amarillo/rojo) visible en variante "full"
-
-### 3. `MatchDetailModal.tsx` / `MatchDetailDrawer.tsx`
-
-- Mostrar badge dorada con nombre del MVP
-- Mostrar semaforo de rendimiento por jugador en lista de participantes
-
-### 4. `src/types/matches.ts`
-
-- Agregar `mvp_player_id` y `mvp_player` al tipo Match
-- Agregar `performance` al tipo MatchPlayer
-
-### 5. `src/hooks/useMatches.ts`
-
-- Incluir join de `mvp_player:players!matches_mvp_player_id_fkey(id, full_name)` en query de matches
-
----
-
-## Archivos a modificar
-
-| Archivo | Cambio |
-|---------|--------|
-| Nueva migracion SQL | Agregar columnas, trigger XP |
-| `src/components/matches/LoadResultsModal.tsx` | Agregar corona MVP + semaforo rendimiento en tab Stats |
-| `src/components/matches/MatchCard.tsx` | Mostrar icono corona si hay MVP |
-| `src/components/matches/MatchDetailModal.tsx` | Mostrar MVP y semaforo en detalle |
-| `src/types/matches.ts` | Agregar campos mvp_player_id, performance |
-| `src/hooks/useMatches.ts` | Agregar join MVP player en query |
-
-## Lo que se reutiliza (sin duplicar)
-
-- `PerformanceIndicator` de `src/components/attendance/PerformanceIndicator.tsx` -- mismo componente, mismo patron visual
-- Logica de semaforo identica a asistencias (azul/verde/amarillo/rojo con ciclo por tap)
-
-## Lo que NO cambia
-
-- CreateMatchFlow (MVP y rendimiento se definen al cargar resultado, no al crear)
-- Attendance module (sistema independiente)
-- STRYK Way Studio (configuracion manual no necesaria, todo via triggers)
+No se necesitan migraciones. El campo `players` en `useCreateMatch` ya acepta array vacio.
 
