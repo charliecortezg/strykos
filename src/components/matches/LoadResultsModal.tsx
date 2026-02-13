@@ -811,6 +811,7 @@ export function LoadResultsModal({
                               status={perf as PerformanceStatus}
                               onChange={(status) => handlePerformanceChange(playerId, status)}
                               size="sm"
+                              cycleOrder={['outstanding', 'excellent', 'focus']}
                             />
 
                             <div className="flex-1 min-w-0">
