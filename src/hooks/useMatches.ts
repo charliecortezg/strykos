@@ -170,6 +170,31 @@ export function useMatchPlayers(matchId: string | null) {
     enabled: !!matchId && !!organization?.id,
   });
 
+  const createMatchPlayers = useMutation({
+    mutationFn: async (players: {
+      match_id: string;
+      player_id: string;
+      organization_id: string;
+      attended: boolean;
+      goals?: number;
+      assists?: number;
+      points?: number;
+      performance?: string | null;
+    }[]) => {
+      const { error } = await supabase
+        .from('match_players')
+        .insert(players);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['match-players', matchId] });
+    },
+    onError: (error) => {
+      console.error('Error creating match players:', error);
+      toast.error('Error al registrar jugadores del partido');
+    },
+  });
+
   const updateMatchPlayers = useMutation({
     mutationFn: async (players: Partial<MatchPlayer>[]) => {
       for (const player of players) {
@@ -200,6 +225,7 @@ export function useMatchPlayers(matchId: string | null) {
   return {
     matchPlayers,
     isLoading,
+    createMatchPlayers,
     updateMatchPlayers,
   };
 }
