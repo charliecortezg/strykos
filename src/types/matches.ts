@@ -38,6 +38,7 @@ export interface Match {
   technical_notes: string | null;
   importance: MatchImportance;
   xp_multiplier: number;
+  mvp_player_id: string | null;
   created_by: string | null;
   last_edited_by: string | null;
   last_edited_at: string | null;
@@ -60,6 +61,10 @@ export interface Match {
     id: string;
     name: string;
   } | null;
+  mvp_player?: {
+    id: string;
+    full_name: string;
+  } | null;
   created_by_profile?: {
     full_name: string;
   } | null;
@@ -67,6 +72,8 @@ export interface Match {
     full_name: string;
   } | null;
 }
+
+export type MatchPerformance = 'outstanding' | 'excellent' | 'focus';
 
 export interface MatchPlayer {
   id: string;
@@ -77,6 +84,7 @@ export interface MatchPlayer {
   goals: number;
   assists: number;
   points: number;
+  performance: MatchPerformance | null;
   created_at: string;
   updated_at: string;
   player?: {

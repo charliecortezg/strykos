@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, MapPin, User, Trophy, Edit2, Save, XCircle, Shield, Target, Users, Trash2, ShieldCheck } from 'lucide-react';
+import { Calendar, MapPin, User, Trophy, Edit2, Save, XCircle, Shield, Target, Users, Trash2, ShieldCheck, Crown } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Match, MatchPlayer, getMatchResult } from '@/types/matches';
+import { PerformanceIndicator } from '@/components/attendance/PerformanceIndicator';
+import type { PerformanceStatus } from '@/components/attendance/PerformanceIndicator';
 import { useMatchPlayers } from '@/hooks/useMatches';
 import { useVenues } from '@/hooks/useVenues';
 import { useAuth } from '@/contexts/AuthContext';
@@ -307,9 +309,19 @@ export function MatchDetailDrawer({
                     </Badge>
                   )}
                 </div>
-              </div>
+                </div>
 
-              {/* Notes */}
+                {/* MVP Badge */}
+                {match.mvp_player_id && match.mvp_player && (
+                  <div className="stryk-card p-3 flex items-center gap-2 bg-yellow-50/50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-800">
+                    <Crown className="w-5 h-5 text-yellow-500 fill-yellow-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">MVP del Partido</p>
+                      <p className="font-semibold text-sm">{match.mvp_player.full_name}</p>
+                    </div>
+                  </div>
+                )}
+
               <div className="space-y-3">
                 <div className="stryk-card p-3">
                   <Label className="text-xs text-muted-foreground">Observaciones</Label>
@@ -378,9 +390,27 @@ export function MatchDetailDrawer({
                 <div className="space-y-2">
                   {(isEditing ? editedPlayers : matchPlayers).map((mp) => (
                     <div key={mp.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{mp.player?.full_name}</p>
-                        <p className="text-xs text-muted-foreground">{mp.player?.position || 'Sin posición'}</p>
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {/* MVP crown indicator */}
+                        {match.mvp_player_id === mp.player_id && (
+                          <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
+                        )}
+                        {/* Performance indicator (read-only in detail view) */}
+                        {mp.attended && mp.performance && (
+                          <PerformanceIndicator
+                            status={mp.performance as PerformanceStatus}
+                            onChange={() => {}}
+                            disabled
+                            size="sm"
+                          />
+                        )}
+                        {!mp.attended && (
+                          <div className="w-5 h-5 min-w-[20px] rounded-full bg-destructive ring-2 ring-destructive/30 flex-shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{mp.player?.full_name}</p>
+                          <p className="text-xs text-muted-foreground">{mp.player?.position || 'Sin posición'}</p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-3">
                         {isEditing ? (
