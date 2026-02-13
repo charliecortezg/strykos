@@ -1,69 +1,56 @@
 
-
-# Plan: Reordenar Tabs y Navegacion Secuencial en LoadResultsModal
+# Plan: Corregir ciclo del semaforo en Stats de partidos
 
 ## Problema
 
-El usuario quiere dos cambios:
-1. **Reordenar los tabs**: Asistencia > Stats > Marcador > Notas (en vez de Asistencia > Marcador > Stats > Notas)
-2. **Navegacion secuencial**: En vez de solo "Guardar Resultado" al fondo, que el tab de Asistencia tenga un boton "Siguiente" que lleve al tab de Stats, y asi sucesivamente hasta el ultimo tab donde se guarda.
+En el tab Stats del modal "Cargar Resultado", al tocar el semaforo de rendimiento solo salta entre verde y amarillo. Esto pasa porque el `PerformanceIndicator` cicla entre 4 estados (azul, verde, amarillo, rojo), pero el tipo `MatchPerformance` solo soporta 3 (`outstanding`, `excellent`, `focus`). Cuando llega a `challenge` (rojo), el codigo lo mapea automaticamente a `focus` (amarillo), rompiendo el ciclo visual.
 
-## Cambios en `src/components/matches/LoadResultsModal.tsx`
+## Causa raiz
 
-### 1. Reordenar tabs en el `TabsList`
+En `LoadResultsModal.tsx`, linea 419:
+```text
+const matchPerf: MatchPerformance = status === 'challenge' ? 'focus' : status;
+```
 
-Nuevo orden:
-- Asistencia (attendance)
-- Stats (stats)
-- Marcador (result)
-- Notas (notes)
+Esto hace que el ciclo sea: azul -> verde -> amarillo -> (rojo se convierte en amarillo) -> azul nunca llega de nuevo correctamente.
 
-### 2. Convertir tabs a controlados
+## Solucion
 
-Cambiar de `defaultValue` a `value` + `onValueChange` usando un estado `activeTab`. Esto permite navegar programaticamente entre tabs.
+En el contexto de partidos, los jugadores **presentes** no deberian tener estado "Reto" (rojo) -- ese color es para ausentes. El semaforo en Stats solo debe ciclar entre 3 estados: **Sobresaliente (azul) -> Excelente (verde) -> Enfoque (amarillo)**.
 
-### 3. Agregar botones "Siguiente" por tab
+### Cambio en `src/components/attendance/PerformanceIndicator.tsx`
 
-Cada tab (excepto el ultimo) tendra un boton "Siguiente" al final de su contenido que avanza al siguiente tab en el orden:
+Agregar una prop opcional `excludeStatuses` (o `allowedStatuses`) que permita restringir los estados del ciclo. En el Stats tab, pasar solo `['outstanding', 'excellent', 'focus']` para que el ciclo de 3 funcione correctamente.
 
-- **Asistencia** -> boton "Siguiente" lleva a **Stats**
-- **Stats** -> boton "Siguiente" lleva a **Marcador**
-- **Marcador** -> boton "Siguiente" lleva a **Notas**
-- **Notas** -> no tiene "Siguiente" (el boton global "Guardar Resultado" esta en el footer)
+Alternativa mas simple: agregar prop `cycleOrder?: PerformanceStatus[]` que sobreescriba el `CYCLE_ORDER` por defecto.
 
-### 4. Footer se mantiene
+### Cambio en `src/components/matches/LoadResultsModal.tsx`
 
-El footer con "Cancelar" y "Guardar Resultado" permanece visible en todos los tabs para que el entrenador pueda guardar desde cualquier punto si ya termino.
+Pasar la prop al `PerformanceIndicator` en el tab Stats para restringir el ciclo a 3 estados.
 
 ## Seccion tecnica
 
-### Estado controlado de tabs
+### PerformanceIndicator.tsx
 
+Agregar prop opcional:
 ```text
-const [activeTab, setActiveTab] = useState(defaultTab);
-
-// Tab order for sequential navigation
-const TAB_ORDER = ['attendance', 'stats', 'result', 'notes'];
-
-const goToNextTab = () => {
-  const currentIdx = TAB_ORDER.indexOf(activeTab);
-  if (currentIdx < TAB_ORDER.length - 1) {
-    setActiveTab(TAB_ORDER[currentIdx + 1]);
-  }
-};
+cycleOrder?: PerformanceStatus[]
 ```
 
-### Boton "Siguiente" en cada tab
+Usar `cycleOrder || CYCLE_ORDER` en la funcion `handleCycle`.
 
-Al final de cada TabsContent (excepto "notes"), agregar:
+### LoadResultsModal.tsx
 
+En el tab Stats, pasar:
 ```text
-<Button onClick={goToNextTab} className="w-full h-12 mt-4">
-  Siguiente →
-</Button>
+<PerformanceIndicator
+  status={perf as PerformanceStatus}
+  onChange={(status) => handlePerformanceChange(playerId, status)}
+  size="sm"
+  cycleOrder={['outstanding', 'excellent', 'focus']}
+/>
 ```
 
-### Solo se modifica un archivo
-
-`src/components/matches/LoadResultsModal.tsx`
-
+### Archivos modificados
+- `src/components/attendance/PerformanceIndicator.tsx` -- agregar prop `cycleOrder`
+- `src/components/matches/LoadResultsModal.tsx` -- pasar `cycleOrder` al indicador en Stats
