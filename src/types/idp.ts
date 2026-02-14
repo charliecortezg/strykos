@@ -111,7 +111,7 @@ export function parseWeeklyPlan(description: string): WeeklyPlanDay[] {
       day: h.replace(':', '').trim(),
       title: '',
       exercises: parts[i]
-        ? parts[i].split(/[.;]/).map(s => s.trim()).filter(Boolean)
+        ? parts[i].split(/[.;]/).map(s => s.trim()).filter(s => s.length >= 3 && !/^[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ]+$/.test(s))
         : [],
     }));
   }
