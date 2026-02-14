@@ -8,17 +8,18 @@ interface RadarChartProps {
 }
 
 const ATTRIBUTES = [
-  { key: 'tecnica', label: 'Técnica', angle: -90 },
-  { key: 'tactica', label: 'Táctica', angle: -30 },
-  { key: 'fisica', label: 'Física', angle: 30 },
-  { key: 'mental', label: 'Mental', angle: 90 },
-  { key: 'social', label: 'Social', angle: 150 },
-  { key: 'disciplina', label: 'Disciplina', angle: 210 },
+  { key: 'tecnica', label: 'Control', shortLabel: 'CTRL', angle: -90 },
+  { key: 'tactica', label: 'Decisión', shortLabel: 'DEC', angle: -30 },
+  { key: 'fisica', label: 'Pase', shortLabel: 'PAS', angle: 30 },
+  { key: 'mental', label: 'Actitud', shortLabel: 'ACT', angle: 150 },
+  { key: 'social', label: 'Autonomía', shortLabel: 'AUT', angle: 210 },
+  { key: 'disciplina', label: 'Disciplina', shortLabel: 'DIS', angle: 90 },
 ] as const;
 
 export function RadarChart({ data, size = 200, className = '' }: RadarChartProps) {
   const center = size / 2;
-  const maxRadius = (size / 2) - 30;
+  const labelPadding = 32;
+  const maxRadius = (size / 2) - labelPadding;
 
   const points = useMemo(() => {
     return ATTRIBUTES.map(attr => {
@@ -32,15 +33,13 @@ export function RadarChart({ data, size = 200, className = '' }: RadarChartProps
         value,
         x: center + radius * Math.cos(angleRad),
         y: center + radius * Math.sin(angleRad),
-        labelX: center + (maxRadius + 20) * Math.cos(angleRad),
-        labelY: center + (maxRadius + 20) * Math.sin(angleRad),
+        labelX: center + (maxRadius + 18) * Math.cos(angleRad),
+        labelY: center + (maxRadius + 18) * Math.sin(angleRad),
       };
     });
   }, [data, center, maxRadius]);
 
   const polygonPoints = points.map(p => `${p.x},${p.y}`).join(' ');
-
-  // Grid circles
   const gridLevels = [0.25, 0.5, 0.75, 1];
 
   return (
@@ -87,7 +86,7 @@ export function RadarChart({ data, size = 200, className = '' }: RadarChartProps
       <polygon
         points={polygonPoints}
         fill="hsl(var(--primary))"
-        fillOpacity={0.3}
+        fillOpacity={0.25}
         stroke="hsl(var(--primary))"
         strokeWidth={2}
       />
@@ -98,12 +97,12 @@ export function RadarChart({ data, size = 200, className = '' }: RadarChartProps
           key={i}
           cx={point.x}
           cy={point.y}
-          r={4}
+          r={3}
           fill="hsl(var(--primary))"
         />
       ))}
 
-      {/* Labels */}
+      {/* Labels - short abbreviations to avoid overflow */}
       {points.map((point, i) => (
         <text
           key={i}
@@ -111,22 +110,9 @@ export function RadarChart({ data, size = 200, className = '' }: RadarChartProps
           y={point.labelY}
           textAnchor="middle"
           dominantBaseline="middle"
-          className="text-[10px] fill-muted-foreground font-medium"
+          className="text-[9px] fill-muted-foreground font-semibold uppercase tracking-wide"
         >
-          {point.label}
-        </text>
-      ))}
-
-      {/* Center value labels */}
-      {points.map((point, i) => (
-        <text
-          key={`value-${i}`}
-          x={point.x}
-          y={point.y - 10}
-          textAnchor="middle"
-          className="text-[8px] fill-foreground font-bold"
-        >
-          {point.value}
+          {point.shortLabel}
         </text>
       ))}
     </svg>
