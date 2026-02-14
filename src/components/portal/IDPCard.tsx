@@ -1,25 +1,26 @@
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { usePlayerIDP } from '@/hooks/usePortal/usePlayerIDP';
-import { STAT_LABELS } from '@/types/idp';
-import { Target, TrendingUp, AlertTriangle, CheckCircle2, Flame, Brain, Sparkles, ListChecks, Calendar } from 'lucide-react';
-import { IDPSessionModal } from './IDPSessionModal';
+import { STAT_LABELS, parseWeeklyPlan } from '@/types/idp';
+import { Target, TrendingUp, AlertTriangle, CheckCircle2, Flame, Brain, Sparkles, ListChecks, Calendar, Dumbbell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   playerId: string;
 }
 
 export function IDPCard({ playerId }: Props) {
-  const {
-    idpCycle, focusAreas, sessions, isLoading, hasSessionToday, acceptIDP, registerSession,
-  } = usePlayerIDP(playerId);
-  const [showSessionModal, setShowSessionModal] = useState(false);
+  const { idpCycle, focusAreas, sessions, isLoading } = usePlayerIDP(playerId);
 
   if (isLoading) return <div className="h-40 bg-muted animate-pulse rounded-lg" />;
-  if (!idpCycle) return null;
+  if (!idpCycle) return (
+    <Card>
+      <CardContent className="py-8 text-center text-muted-foreground text-sm">
+        Aún no se ha generado un Plan de Desarrollo para este jugador.
+      </CardContent>
+    </Card>
+  );
 
   const plan = idpCycle.plan_json;
   const stageLabels: Record<string, string> = { '0_30': 'Días 1–30', '31_60': 'Días 31–60', '61_90': 'Días 61–90' };
@@ -30,13 +31,18 @@ export function IDPCard({ playerId }: Props) {
   };
 
   const config = statusConfig[idpCycle.status] || statusConfig.active;
-
   const strengthenAreas = focusAreas.filter(f => f.focus_type === 'strengthen');
   const improveAreas = focusAreas.filter(f => f.focus_type === 'improve');
   const mentalidadActions = plan?.mentalidad_actions || [];
 
+  // Parse weekly plan into structured days
+  const weeklyPlanDays = plan?.weekly_plan?.description
+    ? parseWeeklyPlan(plan.weekly_plan.description)
+    : [];
+
   return (
-    <>
+    <div className="space-y-4">
+      {/* Status Card */}
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -49,24 +55,20 @@ export function IDPCard({ playerId }: Props) {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{stageLabels[idpCycle.stage] || idpCycle.stage}</span>
             <span>•</span>
-            <span>{idpCycle.starts_at} → {idpCycle.ends_at}</span>
+            <span>{sessions.length} sesiones</span>
+            <Flame className="h-3.5 w-3.5 text-orange-500" />
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Accept button */}
           {!idpCycle.accepted_at && (
-            <Button
-              onClick={() => acceptIDP.mutate()}
-              disabled={acceptIDP.isPending}
-              className="w-full"
-              variant="default"
-            >
+            <Button className="w-full" variant="default" disabled>
               <CheckCircle2 className="h-4 w-4 mr-2" />
               Aceptar Plan
             </Button>
           )}
 
-          {/* === AI COMMENT === */}
+          {/* AI Comment */}
           {plan?.ai_comment && (
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
               <div className="flex items-center gap-1.5 mb-1.5">
@@ -76,130 +78,116 @@ export function IDPCard({ playerId }: Props) {
               <p className="text-sm text-muted-foreground">{plan.ai_comment}</p>
             </div>
           )}
+        </CardContent>
+      </Card>
 
-          {/* === SECTION 1: Enfoque Técnico === */}
-          <div className="space-y-3">
-            <h4 className="font-semibold text-sm flex items-center gap-1.5">
+      {/* Technical Focus Card */}
+      {(strengthenAreas.length > 0 || improveAreas.length > 0) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-1.5">
               <TrendingUp className="h-4 w-4 text-green-600" />
               Enfoque Técnico
-            </h4>
-
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
             {strengthenAreas.map(fa => (
-              <FocusAreaRow
-                key={fa.id}
-                statKey={fa.stat_key}
-                initial={fa.initial_score}
-                target={fa.target_score}
-                label="Potenciar"
-                variant="green"
-              />
+              <FocusAreaRow key={fa.id} statKey={fa.stat_key} initial={fa.initial_score} target={fa.target_score} label="Potenciar" variant="green" />
             ))}
-
             {improveAreas.map(fa => (
-              <FocusAreaRow
-                key={fa.id}
-                statKey={fa.stat_key}
-                initial={fa.initial_score}
-                target={fa.target_score}
-                label="Mejorar"
-                variant="yellow"
-              />
+              <FocusAreaRow key={fa.id} statKey={fa.stat_key} initial={fa.initial_score} target={fa.target_score} label="Mejorar" variant="yellow" />
             ))}
-          </div>
+          </CardContent>
+        </Card>
+      )}
 
-          {/* === AI RECOMMENDATIONS === */}
-          {plan?.ai_recommendations && plan.ai_recommendations.length > 0 && (
-            <div className="space-y-2 pt-2 border-t">
-              <h4 className="font-semibold text-sm flex items-center gap-1.5">
-                <ListChecks className="h-4 w-4 text-primary" />
-                Recomendaciones
-              </h4>
-              <ul className="space-y-1.5">
-                {plan.ai_recommendations.map((rec, i) => (
-                  <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                    {rec}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+      {/* AI Recommendations Card */}
+      {plan?.ai_recommendations && plan.ai_recommendations.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-1.5">
+              <ListChecks className="h-4 w-4 text-primary" />
+              Recomendaciones
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {plan.ai_recommendations.map((rec, i) => (
+                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  {rec}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
-          {/* Sessions + Streak */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-            <div className="text-sm">
-              <span className="font-medium">{sessions.length}</span>
-              <span className="text-muted-foreground"> sesiones</span>
-            </div>
-            <div className="flex items-center gap-1 text-sm">
-              <Flame className="h-4 w-4 text-orange-500" />
-              <span className="font-medium">Racha</span>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setShowSessionModal(true)}
-              disabled={hasSessionToday || idpCycle.status === 'completed'}
-            >
-              {hasSessionToday ? 'Ya registraste hoy' : 'Registrar sesión'}
-            </Button>
-          </div>
-
-          {/* Weekly plan */}
-          {plan?.weekly_plan && (
-            <div className="space-y-1.5 pt-2 border-t">
-              <h4 className="font-semibold text-sm flex items-center gap-1.5">
-                <Calendar className="h-4 w-4 text-primary" />
-                Plan Semanal
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                {plan.weekly_plan.description}
-              </p>
-            </div>
-          )}
-
-          {/* === SECTION 2: Indicaciones de Mentalidad === */}
-          {mentalidadActions.length > 0 && (
-            <div className="space-y-3 pt-2 border-t">
-              <h4 className="font-semibold text-sm flex items-center gap-1.5">
-                <Brain className="h-4 w-4 text-purple-500" />
-                Acciones de Mentalidad
-              </h4>
-              <p className="text-xs text-muted-foreground">
-                Acciones recomendadas para los próximos 30 días
-              </p>
-              {mentalidadActions.map((ma, i) => (
-                <div key={i} className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                    <span className="text-sm font-medium">{ma.stat_label}</span>
-                    <Badge variant="outline" className="text-xs">{ma.score}/20</Badge>
+      {/* Weekly Plan Cards */}
+      {weeklyPlanDays.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-1.5">
+              <Calendar className="h-4 w-4 text-primary" />
+              Plan Semanal
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2">
+              {weeklyPlanDays.map((day, i) => (
+                <div key={i} className="p-3 rounded-lg bg-muted/50 border">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Dumbbell className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-sm font-semibold">{day.day}</span>
+                    {day.title && <span className="text-xs text-muted-foreground">— {day.title}</span>}
                   </div>
-                  <ul className="ml-6 space-y-0.5">
-                    {ma.actions.map((action, j) => (
+                  <ul className="space-y-0.5">
+                    {day.exercises.map((ex, j) => (
                       <li key={j} className="text-xs text-muted-foreground flex items-start gap-1.5">
                         <span className="mt-1.5 h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
-                        {action}
+                        {ex}
                       </li>
                     ))}
                   </ul>
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
-      <IDPSessionModal
-        open={showSessionModal}
-        onOpenChange={setShowSessionModal}
-        sessionNumber={sessions.length + 1}
-        onConfirm={() => {
-          registerSession.mutate();
-          setShowSessionModal(false);
-        }}
-        isPending={registerSession.isPending}
-      />
-    </>
+      {/* Mentality Actions Card */}
+      {mentalidadActions.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-1.5">
+              <Brain className="h-4 w-4 text-purple-500" />
+              Acciones de Mentalidad
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">Acciones recomendadas para los próximos 30 días</p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {mentalidadActions.map((ma, i) => (
+              <div key={i} className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="text-sm font-medium">{ma.stat_label}</span>
+                  <Badge variant="outline" className="text-xs">{ma.score}/20</Badge>
+                </div>
+                <ul className="ml-6 space-y-0.5">
+                  {ma.actions.map((action, j) => (
+                    <li key={j} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                      <span className="mt-1.5 h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
+                      {action}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
 

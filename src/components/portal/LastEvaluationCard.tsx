@@ -4,6 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { WLARadarChart } from '@/components/evaluations/WLARadarChart';
 import { usePlayerLastEvaluation } from '@/hooks/usePortal/usePlayerLastEvaluation';
 import { WLA_STATS } from '@/types/evaluations';
+import { getLevelLabel } from '@/types/idp';
 import { TrendingUp, TrendingDown, Minus, MessageSquare, BookOpen } from 'lucide-react';
 
 interface Props {
@@ -14,7 +15,13 @@ export function LastEvaluationCard({ playerId }: Props) {
   const { lastEvaluation, isLoading } = usePlayerLastEvaluation(playerId);
 
   if (isLoading) return <div className="h-40 bg-muted animate-pulse rounded-lg" />;
-  if (!lastEvaluation) return null;
+  if (!lastEvaluation) return (
+    <Card>
+      <CardContent className="py-8 text-center text-muted-foreground text-sm">
+        Aún no hay evaluaciones cerradas para este jugador.
+      </CardContent>
+    </Card>
+  );
 
   const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const [year, month] = lastEvaluation.period.split('-');
@@ -69,33 +76,36 @@ export function LastEvaluationCard({ playerId }: Props) {
           })}
         </div>
 
-        {/* Rubrics - Level descriptions */}
+        {/* Rubrics - Level descriptions with Quiere/Sabe/Puede ser */}
         {lastEvaluation.rubrics.length > 0 && (
           <div className="space-y-3 pt-2 border-t">
             <h4 className="font-semibold text-sm flex items-center gap-1.5">
               <BookOpen className="h-4 w-4 text-primary" />
               Nivel Actual
             </h4>
-            {lastEvaluation.rubrics.map(rubric => (
-              <div key={rubric.id} className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">
-                    {WLA_STATS.find(s => s.key === rubric.stat_key)?.label || rubric.stat_key}
-                  </span>
-                  <Badge variant="outline" className="text-xs">
-                    {rubric.band_min}-{rubric.band_max}
-                  </Badge>
+            {lastEvaluation.rubrics.map(rubric => {
+              const levelInfo = getLevelLabel(rubric.band_min, rubric.band_max);
+              return (
+                <div key={rubric.id} className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">
+                      {WLA_STATS.find(s => s.key === rubric.stat_key)?.label || rubric.stat_key}
+                    </span>
+                    <Badge variant="outline" className={`text-xs ${levelInfo.color}`}>
+                      {levelInfo.label}
+                    </Badge>
+                  </div>
+                  <ul className="ml-4 space-y-0.5">
+                    {rubric.bullets.map((bullet, i) => (
+                      <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                        <span className="mt-1.5 h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
+                        {bullet}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="ml-4 space-y-0.5">
-                  {rubric.bullets.map((bullet, i) => (
-                    <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                      <span className="mt-1.5 h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
-                      {bullet}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

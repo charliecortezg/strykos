@@ -1,38 +1,42 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Sparkles, LogOut } from 'lucide-react';
+import { ArrowLeft, Sparkles, LogOut, ClipboardCheck, Target, TrendingUp, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePortalAuth } from '@/contexts/PortalAuthContext';
 import { usePlayerProgress, usePlayerBadges, usePlayerActivity, useActiveChallenges } from '@/hooks/usePortal';
-import { ProgressCard, PlayerCard, BadgesGrid, ChallengesActive, ActivityFeed, LastEvaluationCard, IDPCard } from '@/components/portal';
+import { ProgressCard, BadgesGrid, ChallengesActive, ActivityFeed, LastEvaluationCard, IDPCard } from '@/components/portal';
 import { MembershipTimeline } from '@/components/membership/MembershipTimeline';
 import { MembershipHeroCard } from '@/components/membership/MembershipHeroCard';
 import { usePlayerMembershipProgress } from '@/hooks/useMembershipBlocks';
+import { usePlayerIDP } from '@/hooks/usePortal/usePlayerIDP';
+import { IDPSessionModal } from '@/components/portal/IDPSessionModal';
 import type { RadarAttributes } from '@/types/stryk-way';
+import { RadarChart } from '@/components/portal/RadarChart';
+import { User } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function PortalPlayerView() {
   const { playerId } = useParams<{ playerId: string }>();
   const navigate = useNavigate();
   const { linkedPlayers, organizationName, logout } = usePortalAuth();
   const [activityFilter, setActivityFilter] = useState<'block' | 'all'>('all');
+  const [showSessionModal, setShowSessionModal] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/portal/login');
   };
 
-  // Check if player is linked
   const player = linkedPlayers.find(p => p.id === playerId);
-
   const { progress, xpProgress, xpNeeded, xpPercentage, isLoading: loadingProgress } = usePlayerProgress(playerId || null);
   const { earnedBadges, lockedBadges, isLoading: loadingBadges } = usePlayerBadges(playerId || null);
   const { events, isLoading: loadingActivity } = usePlayerActivity(playerId || null);
   const { activeChallenges, isLoading: loadingChallenges } = useActiveChallenges(playerId || null);
   const membership = usePlayerMembershipProgress(playerId || null);
+  const { idpCycle, sessions, hasSessionToday, registerSession } = usePlayerIDP(playerId || null);
 
-  // Redirect if player not linked
   if (!player) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -48,28 +52,23 @@ export default function PortalPlayerView() {
 
   const isLoading = loadingProgress || loadingBadges || loadingActivity || loadingChallenges;
 
-  // Default radar if not available
   const radar: RadarAttributes = progress?.radar || {
-    tecnica: 50,
-    tactica: 50,
-    fisica: 50,
-    mental: 50,
-    social: 50,
-    disciplina: 50,
+    tecnica: 50, tactica: 50, fisica: 50, mental: 50, social: 50, disciplina: 50,
   };
 
-  // Block date range for filtering
+  const ovr = progress?.ovr || 50;
+  const level = progress?.level || 1;
+  const xpTotal = progress?.xp_total || 0;
+
   const blockDateRange = membership.blockStartDate && membership.blockEndDate
     ? { start: membership.blockStartDate, end: membership.blockEndDate }
     : null;
 
-  // Filter activity events by block if needed
   const filteredEvents = activityFilter === 'block' && blockDateRange
-    ? events.filter(e => {
-        const d = e.created_at;
-        return d >= blockDateRange.start && d <= blockDateRange.end;
-      })
+    ? events.filter(e => e.created_at >= blockDateRange.start && e.created_at <= blockDateRange.end)
     : events;
+
+  const showFloatingButton = !!idpCycle && !hasSessionToday && idpCycle.status !== 'completed';
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
@@ -94,89 +93,91 @@ export default function PortalPlayerView() {
         </div>
       </header>
 
-      {/* Content */}
-      <main className="container px-4 py-6 space-y-6">
+      <main className="container px-4 py-4 space-y-4 pb-24">
         {isLoading ? (
           <div className="space-y-4">
             <div className="h-32 bg-muted animate-pulse rounded-lg" />
-            <div className="h-64 bg-muted animate-pulse rounded-lg" />
+            <div className="h-48 bg-muted animate-pulse rounded-lg" />
           </div>
         ) : (
           <>
-            {/* 1. Membership Hero Card */}
-            <MembershipHeroCard
-              currentBlock={membership.currentBlock}
-              currentStage={membership.currentStage}
-              blockStartDate={membership.blockStartDate}
-              blockEndDate={membership.blockEndDate}
-              evalCount={membership.eval_count}
-              attendancePct={membership.attendance_pct}
-              daysRemaining={membership.days_remaining}
-              eligibleForProgression={membership.eligibleForProgression}
-            />
-
-            {/* 1b. Last Evaluation */}
-            <LastEvaluationCard playerId={playerId!} />
-
-            {/* 1c. IDP */}
-            <IDPCard playerId={playerId!} />
-
-            {/* 2. Membership Timeline */}
-            {membership.blocks.length > 0 && (
-              <MembershipTimeline blocks={membership.blocks} currentStage={membership.currentStage} />
-            )}
-
-            {/* 3. Progress Card */}
-            <ProgressCard
-              xpTotal={progress?.xp_total || 0}
-              level={progress?.level || 1}
-              streak={progress?.streak || 0}
-              xpProgress={xpProgress}
-              xpNeeded={xpNeeded}
-              xpPercentage={xpPercentage}
-            />
-
-            {/* 4. Player Card */}
-            <PlayerCard
+            {/* Compact Hero: OVR + Radar + Level */}
+            <CompactPlayerHeader
               playerName={player.full_name}
               categoryName={player.category_name}
-              ovr={progress?.ovr || 50}
+              ovr={ovr}
+              level={level}
+              xpTotal={xpTotal}
               radar={radar}
-              topBadges={earnedBadges.slice(0, 3).map(eb => eb.badge)}
             />
 
-            {/* 5. Tabs with block context */}
-            <Tabs defaultValue="challenges" className="mt-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="challenges">Retos</TabsTrigger>
-                <TabsTrigger value="badges">Logros</TabsTrigger>
-                <TabsTrigger value="activity">Actividad</TabsTrigger>
+            {/* Main Tabs */}
+            <Tabs defaultValue="evaluacion" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 h-auto">
+                <TabsTrigger value="evaluacion" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+                  <ClipboardCheck className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Evaluación</span>
+                  <span className="sm:hidden">Eval</span>
+                </TabsTrigger>
+                <TabsTrigger value="plan" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+                  <Target className="h-3.5 w-3.5" />
+                  Plan
+                </TabsTrigger>
+                <TabsTrigger value="progreso" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Progreso</span>
+                  <span className="sm:hidden">Prog</span>
+                </TabsTrigger>
+                <TabsTrigger value="actividad" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+                  <Activity className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Actividad</span>
+                  <span className="sm:hidden">Act</span>
+                </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="challenges" className="mt-4">
+              <TabsContent value="evaluacion" className="mt-4 space-y-4">
+                <LastEvaluationCard playerId={playerId!} />
+              </TabsContent>
+
+              <TabsContent value="plan" className="mt-4 space-y-4">
+                <IDPCard playerId={playerId!} />
+              </TabsContent>
+
+              <TabsContent value="progreso" className="mt-4 space-y-4">
+                <MembershipHeroCard
+                  currentBlock={membership.currentBlock}
+                  currentStage={membership.currentStage}
+                  blockStartDate={membership.blockStartDate}
+                  blockEndDate={membership.blockEndDate}
+                  evalCount={membership.eval_count}
+                  attendancePct={membership.attendance_pct}
+                  daysRemaining={membership.days_remaining}
+                  eligibleForProgression={membership.eligibleForProgression}
+                />
+                {membership.blocks.length > 0 && (
+                  <MembershipTimeline blocks={membership.blocks} currentStage={membership.currentStage} />
+                )}
+                <ProgressCard
+                  xpTotal={xpTotal}
+                  level={level}
+                  streak={progress?.streak || 0}
+                  xpProgress={xpProgress}
+                  xpNeeded={xpNeeded}
+                  xpPercentage={xpPercentage}
+                />
+              </TabsContent>
+
+              <TabsContent value="actividad" className="mt-4 space-y-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Retos Activos</CardTitle>
-                    {membership.currentBlock && (
-                      <p className="text-xs text-muted-foreground">
-                        Retos activos del bloque {membership.currentBlock.name}
-                      </p>
-                    )}
-                  </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-4">
                     <ChallengesActive challenges={activeChallenges} />
                   </CardContent>
                 </Card>
-              </TabsContent>
-
-              <TabsContent value="badges" className="mt-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      Logros ({earnedBadges.length}/{earnedBadges.length + lockedBadges.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-sm">Logros ({earnedBadges.length})</h3>
+                    </div>
                     <BadgesGrid
                       earnedBadges={earnedBadges}
                       lockedBadges={lockedBadges}
@@ -184,36 +185,25 @@ export default function PortalPlayerView() {
                     />
                   </CardContent>
                 </Card>
-              </TabsContent>
-
-              <TabsContent value="activity" className="mt-4">
                 <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Actividad Reciente</CardTitle>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-sm">Actividad Reciente</h3>
                       {blockDateRange && (
                         <div className="flex gap-1">
                           <Button
                             variant={activityFilter === 'block' ? 'default' : 'outline'}
-                            size="sm"
-                            className="text-xs h-7 px-2"
+                            size="sm" className="text-xs h-7 px-2"
                             onClick={() => setActivityFilter('block')}
-                          >
-                            Este bloque
-                          </Button>
+                          >Este bloque</Button>
                           <Button
                             variant={activityFilter === 'all' ? 'default' : 'outline'}
-                            size="sm"
-                            className="text-xs h-7 px-2"
+                            size="sm" className="text-xs h-7 px-2"
                             onClick={() => setActivityFilter('all')}
-                          >
-                            Todo
-                          </Button>
+                          >Todo</Button>
                         </div>
                       )}
                     </div>
-                  </CardHeader>
-                  <CardContent>
                     <ActivityFeed events={filteredEvents} />
                   </CardContent>
                 </Card>
@@ -222,6 +212,85 @@ export default function PortalPlayerView() {
           </>
         )}
       </main>
+
+      {/* Floating Session Button */}
+      {showFloatingButton && (
+        <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50 px-4">
+          <Button
+            size="lg"
+            className="shadow-lg rounded-full px-6 gap-2"
+            onClick={() => setShowSessionModal(true)}
+          >
+            <Target className="h-5 w-5" />
+            Registrar Sesión de Entrenamiento
+          </Button>
+        </div>
+      )}
+
+      <IDPSessionModal
+        open={showSessionModal}
+        onOpenChange={setShowSessionModal}
+        sessionNumber={(sessions?.length || 0) + 1}
+        onConfirm={() => {
+          registerSession.mutate();
+          setShowSessionModal(false);
+        }}
+        isPending={registerSession.isPending}
+      />
+    </div>
+  );
+}
+
+function CompactPlayerHeader({
+  playerName, categoryName, ovr, level, xpTotal, radar,
+}: {
+  playerName: string;
+  categoryName: string | null;
+  ovr: number;
+  level: number;
+  xpTotal: number;
+  radar: RadarAttributes;
+}) {
+  const tierStyle = ovr >= 85
+    ? { bg: 'from-amber-400 to-orange-500', text: 'text-white' }
+    : ovr >= 70
+      ? { bg: 'from-purple-500 to-pink-500', text: 'text-white' }
+      : ovr >= 55
+        ? { bg: 'from-blue-500 to-cyan-400', text: 'text-white' }
+        : { bg: 'from-slate-400 to-slate-500', text: 'text-white' };
+
+  return (
+    <div className="rounded-2xl overflow-hidden border shadow-sm">
+      <div className={cn('p-4 bg-gradient-to-r', tierStyle.bg)}>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+            <User className="w-6 h-6 text-white/80" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className={cn('font-bold text-base truncate', tierStyle.text)}>{playerName}</h2>
+            {categoryName && (
+              <p className={cn('text-xs opacity-80', tierStyle.text)}>{categoryName}</p>
+            )}
+          </div>
+          <div className="flex flex-col items-center">
+            <span className={cn('text-3xl font-black', tierStyle.text)}>{ovr}</span>
+            <span className={cn('text-[10px] font-medium uppercase tracking-wider opacity-80', tierStyle.text)}>OVR</span>
+          </div>
+        </div>
+        {/* Level + XP chips */}
+        <div className="flex gap-2 mt-2">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-xs text-white font-medium">
+            Nv {level}
+          </span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-xs text-white font-medium">
+            {xpTotal} XP
+          </span>
+        </div>
+      </div>
+      {/* Compact radar */}
+      <div className="bg-card flex justify-center py-3">
+        <RadarChart data={radar} size={140} />
+      </div>
     </div>
   );
 }

@@ -86,3 +86,45 @@ export const STAT_LABELS: Record<string, string> = {
 
 export const PILAR_TECNICO_KEYS = ['control_conduccion', 'pase_recepcion', 'decision_juego'] as const;
 export const PILAR_MENTALIDAD_KEYS = ['actitud_esfuerzo', 'disciplina_constancia', 'autonomia_liderazgo'] as const;
+
+export interface WeeklyPlanDay {
+  day: string;
+  title: string;
+  exercises: string[];
+}
+
+export function getLevelLabel(bandMin: number, bandMax: number): { label: string; color: string } {
+  if (bandMax <= 5) return { label: 'Quiere ser', color: 'bg-orange-100 text-orange-700 border-orange-200' };
+  if (bandMax <= 10) return { label: 'Quiere ser', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' };
+  if (bandMax <= 15) return { label: 'Sabe ser', color: 'bg-blue-100 text-blue-700 border-blue-200' };
+  return { label: 'Puede ser', color: 'bg-green-100 text-green-700 border-green-200' };
+}
+
+export function parseWeeklyPlan(description: string): WeeklyPlanDay[] {
+  // Try to parse "Día 1:", "Día 2:", "Día 3:" patterns
+  const dayRegex = /(?:D[ií]a\s*\d|Lunes|Martes|Mi[eé]rcoles|Jueves|Viernes|S[aá]bado|Domingo)[^:]*:/gi;
+  const parts = description.split(dayRegex).filter(Boolean);
+  const headers = description.match(dayRegex);
+
+  if (headers && headers.length >= 2 && parts.length >= 2) {
+    return headers.map((h, i) => ({
+      day: h.replace(':', '').trim(),
+      title: '',
+      exercises: parts[i]
+        ? parts[i].split(/[.;]/).map(s => s.trim()).filter(Boolean)
+        : [],
+    }));
+  }
+
+  // Fallback: split by periods into 3 cards
+  const sentences = description.split(/\.\s+/).filter(Boolean);
+  if (sentences.length >= 3) {
+    return [
+      { day: 'Día 1', title: '', exercises: [sentences[0]] },
+      { day: 'Día 2', title: '', exercises: [sentences[1]] },
+      { day: 'Día 3', title: '', exercises: sentences.slice(2) },
+    ];
+  }
+
+  return [{ day: 'Plan Semanal', title: '', exercises: [description] }];
+}
