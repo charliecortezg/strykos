@@ -68,6 +68,8 @@ export interface IDPPlanJSON {
     sessions_per_week: number;
     focus_rotation: string[];
   };
+  ai_comment?: string;
+  ai_recommendations?: string[];
 }
 
 export const IDP_SESSION_XP = 10;
