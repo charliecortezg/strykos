@@ -11,10 +11,17 @@ const ATTRIBUTES = [
   { key: 'tecnica', label: 'Control', shortLabel: 'CTRL', angle: -90 },
   { key: 'tactica', label: 'Decisión', shortLabel: 'DEC', angle: -30 },
   { key: 'fisica', label: 'Pase', shortLabel: 'PAS', angle: 30 },
+  { key: 'disciplina', label: 'Disciplina', shortLabel: 'DIS', angle: 90 },
   { key: 'mental', label: 'Actitud', shortLabel: 'ACT', angle: 150 },
   { key: 'social', label: 'Autonomía', shortLabel: 'AUT', angle: 210 },
-  { key: 'disciplina', label: 'Disciplina', shortLabel: 'DIS', angle: 90 },
 ] as const;
+
+function hexagonPoints(cx: number, cy: number, r: number): string {
+  return ATTRIBUTES.map(attr => {
+    const rad = (attr.angle * Math.PI) / 180;
+    return `${cx + r * Math.cos(rad)},${cy + r * Math.sin(rad)}`;
+  }).join(' ');
+}
 
 export function RadarChart({ data, size = 200, className = '' }: RadarChartProps) {
   const center = size / 2;
@@ -48,13 +55,11 @@ export function RadarChart({ data, size = 200, className = '' }: RadarChartProps
       className={`w-full h-auto ${className}`}
       style={{ maxWidth: size }}
     >
-      {/* Background grid circles */}
+      {/* Background grid hexagons */}
       {gridLevels.map((level, i) => (
-        <circle
+        <polygon
           key={i}
-          cx={center}
-          cy={center}
-          r={maxRadius * level}
+          points={hexagonPoints(center, center, maxRadius * level)}
           fill="none"
           stroke="currentColor"
           strokeOpacity={0.1}
