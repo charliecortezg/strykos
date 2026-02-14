@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { usePlayerIDP } from '@/hooks/usePortal/usePlayerIDP';
 import { STAT_LABELS } from '@/types/idp';
-import { Target, TrendingUp, AlertTriangle, CheckCircle2, Flame, Brain } from 'lucide-react';
+import { Target, TrendingUp, AlertTriangle, CheckCircle2, Flame, Brain, Sparkles, ListChecks, Calendar } from 'lucide-react';
 import { IDPSessionModal } from './IDPSessionModal';
 
 interface Props {
@@ -66,6 +66,17 @@ export function IDPCard({ playerId }: Props) {
             </Button>
           )}
 
+          {/* === AI COMMENT === */}
+          {plan?.ai_comment && (
+            <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold">Análisis del Jugador</span>
+              </div>
+              <p className="text-sm text-muted-foreground">{plan.ai_comment}</p>
+            </div>
+          )}
+
           {/* === SECTION 1: Enfoque Técnico === */}
           <div className="space-y-3">
             <h4 className="font-semibold text-sm flex items-center gap-1.5">
@@ -73,7 +84,6 @@ export function IDPCard({ playerId }: Props) {
               Enfoque Técnico
             </h4>
 
-            {/* Strengthen areas */}
             {strengthenAreas.map(fa => (
               <FocusAreaRow
                 key={fa.id}
@@ -85,7 +95,6 @@ export function IDPCard({ playerId }: Props) {
               />
             ))}
 
-            {/* Improve area */}
             {improveAreas.map(fa => (
               <FocusAreaRow
                 key={fa.id}
@@ -97,6 +106,24 @@ export function IDPCard({ playerId }: Props) {
               />
             ))}
           </div>
+
+          {/* === AI RECOMMENDATIONS === */}
+          {plan?.ai_recommendations && plan.ai_recommendations.length > 0 && (
+            <div className="space-y-2 pt-2 border-t">
+              <h4 className="font-semibold text-sm flex items-center gap-1.5">
+                <ListChecks className="h-4 w-4 text-primary" />
+                Recomendaciones
+              </h4>
+              <ul className="space-y-1.5">
+                {plan.ai_recommendations.map((rec, i) => (
+                  <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                    {rec}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Sessions + Streak */}
           <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
@@ -119,9 +146,15 @@ export function IDPCard({ playerId }: Props) {
 
           {/* Weekly plan */}
           {plan?.weekly_plan && (
-            <p className="text-xs text-muted-foreground italic">
-              {plan.weekly_plan.description}
-            </p>
+            <div className="space-y-1.5 pt-2 border-t">
+              <h4 className="font-semibold text-sm flex items-center gap-1.5">
+                <Calendar className="h-4 w-4 text-primary" />
+                Plan Semanal
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                {plan.weekly_plan.description}
+              </p>
+            </div>
           )}
 
           {/* === SECTION 2: Indicaciones de Mentalidad === */}

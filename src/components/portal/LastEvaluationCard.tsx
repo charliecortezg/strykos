@@ -1,9 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { WLARadarChart } from '@/components/evaluations/WLARadarChart';
 import { usePlayerLastEvaluation } from '@/hooks/usePortal/usePlayerLastEvaluation';
 import { WLA_STATS } from '@/types/evaluations';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, MessageSquare, BookOpen } from 'lucide-react';
 
 interface Props {
   playerId: string;
@@ -51,15 +52,67 @@ export function LastEvaluationCard({ playerId }: Props) {
           <WLARadarChart scores={lastEvaluation.scores} />
         </div>
 
-        {/* Stats list */}
-        <div className="grid grid-cols-2 gap-2">
-          {WLA_STATS.map(stat => (
-            <div key={stat.key} className="flex justify-between text-sm px-2 py-1 rounded bg-muted/50">
-              <span className="text-muted-foreground truncate">{stat.label.split(' ')[0]}</span>
-              <span className="font-medium">{lastEvaluation.scores[stat.key] ?? '—'}/20</span>
-            </div>
-          ))}
+        {/* Stats with progress bars */}
+        <div className="space-y-2">
+          {WLA_STATS.map(stat => {
+            const score = lastEvaluation.scores[stat.key] ?? 0;
+            const pct = (score / 20) * 100;
+            return (
+              <div key={stat.key} className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{stat.label}</span>
+                  <span className="font-medium">{score}/20</span>
+                </div>
+                <Progress value={pct} className="h-2" />
+              </div>
+            );
+          })}
         </div>
+
+        {/* Rubrics - Level descriptions */}
+        {lastEvaluation.rubrics.length > 0 && (
+          <div className="space-y-3 pt-2 border-t">
+            <h4 className="font-semibold text-sm flex items-center gap-1.5">
+              <BookOpen className="h-4 w-4 text-primary" />
+              Nivel Actual
+            </h4>
+            {lastEvaluation.rubrics.map(rubric => (
+              <div key={rubric.id} className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">
+                    {WLA_STATS.find(s => s.key === rubric.stat_key)?.label || rubric.stat_key}
+                  </span>
+                  <Badge variant="outline" className="text-xs">
+                    {rubric.band_min}-{rubric.band_max}
+                  </Badge>
+                </div>
+                <ul className="ml-4 space-y-0.5">
+                  {rubric.bullets.map((bullet, i) => (
+                    <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                      <span className="mt-1.5 h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Coach Comments */}
+        {lastEvaluation.comments.length > 0 && (
+          <div className="space-y-2 pt-2 border-t">
+            <h4 className="font-semibold text-sm flex items-center gap-1.5">
+              <MessageSquare className="h-4 w-4 text-primary" />
+              Comentarios del Entrenador
+            </h4>
+            {lastEvaluation.comments.map((comment, i) => (
+              <p key={i} className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3 italic">
+                "{comment}"
+              </p>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
