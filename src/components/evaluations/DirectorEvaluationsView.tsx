@@ -151,19 +151,19 @@ export function DirectorEvaluationsView() {
       </div>
 
       {/* Close button */}
-      {allComplete && !allClosed && (
+      {completedCount > 0 && !allClosed && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button className="gap-1.5">
               <Lock className="w-4 h-4" />
-              Cerrar evaluación del mes
+              Cerrar evaluación del mes ({completedCount} de {summaryRows.length})
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>¿Cerrar evaluaciones de {formatPeriod(period)}?</AlertDialogTitle>
+              <AlertDialogTitle>¿Cerrar evaluaciones de {formatPeriod(period)}? ({completedCount} de {summaryRows.length} jugadores)</AlertDialogTitle>
               <AlertDialogDescription>
-                Se calcularán los overalls ponderados, deltas vs mes anterior, badges y XP. Las evaluaciones se bloquearán y no podrán editarse.
+                Se cerrarán las {completedCount} evaluaciones completas. Los jugadores pendientes quedarán sin evaluar este mes. Se calcularán overalls ponderados, deltas, badges y XP. Las evaluaciones cerradas no podrán editarse.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
