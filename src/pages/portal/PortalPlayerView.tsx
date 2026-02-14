@@ -101,13 +101,17 @@ export default function PortalPlayerView() {
           </div>
         ) : (
           <>
-            {/* Compact Hero: OVR + Radar + Level */}
+            {/* Compact Hero: OVR + Radar + Level + XP Progress */}
             <CompactPlayerHeader
               playerName={player.full_name}
               categoryName={player.category_name}
               ovr={ovr}
               level={level}
               xpTotal={xpTotal}
+              xpProgress={xpProgress}
+              xpNeeded={xpNeeded}
+              xpPercentage={xpPercentage}
+              streak={progress?.streak || 0}
               radar={radar}
             />
 
@@ -157,14 +161,7 @@ export default function PortalPlayerView() {
                 {membership.blocks.length > 0 && (
                   <MembershipTimeline blocks={membership.blocks} currentStage={membership.currentStage} />
                 )}
-                <ProgressCard
-                  xpTotal={xpTotal}
-                  level={level}
-                  streak={progress?.streak || 0}
-                  xpProgress={xpProgress}
-                  xpNeeded={xpNeeded}
-                  xpPercentage={xpPercentage}
-                />
+                {/* ProgressCard removed - XP/Level info is now in the compact header above */}
               </TabsContent>
 
               <TabsContent value="actividad" className="mt-4 space-y-4">
@@ -242,13 +239,17 @@ export default function PortalPlayerView() {
 }
 
 function CompactPlayerHeader({
-  playerName, categoryName, ovr, level, xpTotal, radar,
+  playerName, categoryName, ovr, level, xpTotal, xpProgress, xpNeeded, xpPercentage, streak, radar,
 }: {
   playerName: string;
   categoryName: string | null;
   ovr: number;
   level: number;
   xpTotal: number;
+  xpProgress: number;
+  xpNeeded: number;
+  xpPercentage: number;
+  streak: number;
   radar: RadarAttributes;
 }) {
   const tierStyle = ovr >= 85
@@ -277,7 +278,7 @@ function CompactPlayerHeader({
             <span className={cn('text-[10px] font-medium uppercase tracking-wider opacity-80', tierStyle.text)}>OVR</span>
           </div>
         </div>
-        {/* Level + XP chips */}
+        {/* Level + XP + Streak chips */}
         <div className="flex gap-2 mt-2">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-xs text-white font-medium">
             Nv {level}
@@ -285,11 +286,36 @@ function CompactPlayerHeader({
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-xs text-white font-medium">
             {xpTotal} XP
           </span>
+          {streak > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-xs text-white font-medium">
+              🔥 {streak}d
+            </span>
+          )}
+        </div>
+        {/* XP Progress bar */}
+        <div className="mt-2">
+          <div className="flex justify-between text-[10px] text-white/70 mb-0.5">
+            <span>Nivel {level + 1}</span>
+            <span>{xpProgress}/{xpNeeded} XP</span>
+          </div>
+          <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+            <div className="h-full bg-white/80 rounded-full transition-all" style={{ width: `${xpPercentage}%` }} />
+          </div>
         </div>
       </div>
-      {/* Compact radar */}
-      <div className="bg-card flex justify-center py-3">
-        <RadarChart data={radar} size={140} />
+      {/* Radar - proper size with legend */}
+      <div className="bg-card px-4 py-4">
+        <div className="flex justify-center">
+          <RadarChart data={radar} size={180} />
+        </div>
+        <div className="grid grid-cols-3 gap-x-3 gap-y-1 mt-2 text-[10px] text-muted-foreground">
+          <span><strong className="text-foreground">CTRL</strong> Control</span>
+          <span><strong className="text-foreground">DEC</strong> Decisión</span>
+          <span><strong className="text-foreground">PAS</strong> Pase</span>
+          <span><strong className="text-foreground">ACT</strong> Actitud</span>
+          <span><strong className="text-foreground">AUT</strong> Autonomía</span>
+          <span><strong className="text-foreground">DIS</strong> Disciplina</span>
+        </div>
       </div>
     </div>
   );
