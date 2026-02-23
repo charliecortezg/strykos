@@ -74,6 +74,7 @@ export function CategoriesTable() {
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Nombre</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground hidden md:table-cell">Deporte</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground hidden md:table-cell">Grupo</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground hidden lg:table-cell">Sede</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground hidden md:table-cell">Horario</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground hidden lg:table-cell">Días</th>
@@ -93,6 +94,9 @@ export function CategoriesTable() {
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground hidden md:table-cell">
                       {category.sport?.name || '—'}
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      <Badge variant="outline" className="text-xs">{category.age_group || '8-9'} años</Badge>
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground hidden lg:table-cell">
                       {category.venue?.name || '—'}

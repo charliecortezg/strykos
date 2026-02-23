@@ -3,7 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { usePlayerIDP } from '@/hooks/usePortal/usePlayerIDP';
 import { STAT_LABELS, parseWeeklyPlan } from '@/types/idp';
-import { Target, TrendingUp, AlertTriangle, CheckCircle2, Flame, Brain, Sparkles, ListChecks, Calendar, Dumbbell } from 'lucide-react';
+import type { IDPPlanJSON } from '@/types/idp';
+import { Target, TrendingUp, AlertTriangle, CheckCircle2, Flame, Brain, Sparkles, ListChecks, Calendar, Dumbbell, Stethoscope, Activity, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Props {
@@ -22,7 +23,7 @@ export function IDPCard({ playerId }: Props) {
     </Card>
   );
 
-  const plan = idpCycle.plan_json;
+  const plan = idpCycle.plan_json as IDPPlanJSON | null;
   const stageLabels: Record<string, string> = { '0_30': 'Días 1–30', '31_60': 'Días 31–60', '61_90': 'Días 61–90' };
   const statusConfig: Record<string, { label: string; variant: 'default' | 'destructive' | 'secondary' }> = {
     active: { label: 'Activo', variant: 'default' },
@@ -34,6 +35,7 @@ export function IDPCard({ playerId }: Props) {
   const strengthenAreas = focusAreas.filter(f => f.focus_type === 'strengthen');
   const improveAreas = focusAreas.filter(f => f.focus_type === 'improve');
   const mentalidadActions = plan?.mentalidad_actions || [];
+  const attendanceContext = plan?.attendance_context;
 
   // Parse weekly plan into structured days
   const weeklyPlanDays = plan?.weekly_plan?.description
@@ -50,7 +52,15 @@ export function IDPCard({ playerId }: Props) {
               <Target className="h-5 w-5 text-primary" />
               <CardTitle className="text-lg">Plan de Desarrollo (90 días)</CardTitle>
             </div>
-            <Badge variant={config.variant}>{config.label}</Badge>
+            <div className="flex items-center gap-2">
+              {attendanceContext && attendanceContext.total > 0 && (
+                <Badge variant="outline" className="text-xs">
+                  <Activity className="h-3 w-3 mr-1" />
+                  Asistencia: {attendanceContext.pct}%
+                </Badge>
+              )}
+              <Badge variant={config.variant}>{config.label}</Badge>
+            </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{stageLabels[idpCycle.stage] || idpCycle.stage}</span>
@@ -68,6 +78,17 @@ export function IDPCard({ playerId }: Props) {
             </Button>
           )}
 
+          {/* Diagnóstico */}
+          {plan?.diagnostico && (
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Stethoscope className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-semibold text-blue-900 dark:text-blue-200">Diagnóstico</span>
+              </div>
+              <p className="text-sm text-blue-800 dark:text-blue-300">{plan.diagnostico}</p>
+            </div>
+          )}
+
           {/* AI Comment */}
           {plan?.ai_comment && (
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
@@ -76,6 +97,17 @@ export function IDPCard({ playerId }: Props) {
                 <span className="text-sm font-semibold">Análisis del Jugador</span>
               </div>
               <p className="text-sm text-muted-foreground">{plan.ai_comment}</p>
+            </div>
+          )}
+
+          {/* Foco Conductual */}
+          {plan?.foco_conductual && (
+            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <ClipboardList className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <span className="text-sm font-semibold text-amber-900 dark:text-amber-200">Foco Conductual</span>
+              </div>
+              <p className="text-sm text-amber-800 dark:text-amber-300">{plan.foco_conductual}</p>
             </div>
           )}
         </CardContent>

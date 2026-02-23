@@ -80,14 +80,17 @@ export function useEvaluations(categoryId: string | null, period: string) {
       playerId,
       scores,
       dateOfBirth,
+      categoryAgeGroup,
     }: {
       playerId: string;
       scores: Record<StatKey, number>;
       dateOfBirth: string | null;
+      categoryAgeGroup?: string;
     }) => {
       if (!orgId || !categoryId) throw new Error('Missing org/category');
 
-      const ageGroup = calculateAgeGroup(dateOfBirth);
+      // Use category age_group as source of truth, fallback to birthdate calculation
+      const ageGroup = categoryAgeGroup || calculateAgeGroup(dateOfBirth);
 
       // Upsert evaluation
       const { data: evalData, error: evalError } = await supabase

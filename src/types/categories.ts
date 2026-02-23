@@ -43,6 +43,12 @@ export interface Venue {
   updated_at: string;
 }
 
+export const AGE_GROUPS = [
+  { value: '6-7', label: '6-7 años' },
+  { value: '8-9', label: '8-9 años' },
+  { value: '10-11', label: '10-11 años' },
+] as const;
+
 export interface Category {
   id: string;
   organization_id: string;
@@ -53,6 +59,7 @@ export interface Category {
   start_time: string | null;
   end_time: string | null;
   days_of_week: string[];
+  age_group: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -157,6 +164,7 @@ export interface CreateCategoryData {
   start_time?: string;
   end_time?: string;
   days_of_week?: string[];
+  age_group?: string;
 }
 
 export interface CreatePlayerData {

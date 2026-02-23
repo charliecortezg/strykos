@@ -61,6 +61,7 @@ export function useCategories() {
           start_time: data.start_time || null,
           end_time: data.end_time || null,
           days_of_week: data.days_of_week || [],
+          age_group: data.age_group || '8-9',
         });
 
       if (insertError) {
@@ -80,9 +81,7 @@ export function useCategories() {
 
   const updateCategory = async (id: string, data: Partial<CreateCategoryData>): Promise<boolean> => {
     try {
-      const { error: updateError } = await supabase
-        .from('categories')
-        .update({
+      const updateData: Record<string, unknown> = {
           name: data.name,
           sport_id: data.sport_id || null,
           venue_id: data.venue_id || null,
@@ -90,7 +89,11 @@ export function useCategories() {
           start_time: data.start_time || null,
           end_time: data.end_time || null,
           days_of_week: data.days_of_week || [],
-        })
+        };
+      if (data.age_group) updateData.age_group = data.age_group;
+      const { error: updateError } = await supabase
+        .from('categories')
+        .update(updateData)
         .eq('id', id);
 
       if (updateError) {
