@@ -31,7 +31,7 @@ import { useSports } from '@/hooks/useSports';
 import { useVenues } from '@/hooks/useVenues';
 import { useTrainers } from '@/hooks/useTrainers';
 import { useToast } from '@/hooks/use-toast';
-import { DAYS_OF_WEEK, type Category } from '@/types/categories';
+import { DAYS_OF_WEEK, AGE_GROUPS, type Category } from '@/types/categories';
 import { SmartSportSelector } from '@/components/ui/smart-sport-selector';
 
 const formSchema = z.object({
@@ -42,6 +42,7 @@ const formSchema = z.object({
   start_time: z.string().optional(),
   end_time: z.string().optional(),
   days_of_week: z.array(z.string()).default([]),
+  age_group: z.string().default('8-9'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -71,6 +72,7 @@ export function EditCategoryModal({ open, onOpenChange, category, onCategoryUpda
       start_time: '',
       end_time: '',
       days_of_week: [],
+      age_group: '8-9',
     },
   });
 
@@ -84,6 +86,7 @@ export function EditCategoryModal({ open, onOpenChange, category, onCategoryUpda
         start_time: category.start_time?.slice(0, 5) || '',
         end_time: category.end_time?.slice(0, 5) || '',
         days_of_week: category.days_of_week || [],
+        age_group: category.age_group || '8-9',
       });
     }
   }, [category, form]);
@@ -101,6 +104,7 @@ export function EditCategoryModal({ open, onOpenChange, category, onCategoryUpda
       start_time: values.start_time || undefined,
       end_time: values.end_time || undefined,
       days_of_week: values.days_of_week,
+      age_group: values.age_group,
     });
 
     setIsSubmitting(false);
@@ -150,6 +154,31 @@ export function EditCategoryModal({ open, onOpenChange, category, onCategoryUpda
                   <FormControl>
                     <Input placeholder="Ej: Sub-12 Varonil" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="age_group"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Grupo de edad</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {AGE_GROUPS.map(ag => (
+                        <SelectItem key={ag.value} value={ag.value}>
+                          {ag.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

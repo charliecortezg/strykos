@@ -60,6 +60,12 @@ export interface IDPPlanFocusArea {
   target: number;
 }
 
+export interface AttendanceContext {
+  presente: number;
+  total: number;
+  pct: number;
+}
+
 export interface IDPPlanJSON {
   focus_areas: IDPPlanFocusArea[];
   mentalidad_actions: MentalidadAction[];
@@ -70,6 +76,18 @@ export interface IDPPlanJSON {
   };
   ai_comment?: string;
   ai_recommendations?: string[];
+  diagnostico?: string;
+  foco_conductual?: string | null;
+  insights?: EvaluationInsights | null;
+  attendance_context?: AttendanceContext | null;
+}
+
+export interface EvaluationInsights {
+  fortalezas: string[];
+  debilidades: string[];
+  habitos: string[];
+  riesgo: 'bajo' | 'medio' | 'alto';
+  palabras_clave: string[];
 }
 
 export const IDP_SESSION_XP = 10;

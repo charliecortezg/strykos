@@ -31,7 +31,7 @@ import { useSports } from '@/hooks/useSports';
 import { useVenues } from '@/hooks/useVenues';
 import { useTrainers } from '@/hooks/useTrainers';
 import { useToast } from '@/hooks/use-toast';
-import { DAYS_OF_WEEK } from '@/types/categories';
+import { DAYS_OF_WEEK, AGE_GROUPS } from '@/types/categories';
 import { SmartSportSelector } from '@/components/ui/smart-sport-selector';
 
 const formSchema = z.object({
@@ -42,6 +42,7 @@ const formSchema = z.object({
   start_time: z.string().optional(),
   end_time: z.string().optional(),
   days_of_week: z.array(z.string()).default([]),
+  age_group: z.string().default('8-9'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -70,6 +71,7 @@ export function CreateCategoryModal({ open, onOpenChange, onCategoryCreated }: C
       start_time: '',
       end_time: '',
       days_of_week: [],
+      age_group: '8-9',
     },
   });
 
@@ -84,6 +86,7 @@ export function CreateCategoryModal({ open, onOpenChange, onCategoryCreated }: C
       start_time: values.start_time || undefined,
       end_time: values.end_time || undefined,
       days_of_week: values.days_of_week,
+      age_group: values.age_group,
     });
 
     setIsSubmitting(false);
@@ -134,6 +137,31 @@ export function CreateCategoryModal({ open, onOpenChange, onCategoryCreated }: C
                   <FormControl>
                     <Input placeholder="Ej: Sub-12 Varonil" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="age_group"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Grupo de edad</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {AGE_GROUPS.map(ag => (
+                        <SelectItem key={ag.value} value={ag.value}>
+                          {ag.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

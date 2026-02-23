@@ -135,6 +135,7 @@ export type Database = {
       }
       categories: {
         Row: {
+          age_group: string
           created_at: string
           days_of_week: string[] | null
           end_time: string | null
@@ -149,6 +150,7 @@ export type Database = {
           venue_id: string | null
         }
         Insert: {
+          age_group?: string
           created_at?: string
           days_of_week?: string[] | null
           end_time?: string | null
@@ -163,6 +165,7 @@ export type Database = {
           venue_id?: string | null
         }
         Update: {
+          age_group?: string
           created_at?: string
           days_of_week?: string[] | null
           end_time?: string | null
@@ -585,6 +588,7 @@ export type Database = {
           created_at: string
           event_id: string | null
           id: string
+          insights_json: Json | null
           organization_id: string
           overall_score: number | null
           period: string
@@ -602,6 +606,7 @@ export type Database = {
           created_at?: string
           event_id?: string | null
           id?: string
+          insights_json?: Json | null
           organization_id: string
           overall_score?: number | null
           period: string
@@ -619,6 +624,7 @@ export type Database = {
           created_at?: string
           event_id?: string | null
           id?: string
+          insights_json?: Json | null
           organization_id?: string
           overall_score?: number | null
           period?: string
