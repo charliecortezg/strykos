@@ -225,11 +225,16 @@ export function useEvaluations(categoryId: string | null, period: string) {
         });
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['evaluations'] });
       queryClient.invalidateQueries({ queryKey: ['evaluation_scores'] });
       queryClient.invalidateQueries({ queryKey: ['evaluation_achievements'] });
       toast({ title: 'Evaluaciones cerradas', description: 'Se calcularon overalls, achievements y XP.' });
+
+      // Collect closed evaluation IDs
+      const closedEvalIds = evaluations
+        .filter(e => e.status === 'open')
+        .map(e => e.id);
 
       // Trigger IDP processing (fire-and-forget)
       if (orgId && categoryId) {
@@ -238,6 +243,16 @@ export function useEvaluations(categoryId: string | null, period: string) {
         }).then(res => {
           if (res.error) console.error('[IDP] process-idp error:', res.error);
           else console.log('[IDP] process-idp result:', res.data);
+        });
+      }
+
+      // Send evaluation report emails (fire-and-forget)
+      if (closedEvalIds.length > 0) {
+        supabase.functions.invoke('send-evaluation-report', {
+          body: { evaluationIds: closedEvalIds, portalBaseUrl: `${window.location.origin}/portal/login` },
+        }).then(res => {
+          if (res.error) console.error('[Email] send-evaluation-report error:', res.error);
+          else console.log('[Email] send-evaluation-report result:', res.data);
         });
       }
     },
