@@ -86,4 +86,5 @@ export const DEFAULT_WEIGHTS: Record<string, { mentalidad: number; tecnica: numb
   '6-7': { mentalidad: 0.50, tecnica: 0.30, juego: 0.20 },
   '8-9': { mentalidad: 0.40, tecnica: 0.35, juego: 0.25 },
   '10-11': { mentalidad: 0.30, tecnica: 0.40, juego: 0.30 },
+  '12-13': { mentalidad: 0.25, tecnica: 0.45, juego: 0.30 },
 };

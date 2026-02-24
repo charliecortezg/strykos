@@ -14,7 +14,8 @@ export function calculateAgeGroup(dateOfBirth: string | null): string {
 
   if (age <= 7) return '6-7';
   if (age <= 9) return '8-9';
-  return '10-11';
+  if (age <= 11) return '10-11';
+  return '12-13';
 }
 
 /**
