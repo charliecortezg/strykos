@@ -47,6 +47,7 @@ export const AGE_GROUPS = [
   { value: '6-7', label: '6-7 años' },
   { value: '8-9', label: '8-9 años' },
   { value: '10-11', label: '10-11 años' },
+  { value: '12-13', label: '12-13 años' },
 ] as const;
 
 export interface Category {
