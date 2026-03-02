@@ -6,15 +6,17 @@ import { useEvaluations } from '@/hooks/useEvaluations';
 import { usePlayers } from '@/hooks/usePlayers';
 import { PlayerEvaluationSheet } from './PlayerEvaluationSheet';
 import { WLA_STATS, type StatKey, type PlayerEvaluationStatus } from '@/types/evaluations';
-import { calculateAgeGroup, getCurrentPeriod, formatPeriod } from '@/lib/evaluation-utils';
+import { getCurrentPeriod, formatPeriod } from '@/lib/evaluation-utils';
 import { ClipboardCheck, CheckCircle2, Clock } from 'lucide-react';
 
 interface EvaluationsModuleProps {
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; age_group?: string }[];
 }
 
 export function EvaluationsModule({ categories }: EvaluationsModuleProps) {
   const [selectedCategory, setSelectedCategory] = useState(categories[0]?.id || '');
+  const selectedCategoryObj = categories.find(c => c.id === selectedCategory);
+  const categoryAgeGroup = selectedCategoryObj?.age_group || '8-9';
   const [period, setPeriod] = useState(getCurrentPeriod());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedPlayerIdx, setSelectedPlayerIdx] = useState(0);
@@ -40,7 +42,7 @@ export function EvaluationsModule({ categories }: EvaluationsModuleProps) {
         player_id: p.id,
         player_name: p.full_name,
         date_of_birth: p.date_of_birth,
-        age_group: calculateAgeGroup(p.date_of_birth),
+        age_group: categoryAgeGroup,
         evaluation_id: evalRecord?.id || null,
         scores_count: evalScores.length,
         status: evalScores.length >= 6 ? 'completado' : 'pendiente',
@@ -64,6 +66,7 @@ export function EvaluationsModule({ categories }: EvaluationsModuleProps) {
       playerId,
       scores,
       dateOfBirth: player?.date_of_birth || null,
+      categoryAgeGroup,
     });
   };
 
