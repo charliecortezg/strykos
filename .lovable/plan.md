@@ -1,50 +1,50 @@
 
-# Plan: Sincronizar Radar del Perfil con Evaluaciones
+# Plan: Usar age_group de la categoria como fuente de verdad en evaluaciones
 
 ## Problema
 
-El radar del perfil del jugador (parte superior) muestra valores default (todos en 10/20) porque no hay un trigger que sincronice automaticamente los scores de la evaluacion cerrada con la tabla `player_progress`. La `LastEvaluationCard` lee directamente de `evaluation_scores` y muestra los datos reales (14, 11, 13, 7, 13, 4). Estan desconectados.
+Actualmente, el modulo de evaluaciones usa `calculateAgeGroup(player.date_of_birth)` para determinar el grupo de edad de cada jugador. Esto causa que jugadores de la categoria "Escuelita Futbol" (grupo 6-7) aparezcan como "8-9" si su fecha de nacimiento los ubica en ese rango, o peor, aparezcan como "8-9" por default cuando no tienen fecha de nacimiento registrada.
+
+Segun la gobernanza del producto, **la categoria es la fuente de verdad** para el grupo de edad, no la fecha de nacimiento del jugador.
+
+## Causa raiz
+
+En 4 puntos del codigo se usa `calculateAgeGroup(player.date_of_birth)` en lugar de `category.age_group`:
+
+1. **EvaluationsModule.tsx** (linea 43): al construir `playerStatuses`, calcula `age_group` desde `date_of_birth`
+2. **EvaluationsModule.tsx** (linea 63-67): al llamar `saveEvaluation`, no pasa `categoryAgeGroup`
+3. **DirectorEvaluationsView.tsx** (linea ~55): al construir `summaryRows`, usa `calculateAgeGroup(player.date_of_birth)` para `ageGroup`
+4. El campo `age_group` guardado en la tabla `evaluations` puede estar incorrecto en registros existentes
 
 ## Solucion
 
-Crear un trigger SQL que, cuando una evaluacion se cierra (`status` cambia a `'closed'`), automaticamente:
-1. Mapee los 6 stats de evaluacion (escala 0-20) a los 6 atributos del radar en `player_progress` (escala 0-100)
-2. Actualice el OVR en `player_progress` con el `overall_score` de la evaluacion
-3. Cree el registro de `player_progress` si no existe (upsert)
+### 1. EvaluationsModule.tsx
 
-## Mapeo de Stats
+- En `playerStatuses`, cambiar `age_group: calculateAgeGroup(p.date_of_birth)` por el `age_group` de la categoria seleccionada
+- En `handleSave`, pasar `categoryAgeGroup` al llamar `saveEvaluation.mutateAsync()`
 
-```text
-evaluation_scores (0-20)    ->  player_progress.radar (0-100)
-actitud_esfuerzo            ->  mental
-disciplina_constancia       ->  disciplina
-autonomia_liderazgo         ->  social
-control_conduccion          ->  tecnica
-pase_recepcion              ->  fisica
-decision_juego              ->  tactica
+### 2. DirectorEvaluationsView.tsx
+
+- En `summaryRows`, reemplazar `calculateAgeGroup(player.date_of_birth)` por el `age_group` de la categoria seleccionada (obtenido de `activeCategories`)
+
+### 3. Migracion SQL (backfill)
+
+- Actualizar los registros existentes en `evaluations` donde `age_group` no coincida con el `age_group` de su categoria:
+
+```sql
+UPDATE evaluations e
+SET age_group = c.age_group
+FROM categories c
+WHERE e.category_id = c.id
+  AND e.age_group != c.age_group;
 ```
 
-Formula: `valor_radar = (score / 20) * 100`
+## Archivos a modificar
 
-## Implementacion Tecnica
+| Archivo | Cambio |
+|---|---|
+| src/components/evaluations/EvaluationsModule.tsx | Usar `category.age_group` en `playerStatuses` y pasar `categoryAgeGroup` en `handleSave` |
+| src/components/evaluations/DirectorEvaluationsView.tsx | Usar `category.age_group` de la categoria seleccionada en `summaryRows` |
+| Migracion SQL | Backfill de `evaluations.age_group` desde `categories.age_group` |
 
-### 1. Migracion SQL
-
-Crear un trigger `trg_sync_evaluation_to_progress` en la tabla `evaluations` que se ejecute en UPDATE cuando `status` cambia a `'closed'`:
-
-- Leer los 6 scores de `evaluation_scores` para esa evaluacion
-- Convertir cada score a escala 0-100
-- Hacer UPSERT en `player_progress` con el nuevo radar y OVR
-- Solo actuar cuando `NEW.status = 'closed'` y `OLD.status != 'closed'`
-
-### 2. Backfill de datos existentes
-
-Ejecutar un update inmediato para el jugador que ya tiene evaluacion cerrada pero no tiene `player_progress` (el caso actual visible en las screenshots).
-
-## Archivos a Crear/Modificar
-
-| Archivo | Accion | Descripcion |
-|---|---|---|
-| Migracion SQL | Crear | Trigger `trg_sync_evaluation_to_progress` + backfill de evaluaciones cerradas existentes |
-
-No hay cambios de frontend necesarios. El `RadarChart` del perfil ya lee de `player_progress.radar` correctamente, solo falta que los datos se sincronicen.
+No se requieren cambios en `useEvaluations.ts` ya que el parametro `categoryAgeGroup` ya existe y tiene prioridad cuando se proporciona.
