@@ -8,7 +8,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { usePlayers } from '@/hooks/usePlayers';
 import { PlayerEvaluationReport } from './PlayerEvaluationReport';
 import { WLA_STATS, type StatKey } from '@/types/evaluations';
-import { calculateAgeGroup, calculateOverall, getCurrentPeriod, formatPeriod, getPreviousPeriod } from '@/lib/evaluation-utils';
+import { calculateOverall, getCurrentPeriod, formatPeriod, getPreviousPeriod } from '@/lib/evaluation-utils';
 import { ClipboardCheck, Lock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import {
@@ -59,7 +59,8 @@ export function DirectorEvaluationsView() {
       const scoresMap = {} as Record<StatKey, number>;
       evalScores.forEach(s => { scoresMap[s.stat_key as StatKey] = s.score; });
 
-      const ageGroup = calculateAgeGroup(player.date_of_birth);
+      const selectedCat = activeCategories.find(c => c.id === selectedCategory);
+      const ageGroup = selectedCat?.age_group || '8-9';
       const overall = evalScores.length >= 6
         ? calculateOverall(scoresMap, ageGroup, { weights: weightsMap[ageGroup] } as any)
         : null;
