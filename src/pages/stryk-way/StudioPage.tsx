@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Trophy, Target, Sparkles, Settings, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Trophy, Target, Sparkles, Settings, BarChart3, Dumbbell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
