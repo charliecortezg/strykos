@@ -10,6 +10,7 @@ import { BadgesList } from '@/components/stryk-way/BadgesList';
 import { ChallengesList } from '@/components/stryk-way/ChallengesList';
 import { RulesetEditor } from '@/components/stryk-way/RulesetEditor';
 import { AnalyticsDashboard } from '@/components/stryk-way/AnalyticsDashboard';
+import { ExercisesList } from '@/components/stryk-way/ExercisesList';
 import type { RulesetEconomy, RulesetCaps, RulesetMultipliers, OvrWeights } from '@/types/stryk-way';
 
 export default function StudioPage() {
