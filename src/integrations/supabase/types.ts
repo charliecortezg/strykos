@@ -671,6 +671,145 @@ export type Database = {
           },
         ]
       }
+      exercise_addon_subscriptions: {
+        Row: {
+          created_at: string | null
+          current_period_end: string | null
+          guardian_id: string | null
+          id: string
+          organization_id: string
+          plan_type: string | null
+          player_id: string | null
+          status: string | null
+          stripe_subscription_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_period_end?: string | null
+          guardian_id?: string | null
+          id?: string
+          organization_id: string
+          plan_type?: string | null
+          player_id?: string | null
+          status?: string | null
+          stripe_subscription_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_period_end?: string | null
+          guardian_id?: string | null
+          id?: string
+          organization_id?: string
+          plan_type?: string | null
+          player_id?: string | null
+          status?: string | null
+          stripe_subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_addon_subscriptions_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_addon_subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_addon_subscriptions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercise_library: {
+        Row: {
+          age_max: number | null
+          age_min: number | null
+          category: string
+          coach_tip: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          difficulty: string | null
+          duration_minutes: number | null
+          equipment_needed: string | null
+          id: string
+          is_active: boolean | null
+          organization_id: string
+          partner_required: boolean | null
+          skill_tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          video_source: string | null
+          video_url: string
+        }
+        Insert: {
+          age_max?: number | null
+          age_min?: number | null
+          category: string
+          coach_tip?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty?: string | null
+          duration_minutes?: number | null
+          equipment_needed?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id: string
+          partner_required?: boolean | null
+          skill_tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          video_source?: string | null
+          video_url: string
+        }
+        Update: {
+          age_max?: number | null
+          age_min?: number | null
+          category?: string
+          coach_tip?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty?: string | null
+          duration_minutes?: number | null
+          equipment_needed?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string
+          partner_required?: boolean | null
+          skill_tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          video_source?: string | null
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_library_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_library_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
