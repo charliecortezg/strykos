@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePortalAuth } from '@/contexts/PortalAuthContext';
 import { usePlayerProgress, usePlayerBadges, usePlayerActivity, useActiveChallenges } from '@/hooks/usePortal';
 import { ProgressCard, BadgesGrid, ChallengesActive, ActivityFeed, LastEvaluationCard, IDPCard } from '@/components/portal';
+import { ExercisesTab } from '@/components/portal/ExercisesTab';
 import { MembershipTimeline } from '@/components/membership/MembershipTimeline';
 import { MembershipHeroCard } from '@/components/membership/MembershipHeroCard';
 import { usePlayerMembershipProgress } from '@/hooks/useMembershipBlocks';
