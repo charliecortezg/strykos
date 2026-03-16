@@ -19,10 +19,12 @@ const STAT_TO_CATEGORIES: Record<string, string[]> = {
 
 interface Props {
   playerId: string;
+  onExerciseLink?: (category: string, skillName: string, scores: { current: number; target: number } | null) => void;
 }
 
-export function IDPCard({ playerId }: Props) {
+export function IDPCard({ playerId, onExerciseLink }: Props) {
   const { idpCycle, focusAreas, sessions, isLoading } = usePlayerIDP(playerId);
+  const { exercises } = useExerciseLibrary();
 
   if (isLoading) return <div className="h-40 bg-muted animate-pulse rounded-lg" />;
   if (!idpCycle) return (
