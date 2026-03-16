@@ -135,12 +135,38 @@ export function IDPCard({ playerId, onExerciseLink }: Props) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {strengthenAreas.map(fa => (
-              <FocusAreaRow key={fa.id} statKey={fa.stat_key} initial={fa.initial_score} target={fa.target_score} label="Potenciar" variant="green" />
-            ))}
-            {improveAreas.map(fa => (
-              <FocusAreaRow key={fa.id} statKey={fa.stat_key} initial={fa.initial_score} target={fa.target_score} label="Mejorar" variant="yellow" />
-            ))}
+            {strengthenAreas.map(fa => {
+              const cats = STAT_TO_CATEGORIES[fa.stat_key] || [];
+              const hasExercises = exercises.some(e => cats.includes(e.category));
+              return (
+                <FocusAreaRow
+                  key={fa.id} statKey={fa.stat_key} initial={fa.initial_score} target={fa.target_score}
+                  label="Potenciar" variant="green"
+                  showExerciseLink={hasExercises && !!onExerciseLink}
+                  onExerciseClick={() => onExerciseLink?.(
+                    cats[0],
+                    STAT_LABELS[fa.stat_key] || fa.stat_key,
+                    { current: fa.initial_score, target: fa.target_score }
+                  )}
+                />
+              );
+            })}
+            {improveAreas.map(fa => {
+              const cats = STAT_TO_CATEGORIES[fa.stat_key] || [];
+              const hasExercises = exercises.some(e => cats.includes(e.category));
+              return (
+                <FocusAreaRow
+                  key={fa.id} statKey={fa.stat_key} initial={fa.initial_score} target={fa.target_score}
+                  label="Mejorar" variant="yellow"
+                  showExerciseLink={hasExercises && !!onExerciseLink}
+                  onExerciseClick={() => onExerciseLink?.(
+                    cats[0],
+                    STAT_LABELS[fa.stat_key] || fa.stat_key,
+                    { current: fa.initial_score, target: fa.target_score }
+                  )}
+                />
+              );
+            })}
           </CardContent>
         </Card>
       )}
