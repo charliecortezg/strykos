@@ -33,7 +33,7 @@ export function ActionButton({
   ...props
 }: ActionButtonProps) {
   const [state, setState] = React.useState<ActionState>("idle");
-  const timeoutRef = React.useRef<NodeJS.Timeout>();
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
 
   // Cleanup timeout on unmount
   React.useEffect(() => {
