@@ -79,7 +79,7 @@ export default function StudioPage() {
 
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className={`grid w-full max-w-lg ${feature_analytics_enabled ? 'grid-cols-4' : 'grid-cols-3'}`}>
+              <TabsList className="grid w-full max-w-xl grid-cols-5">
                 <TabsTrigger value="badges" className="gap-2">
                   <Trophy className="w-4 h-4" />
                   <span className="hidden sm:inline">Badges</span>
@@ -87,6 +87,10 @@ export default function StudioPage() {
                 <TabsTrigger value="challenges" className="gap-2">
                   <Target className="w-4 h-4" />
                   <span className="hidden sm:inline">Retos</span>
+                </TabsTrigger>
+                <TabsTrigger value="exercises" className="gap-2">
+                  <Dumbbell className="w-4 h-4" />
+                  <span className="hidden sm:inline">Ejercicios</span>
                 </TabsTrigger>
                 {feature_studio_pro_enabled && (
                   <TabsTrigger value="settings" className="gap-2">
@@ -108,6 +112,10 @@ export default function StudioPage() {
 
               <TabsContent value="challenges" className="mt-6">
                 <ChallengesList packId={publishedPack.id} />
+              </TabsContent>
+
+              <TabsContent value="exercises" className="mt-6">
+                <ExercisesList />
               </TabsContent>
 
               {feature_studio_pro_enabled && ruleset && (

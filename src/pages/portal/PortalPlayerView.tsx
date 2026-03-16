@@ -154,7 +154,25 @@ export default function PortalPlayerView() {
               </TabsContent>
 
               <TabsContent value="plan" className="mt-4 space-y-4">
-                <IDPCard playerId={playerId!} />
+                <IDPCard
+                  playerId={playerId!}
+                  onExerciseLink={(category, skillName, scores) => {
+                    setExerciseCategory(category);
+                    setExerciseSkillName(skillName);
+                    setExercisePaywallScores(scores);
+                    setActiveTab('ejercicios');
+                  }}
+                />
+              </TabsContent>
+
+              <TabsContent value="ejercicios" className="mt-4 space-y-4">
+                <ExercisesTab
+                  playerId={playerId!}
+                  playerName={player.full_name}
+                  initialCategory={exerciseCategory}
+                  paywallSkillName={exerciseSkillName}
+                  paywallScores={exercisePaywallScores}
+                />
               </TabsContent>
 
               <TabsContent value="progreso" className="mt-4 space-y-4">
