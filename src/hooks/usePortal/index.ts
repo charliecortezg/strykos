@@ -4,3 +4,4 @@ export { usePlayerBadges } from './usePlayerBadges';
 export { useActiveChallenges } from './useActiveChallenges';
 export { usePlayerIDP } from './usePlayerIDP';
 export { usePlayerLastEvaluation } from './usePlayerLastEvaluation';
+export { useExerciseLibrary } from './useExerciseLibrary';

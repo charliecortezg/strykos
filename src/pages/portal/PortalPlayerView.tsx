@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Sparkles, LogOut, ClipboardCheck, Target, TrendingUp, Activity } from 'lucide-react';
+import { ArrowLeft, Sparkles, LogOut, ClipboardCheck, Target, TrendingUp, Activity, Dumbbell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePortalAuth } from '@/contexts/PortalAuthContext';
 import { usePlayerProgress, usePlayerBadges, usePlayerActivity, useActiveChallenges } from '@/hooks/usePortal';
 import { ProgressCard, BadgesGrid, ChallengesActive, ActivityFeed, LastEvaluationCard, IDPCard } from '@/components/portal';
+import { ExercisesTab } from '@/components/portal/ExercisesTab';
 import { MembershipTimeline } from '@/components/membership/MembershipTimeline';
 import { MembershipHeroCard } from '@/components/membership/MembershipHeroCard';
 import { usePlayerMembershipProgress } from '@/hooks/useMembershipBlocks';
@@ -23,6 +24,10 @@ export default function PortalPlayerView() {
   const { linkedPlayers, organizationName, logout } = usePortalAuth();
   const [activityFilter, setActivityFilter] = useState<'block' | 'all'>('all');
   const [showSessionModal, setShowSessionModal] = useState(false);
+  const [exerciseCategory, setExerciseCategory] = useState<string | null>(null);
+  const [exerciseSkillName, setExerciseSkillName] = useState<string | null>(null);
+  const [exercisePaywallScores, setExercisePaywallScores] = useState<{ current: number; target: number } | null>(null);
+  const [activeTab, setActiveTab] = useState('evaluacion');
 
   const handleLogout = () => {
     logout();
@@ -116,8 +121,8 @@ export default function PortalPlayerView() {
             />
 
             {/* Main Tabs */}
-            <Tabs defaultValue="evaluacion" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 h-auto">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-5 h-auto">
                 <TabsTrigger value="evaluacion" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
                   <ClipboardCheck className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Evaluación</span>
@@ -126,6 +131,11 @@ export default function PortalPlayerView() {
                 <TabsTrigger value="plan" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
                   <Target className="h-3.5 w-3.5" />
                   Plan
+                </TabsTrigger>
+                <TabsTrigger value="ejercicios" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+                  <Dumbbell className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Ejercicios</span>
+                  <span className="sm:hidden">Ejer</span>
                 </TabsTrigger>
                 <TabsTrigger value="progreso" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
                   <TrendingUp className="h-3.5 w-3.5" />
@@ -144,7 +154,25 @@ export default function PortalPlayerView() {
               </TabsContent>
 
               <TabsContent value="plan" className="mt-4 space-y-4">
-                <IDPCard playerId={playerId!} />
+                <IDPCard
+                  playerId={playerId!}
+                  onExerciseLink={(category, skillName, scores) => {
+                    setExerciseCategory(category);
+                    setExerciseSkillName(skillName);
+                    setExercisePaywallScores(scores);
+                    setActiveTab('ejercicios');
+                  }}
+                />
+              </TabsContent>
+
+              <TabsContent value="ejercicios" className="mt-4 space-y-4">
+                <ExercisesTab
+                  playerId={playerId!}
+                  playerName={player.full_name}
+                  initialCategory={exerciseCategory}
+                  paywallSkillName={exerciseSkillName}
+                  paywallScores={exercisePaywallScores}
+                />
               </TabsContent>
 
               <TabsContent value="progreso" className="mt-4 space-y-4">

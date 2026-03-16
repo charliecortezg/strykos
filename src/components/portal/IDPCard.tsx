@@ -6,13 +6,25 @@ import { STAT_LABELS, parseWeeklyPlan } from '@/types/idp';
 import type { IDPPlanJSON } from '@/types/idp';
 import { Target, TrendingUp, AlertTriangle, CheckCircle2, Flame, Brain, Sparkles, ListChecks, Calendar, Dumbbell, Stethoscope, Activity, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useExerciseLibrary } from '@/hooks/usePortal/useExerciseLibrary';
+
+const STAT_TO_CATEGORIES: Record<string, string[]> = {
+  control_conduccion: ['control', 'conduccion'],
+  pase_recepcion: ['pase'],
+  decision_juego: ['decision'],
+  actitud_esfuerzo: ['actitud'],
+  disciplina_constancia: ['actitud'],
+  autonomia_liderazgo: ['decision'],
+};
 
 interface Props {
   playerId: string;
+  onExerciseLink?: (category: string, skillName: string, scores: { current: number; target: number } | null) => void;
 }
 
-export function IDPCard({ playerId }: Props) {
+export function IDPCard({ playerId, onExerciseLink }: Props) {
   const { idpCycle, focusAreas, sessions, isLoading } = usePlayerIDP(playerId);
+  const { exercises } = useExerciseLibrary();
 
   if (isLoading) return <div className="h-40 bg-muted animate-pulse rounded-lg" />;
   if (!idpCycle) return (
@@ -123,12 +135,38 @@ export function IDPCard({ playerId }: Props) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {strengthenAreas.map(fa => (
-              <FocusAreaRow key={fa.id} statKey={fa.stat_key} initial={fa.initial_score} target={fa.target_score} label="Potenciar" variant="green" />
-            ))}
-            {improveAreas.map(fa => (
-              <FocusAreaRow key={fa.id} statKey={fa.stat_key} initial={fa.initial_score} target={fa.target_score} label="Mejorar" variant="yellow" />
-            ))}
+            {strengthenAreas.map(fa => {
+              const cats = STAT_TO_CATEGORIES[fa.stat_key] || [];
+              const hasExercises = exercises.some(e => cats.includes(e.category));
+              return (
+                <FocusAreaRow
+                  key={fa.id} statKey={fa.stat_key} initial={fa.initial_score} target={fa.target_score}
+                  label="Potenciar" variant="green"
+                  showExerciseLink={hasExercises && !!onExerciseLink}
+                  onExerciseClick={() => onExerciseLink?.(
+                    cats[0],
+                    STAT_LABELS[fa.stat_key] || fa.stat_key,
+                    { current: fa.initial_score, target: fa.target_score }
+                  )}
+                />
+              );
+            })}
+            {improveAreas.map(fa => {
+              const cats = STAT_TO_CATEGORIES[fa.stat_key] || [];
+              const hasExercises = exercises.some(e => cats.includes(e.category));
+              return (
+                <FocusAreaRow
+                  key={fa.id} statKey={fa.stat_key} initial={fa.initial_score} target={fa.target_score}
+                  label="Mejorar" variant="yellow"
+                  showExerciseLink={hasExercises && !!onExerciseLink}
+                  onExerciseClick={() => onExerciseLink?.(
+                    cats[0],
+                    STAT_LABELS[fa.stat_key] || fa.stat_key,
+                    { current: fa.initial_score, target: fa.target_score }
+                  )}
+                />
+              );
+            })}
           </CardContent>
         </Card>
       )}
@@ -224,9 +262,10 @@ export function IDPCard({ playerId }: Props) {
 }
 
 function FocusAreaRow({
-  statKey, initial, target, label, variant,
+  statKey, initial, target, label, variant, showExerciseLink, onExerciseClick,
 }: {
   statKey: string; initial: number; target: number; label: string; variant: 'green' | 'yellow';
+  showExerciseLink?: boolean; onExerciseClick?: () => void;
 }) {
   const pct = target > initial ? Math.round(((initial) / target) * 100) : 100;
   const badgeClass = variant === 'green' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200';
@@ -243,6 +282,11 @@ function FocusAreaRow({
           {initial} → {target}
         </span>
       </div>
+      {showExerciseLink && (
+        <button onClick={onExerciseClick} className="text-xs text-primary hover:underline flex items-center gap-1">
+          <Dumbbell className="h-3 w-3" /> Ver ejercicios para esto →
+        </button>
+      )}
     </div>
   );
 }
