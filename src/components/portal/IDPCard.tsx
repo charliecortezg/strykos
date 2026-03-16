@@ -262,9 +262,10 @@ export function IDPCard({ playerId, onExerciseLink }: Props) {
 }
 
 function FocusAreaRow({
-  statKey, initial, target, label, variant,
+  statKey, initial, target, label, variant, showExerciseLink, onExerciseClick,
 }: {
   statKey: string; initial: number; target: number; label: string; variant: 'green' | 'yellow';
+  showExerciseLink?: boolean; onExerciseClick?: () => void;
 }) {
   const pct = target > initial ? Math.round(((initial) / target) * 100) : 100;
   const badgeClass = variant === 'green' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200';
@@ -281,6 +282,11 @@ function FocusAreaRow({
           {initial} → {target}
         </span>
       </div>
+      {showExerciseLink && (
+        <button onClick={onExerciseClick} className="text-xs text-primary hover:underline flex items-center gap-1">
+          <Dumbbell className="h-3 w-3" /> Ver ejercicios para esto →
+        </button>
+      )}
     </div>
   );
 }
