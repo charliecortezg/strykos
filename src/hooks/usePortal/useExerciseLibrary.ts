@@ -22,30 +22,9 @@ export function useExerciseLibrary() {
     enabled: !!organizationId,
   });
 
-  const { data: subscription, isLoading: loadingSub } = useQuery({
-    queryKey: ['exercise-subscription', guardian?.id, organizationId],
-    queryFn: async () => {
-      if (!guardian?.id || !organizationId) return null;
-      const { data, error } = await supabase
-        .from('exercise_addon_subscriptions')
-        .select('*')
-        .eq('guardian_id', guardian.id)
-        .eq('organization_id', organizationId)
-        .eq('status', 'active')
-        .maybeSingle();
-      if (error) { console.error('Sub check error:', error); return null; }
-      return data;
-    },
-    enabled: !!guardian?.id && !!organizationId,
-  });
-
-  const hasActiveSubscription = !!subscription && (
-    !subscription.current_period_end || new Date(subscription.current_period_end) > new Date()
-  );
-
   return {
     exercises,
-    hasActiveSubscription,
-    isLoading: loadingExercises || loadingSub,
+    hasActiveSubscription: true,
+    isLoading: loadingExercises,
   };
 }
