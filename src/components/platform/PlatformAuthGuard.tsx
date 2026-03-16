@@ -16,7 +16,7 @@ export function PlatformAuthGuard({ children }: PlatformAuthGuardProps) {
   const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
     
     if (status === 'loading') {
       setTimedOut(false);
