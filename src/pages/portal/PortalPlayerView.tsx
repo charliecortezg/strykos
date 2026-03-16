@@ -121,8 +121,8 @@ export default function PortalPlayerView() {
             />
 
             {/* Main Tabs */}
-            <Tabs defaultValue="evaluacion" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 h-auto">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-5 h-auto">
                 <TabsTrigger value="evaluacion" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
                   <ClipboardCheck className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Evaluación</span>
@@ -131,6 +131,11 @@ export default function PortalPlayerView() {
                 <TabsTrigger value="plan" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
                   <Target className="h-3.5 w-3.5" />
                   Plan
+                </TabsTrigger>
+                <TabsTrigger value="ejercicios" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+                  <Dumbbell className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Ejercicios</span>
+                  <span className="sm:hidden">Ejer</span>
                 </TabsTrigger>
                 <TabsTrigger value="progreso" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
                   <TrendingUp className="h-3.5 w-3.5" />
