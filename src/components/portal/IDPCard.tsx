@@ -6,6 +6,16 @@ import { STAT_LABELS, parseWeeklyPlan } from '@/types/idp';
 import type { IDPPlanJSON } from '@/types/idp';
 import { Target, TrendingUp, AlertTriangle, CheckCircle2, Flame, Brain, Sparkles, ListChecks, Calendar, Dumbbell, Stethoscope, Activity, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useExerciseLibrary } from '@/hooks/usePortal/useExerciseLibrary';
+
+const STAT_TO_CATEGORIES: Record<string, string[]> = {
+  control_conduccion: ['control', 'conduccion'],
+  pase_recepcion: ['pase'],
+  decision_juego: ['decision'],
+  actitud_esfuerzo: ['actitud'],
+  disciplina_constancia: ['actitud'],
+  autonomia_liderazgo: ['decision'],
+};
 
 interface Props {
   playerId: string;
