@@ -24,6 +24,10 @@ export default function PortalPlayerView() {
   const { linkedPlayers, organizationName, logout } = usePortalAuth();
   const [activityFilter, setActivityFilter] = useState<'block' | 'all'>('all');
   const [showSessionModal, setShowSessionModal] = useState(false);
+  const [exerciseCategory, setExerciseCategory] = useState<string | null>(null);
+  const [exerciseSkillName, setExerciseSkillName] = useState<string | null>(null);
+  const [exercisePaywallScores, setExercisePaywallScores] = useState<{ current: number; target: number } | null>(null);
+  const [activeTab, setActiveTab] = useState('evaluacion');
 
   const handleLogout = () => {
     logout();
