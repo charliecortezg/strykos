@@ -124,7 +124,7 @@ export function ActionButton({
  */
 export function useActionState() {
   const [state, setState] = React.useState<ActionState>("idle");
-  const timeoutRef = React.useRef<NodeJS.Timeout>();
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
 
   React.useEffect(() => {
     return () => {
