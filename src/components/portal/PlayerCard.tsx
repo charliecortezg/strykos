@@ -71,8 +71,12 @@ export function PlayerCard({
 
         <div className="relative flex items-center gap-4">
           {/* Avatar placeholder */}
-          <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-            <User className="w-8 h-8 text-white/80" />
+          <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center relative">
+            {jerseyNumber ? (
+              <span className="text-2xl font-black text-white">#{jerseyNumber}</span>
+            ) : (
+              <User className="w-8 h-8 text-white/80" />
+            )}
           </div>
 
           <div className="flex-1">
