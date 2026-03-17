@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { CreditCard, Users, DollarSign, Settings, UserPlus } from 'lucide-react';
+import { CreditCard, Users, DollarSign, Settings, UserPlus, Shirt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
 import { IntakeSettingsPanel } from '@/components/fichajes/IntakeSettingsPanel';
