@@ -8,6 +8,7 @@ import { OrdersTab } from './OrdersTab';
 import { NumbersGridTab } from './NumbersGridTab';
 import { ActivePlayersTab } from './ActivePlayersTab';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { getUniformPublicUrl } from '@/lib/uniform-utils';
 
 interface Props {
   campaignId: string;
