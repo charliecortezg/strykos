@@ -33,7 +33,7 @@ export default function AdministrativoDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6 w-full sm:w-auto grid grid-cols-5 sm:inline-flex">
+          <TabsList className="mb-6 w-full sm:w-auto grid grid-cols-6 sm:inline-flex">
             <TabsTrigger value="finanzas" className="gap-2">
               <CreditCard className="w-4 h-4" />
               <span className="hidden sm:inline">Finanzas</span>
