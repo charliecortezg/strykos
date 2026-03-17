@@ -68,7 +68,7 @@ export default function UniformOrderPage() {
         if (data.error) { setState('invalid'); return; }
         setCampaignId(data.campaign_id);
         setCampaignName(data.campaign_name);
-        setCategories(data.categories || []);
+        setCategories((data.categories || []).filter((c: Category) => c.name.toLowerCase() !== 'pruebas'));
         setState('active');
       })
       .catch(() => setState('invalid'));
