@@ -11,6 +11,7 @@ import { FinanceModule } from '@/components/payments/FinanceModule';
 import { PlayersTable } from '@/components/players/PlayersTable';
 import { PlansModule } from '@/components/plans/PlansModule';
 import { BillingConfigurationPanel } from '@/components/billing/BillingConfigurationPanel';
+import { UniformsModule } from '@/components/uniforms/UniformsModule';
 
 export default function AdministrativoDashboard() {
   const { user, organization } = useAuth();
