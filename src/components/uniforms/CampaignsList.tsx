@@ -20,7 +20,7 @@ function CampaignRow({ campaign, onClick }: { campaign: any; onClick: () => void
   const paid = list.filter((o) => o.paid).length;
   const delivered = list.filter((o) => o.delivered).length;
 
-  const publicUrl = `${window.location.origin}/uniforme/${campaign.public_token}`;
+  const publicUrl = getUniformPublicUrl(campaign.public_token);
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();

@@ -21,9 +21,7 @@ export function CreateCampaignModal({ open, onOpenChange }: Props) {
   const [copied, setCopied] = useState(false);
   const { createCampaign } = useUniformCampaigns();
 
-  const publicUrl = createdToken
-    ? `${window.location.origin}/uniforme/${createdToken}`
-    : '';
+  const publicUrl = createdToken ? getUniformPublicUrl(createdToken) : '';
 
   const handleCreate = async () => {
     const result = await createCampaign.mutateAsync({
