@@ -36,6 +36,8 @@ import StudioPage from "./pages/stryk-way/StudioPage";
 import PortalLogin from "./pages/portal/PortalLogin";
 import PortalDashboard from "./pages/portal/PortalDashboard";
 import PortalPlayerView from "./pages/portal/PortalPlayerView";
+// Uniform public page
+import UniformOrderPage from "./pages/uniforms/UniformOrderPage";
 
 const queryClient = new QueryClient();
 
@@ -171,6 +173,9 @@ const App = () => (
           
           {/* Portal Familiar - Isolated routing for guardians */}
           <Route path="/portal/*" element={<PortalFamiliarRoutes />} />
+
+          {/* Public uniform order form - No auth */}
+          <Route path="/uniforme/:token" element={<UniformOrderPage />} />
           
           {/* Academy routes - Everything else */}
           <Route path="/*" element={<AcademyRoutes />} />

@@ -1,143 +1,50 @@
 
+# Plan: Usar age_group de la categoria como fuente de verdad en evaluaciones
 
-# Plan: Módulo de Uniformes + Formulario Público
+## Problema
 
-## Resumen
+Actualmente, el modulo de evaluaciones usa `calculateAgeGroup(player.date_of_birth)` para determinar el grupo de edad de cada jugador. Esto causa que jugadores de la categoria "Escuelita Futbol" (grupo 6-7) aparezcan como "8-9" si su fecha de nacimiento los ubica en ese rango, o peor, aparezcan como "8-9" por default cuando no tienen fecha de nacimiento registrada.
 
-Crear un sistema completo de gestión de pedidos de uniformes con: tablas en base de datos, Edge Function pública, panel admin con 3 tabs, formulario público mobile-first para padres, e importación del PDF adjunto de jugadores activos.
+Segun la gobernanza del producto, **la categoria es la fuente de verdad** para el grupo de edad, no la fecha de nacimiento del jugador.
 
----
+## Causa raiz
 
-## 1. Base de datos (migración SQL)
+En 4 puntos del codigo se usa `calculateAgeGroup(player.date_of_birth)` en lugar de `category.age_group`:
 
-**Tablas nuevas:**
-- `uniform_campaigns` — campañas con `public_token`, `status`, `deadline`
-- `uniform_orders` — pedidos con datos del uniforme, número, pago, entrega. UNIQUE en `(org_id, category_id, assigned_number)`
-- `uniform_blocked_numbers` — números bloqueados permanentes por categoría
+1. **EvaluationsModule.tsx** (linea 43): al construir `playerStatuses`, calcula `age_group` desde `date_of_birth`
+2. **EvaluationsModule.tsx** (linea 63-67): al llamar `saveEvaluation`, no pasa `categoryAgeGroup`
+3. **DirectorEvaluationsView.tsx** (linea ~55): al construir `summaryRows`, usa `calculateAgeGroup(player.date_of_birth)` para `ageGroup`
+4. El campo `age_group` guardado en la tabla `evaluations` puede estar incorrecto en registros existentes
 
-**Columna nueva en `players`:**
-- `jersey_number INT` — número de uniforme del jugador activo
+## Solucion
 
-**RLS:** Usando `get_current_org_id()` para aislamiento multi-tenant (patrón existente). Políticas adicionales para acceso público anónimo en SELECT de `uniform_campaigns` (por token) y para INSERT en `uniform_orders` (vía Edge Function con service role).
+### 1. EvaluationsModule.tsx
 
-**Trigger:** `update_updated_at_column` en `uniform_orders`.
+- En `playerStatuses`, cambiar `age_group: calculateAgeGroup(p.date_of_birth)` por el `age_group` de la categoria seleccionada
+- En `handleSave`, pasar `categoryAgeGroup` al llamar `saveEvaluation.mutateAsync()`
 
----
+### 2. DirectorEvaluationsView.tsx
 
-## 2. Edge Function: `uniform-campaign`
+- En `summaryRows`, reemplazar `calculateAgeGroup(player.date_of_birth)` por el `age_group` de la categoria seleccionada (obtenido de `activeCategories`)
 
-Función pública (`verify_jwt = false`), usa `SUPABASE_SERVICE_ROLE_KEY`.
+### 3. Migracion SQL (backfill)
 
-3 endpoints:
-- **GET `?token=`** → Devuelve datos de campaña + categorías de la org
-- **GET `?token=&action=available-numbers&category_id=`** → Devuelve números ocupados (unión de: permanent blocks + players.jersey_number + blocked_numbers + orders submitted/confirmed)
-- **POST `?token=`** → Crea orden con triple validación del número. Calcula precio según tipo.
+- Actualizar los registros existentes en `evaluations` donde `age_group` no coincida con el `age_group` de su categoria:
 
-Constantes hardcoded: `PERMANENT_BLOCKS = [67, 69]`, precios manga_corta=$500, manga_larga=$600.
+```sql
+UPDATE evaluations e
+SET age_group = c.age_group
+FROM categories c
+WHERE e.category_id = c.id
+  AND e.age_group != c.age_group;
+```
 
----
+## Archivos a modificar
 
-## 3. Panel Admin — Tab "Uniformes" en AdministrativoDashboard
-
-Agregar tab con icono `Shirt` al `AdministrativoDashboard.tsx` existente.
-
-**Componentes nuevos en `src/components/uniforms/`:**
-
-| Componente | Función |
+| Archivo | Cambio |
 |---|---|
-| `UniformsModule.tsx` | Contenedor principal: lista campañas + detalle |
-| `CampaignsList.tsx` | Tabla de campañas con KPIs, botón nueva campaña, modal crear |
-| `CampaignDetail.tsx` | Vista con 3 sub-tabs: Órdenes, Números, Jugadores Activos |
-| `OrdersTab.tsx` | Tabla de órdenes con filtros, checkboxes paid/delivered optimistic, confirmar número, exportar CSV |
-| `NumbersGridTab.tsx` | Grid visual 1-99 por categoría con estados coloreados |
-| `ActivePlayersTab.tsx` | Tabla de jugadores con número + importador CSV |
-| `CreateCampaignModal.tsx` | Modal crear campaña + copiar link |
+| src/components/evaluations/EvaluationsModule.tsx | Usar `category.age_group` en `playerStatuses` y pasar `categoryAgeGroup` en `handleSave` |
+| src/components/evaluations/DirectorEvaluationsView.tsx | Usar `category.age_group` de la categoria seleccionada en `summaryRows` |
+| Migracion SQL | Backfill de `evaluations.age_group` desde `categories.age_group` |
 
-**Hook:** `src/hooks/useUniforms.ts` — React Query para CRUD de campañas, órdenes, blocked numbers.
-
----
-
-## 4. Formulario Público — `/uniforme/:token`
-
-**Ruta nueva** en `App.tsx` fuera de `AcademyRoutes` y sin auth.
-
-**Página:** `src/pages/uniforms/UniformOrderPage.tsx`
-
-Diseño dark (#0A0A0A) con acentos dorados (#C9A84C). Sin layout de STRYK. Mobile-first.
-
-**Flujo:**
-1. Carga campaña via Edge Function
-2. Formulario en secciones: datos jugador → tipo uniforme (cards) → nombre camiseta (uppercase, 12 max) → talla (3 grupos colapsables con medidas) → número (grid táctil 1-99 + validación real-time)
-3. Resumen sticky al pie
-4. POST → confirmación con datos de pago (Citibanamex)
-5. Estados: cargando, activo, cerrado, inválido
-
----
-
-## 5. Importación del PDF adjunto
-
-El PDF contiene 15 registros de jugadores de campañas pasadas. Al implementar, crearé un seed SQL que:
-1. Actualiza `players.jersey_number` haciendo match por nombre + categoría en org `982f355c-...` (White Lions Academies)
-2. Inserta en `uniform_blocked_numbers` para bloquear esos números
-
-Datos extraídos del PDF:
-
-| Categoría | Jugador | Número |
-|---|---|---|
-| Juvenil A | Roberto Franco Gómez Flores | 9 |
-| Estrellita | Ian Jesús González flores | 12 |
-| Infantil | Luis Mario Vazquez Nieves | 3 |
-| Estrellita | Axel Fernando Chico Martinez | 93 |
-| Infantil | Alaim Contreras Cota | 9 |
-| Infantil | Ian raydel García serena | 19 |
-| Infantil | Derek Fernando Salazar Pérez | 8 |
-| Infantil | Dylan gutierrez | 10 |
-| Juvenil A | Roberto Franco Gómez Flores | 9 (duplicado) |
-| Estrellita | Leonardo Espinoza soto | 35 |
-| Estrellita | ANDRU MARTINEZ FLORES | 7 |
-| Estrellita | Angel Javier Lopez Lopez | 1 |
-| Estrellita | Jaziel salvador Rangel cárdenas | 30 |
-| Estrellita | Emilio Moisés Mayorga Galindo | 21 |
-| Estrellita | Mateo Avila Cervantes | 9 |
-| Infantil | Mario elian Valenzuela Hernández | 51 |
-
----
-
-## 6. Perfil del jugador + Portal de padres
-
-- **PlayerProfileModal**: Mostrar `jersey_number` con badge destacado
-- **PlayerCard** (portal padres): Mostrar número de uniforme visible
-
----
-
-## Archivos a crear/modificar
-
-| Archivo | Acción |
-|---|---|
-| `supabase/migrations/..._uniforms.sql` | Migración: 3 tablas + columna + RLS |
-| `supabase/functions/uniform-campaign/index.ts` | Edge Function pública |
-| `supabase/config.toml` | Agregar `[functions.uniform-campaign] verify_jwt = false` |
-| `src/hooks/useUniforms.ts` | Hook React Query |
-| `src/components/uniforms/UniformsModule.tsx` | Módulo principal admin |
-| `src/components/uniforms/CampaignsList.tsx` | Lista de campañas |
-| `src/components/uniforms/CampaignDetail.tsx` | Detalle campaña 3 tabs |
-| `src/components/uniforms/OrdersTab.tsx` | Tab órdenes |
-| `src/components/uniforms/NumbersGridTab.tsx` | Grid visual números |
-| `src/components/uniforms/ActivePlayersTab.tsx` | Tab jugadores + importador |
-| `src/components/uniforms/CreateCampaignModal.tsx` | Modal crear campaña |
-| `src/pages/uniforms/UniformOrderPage.tsx` | Formulario público padres |
-| `src/pages/dashboard/AdministrativoDashboard.tsx` | Agregar tab Uniformes |
-| `src/App.tsx` | Agregar ruta `/uniforme/:token` |
-| `src/components/players/PlayerProfileModal.tsx` | Mostrar jersey_number |
-| `src/components/portal/PlayerCard.tsx` | Mostrar jersey_number |
-
----
-
-## Consideraciones técnicas
-
-- RLS usa `get_current_org_id()` para admin, service role para Edge Function pública
-- Validación triple del número: frontend (occupied[]), Edge Function (query BD), constraint SQL
-- Optimistic updates en checkboxes paid/delivered
-- El formulario público es completamente independiente del layout STRYK
-- Todos los textos en español
-
+No se requieren cambios en `useEvaluations.ts` ya que el parametro `categoryAgeGroup` ya existe y tiene prioridad cuando se proporciona.

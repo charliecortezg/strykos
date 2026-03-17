@@ -107,6 +107,11 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
                 <span>{player.position}</span>
               </>
             )}
+            {(player as any).jersey_number && (
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-bold">
+                #{(player as any).jersey_number}
+              </Badge>
+            )}
             {player.is_scholarship && (
               <Badge variant="outline" className="text-xs">Becado</Badge>
             )}

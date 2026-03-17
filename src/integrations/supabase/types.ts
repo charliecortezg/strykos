@@ -2513,6 +2513,7 @@ export type Database = {
           is_active: boolean
           is_scholarship: boolean
           is_trial: boolean
+          jersey_number: number | null
           last_paid_month: string | null
           last_progression_at: string | null
           lifecycle_status: string
@@ -2548,6 +2549,7 @@ export type Database = {
           is_active?: boolean
           is_scholarship?: boolean
           is_trial?: boolean
+          jersey_number?: number | null
           last_paid_month?: string | null
           last_progression_at?: string | null
           lifecycle_status?: string
@@ -2583,6 +2585,7 @@ export type Database = {
           is_active?: boolean
           is_scholarship?: boolean
           is_trial?: boolean
+          jersey_number?: number | null
           last_paid_month?: string | null
           last_progression_at?: string | null
           lifecycle_status?: string
@@ -3079,6 +3082,187 @@ export type Database = {
           {
             foreignKeyName: "tutor_auth_tokens_organization_id_fkey"
             columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      uniform_blocked_numbers: {
+        Row: {
+          category_id: string | null
+          category_name: string
+          id: string
+          number: number
+          org_id: string
+          player_id: string | null
+          player_name: string
+        }
+        Insert: {
+          category_id?: string | null
+          category_name: string
+          id?: string
+          number: number
+          org_id: string
+          player_id?: string | null
+          player_name: string
+        }
+        Update: {
+          category_id?: string | null
+          category_name?: string
+          id?: string
+          number?: number
+          org_id?: string
+          player_id?: string | null
+          player_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uniform_blocked_numbers_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "uniform_blocked_numbers_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "uniform_blocked_numbers_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      uniform_campaigns: {
+        Row: {
+          created_at: string | null
+          deadline: string | null
+          id: string
+          name: string
+          notes: string | null
+          org_id: string
+          public_token: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          deadline?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          org_id: string
+          public_token?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          deadline?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          org_id?: string
+          public_token?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uniform_campaigns_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      uniform_orders: {
+        Row: {
+          assigned_number: number | null
+          campaign_id: string
+          category_id: string
+          category_name: string
+          created_at: string | null
+          delivered: boolean
+          id: string
+          jersey_size: string | null
+          name_on_jersey: string | null
+          notes: string | null
+          number_status: string
+          org_id: string
+          paid: boolean
+          payment_notes: string | null
+          player_name: string
+          price: number
+          requested_number: number | null
+          uniform_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_number?: number | null
+          campaign_id: string
+          category_id: string
+          category_name: string
+          created_at?: string | null
+          delivered?: boolean
+          id?: string
+          jersey_size?: string | null
+          name_on_jersey?: string | null
+          notes?: string | null
+          number_status?: string
+          org_id: string
+          paid?: boolean
+          payment_notes?: string | null
+          player_name: string
+          price?: number
+          requested_number?: number | null
+          uniform_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_number?: number | null
+          campaign_id?: string
+          category_id?: string
+          category_name?: string
+          created_at?: string | null
+          delivered?: boolean
+          id?: string
+          jersey_size?: string | null
+          name_on_jersey?: string | null
+          notes?: string | null
+          number_status?: string
+          org_id?: string
+          paid?: boolean
+          payment_notes?: string | null
+          player_name?: string
+          price?: number
+          requested_number?: number | null
+          uniform_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uniform_orders_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "uniform_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "uniform_orders_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "uniform_orders_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]

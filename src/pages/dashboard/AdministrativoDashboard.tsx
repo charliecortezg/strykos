@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { CreditCard, Users, DollarSign, Settings, UserPlus } from 'lucide-react';
+import { CreditCard, Users, DollarSign, Settings, UserPlus, Shirt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
 import { IntakeSettingsPanel } from '@/components/fichajes/IntakeSettingsPanel';
@@ -11,6 +11,7 @@ import { FinanceModule } from '@/components/payments/FinanceModule';
 import { PlayersTable } from '@/components/players/PlayersTable';
 import { PlansModule } from '@/components/plans/PlansModule';
 import { BillingConfigurationPanel } from '@/components/billing/BillingConfigurationPanel';
+import { UniformsModule } from '@/components/uniforms/UniformsModule';
 
 export default function AdministrativoDashboard() {
   const { user, organization } = useAuth();
@@ -32,7 +33,7 @@ export default function AdministrativoDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6 w-full sm:w-auto grid grid-cols-5 sm:inline-flex">
+          <TabsList className="mb-6 w-full sm:w-auto grid grid-cols-6 sm:inline-flex">
             <TabsTrigger value="finanzas" className="gap-2">
               <CreditCard className="w-4 h-4" />
               <span className="hidden sm:inline">Finanzas</span>
@@ -53,6 +54,10 @@ export default function AdministrativoDashboard() {
             <TabsTrigger value="fichajes" className="gap-2">
               <UserPlus className="w-4 h-4" />
               <span className="hidden sm:inline">Fichajes</span>
+            </TabsTrigger>
+            <TabsTrigger value="uniformes" className="gap-2">
+              <Shirt className="w-4 h-4" />
+              <span className="hidden sm:inline">Uniformes</span>
             </TabsTrigger>
           </TabsList>
 
@@ -93,6 +98,10 @@ export default function AdministrativoDashboard() {
                 <IntakeSettingsPanel />
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="uniformes">
+            <UniformsModule />
           </TabsContent>
         </Tabs>
       </main>

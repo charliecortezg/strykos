@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.send-evaluation-report]
 verify_jwt = false
+
+[functions.uniform-campaign]
+verify_jwt = false
