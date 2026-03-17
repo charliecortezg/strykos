@@ -1,38 +1,50 @@
 
+# Plan: Usar age_group de la categoria como fuente de verdad en evaluaciones
 
-# Plan: Mejorar formulario de uniformes
+## Problema
 
-## Cambios
+Actualmente, el modulo de evaluaciones usa `calculateAgeGroup(player.date_of_birth)` para determinar el grupo de edad de cada jugador. Esto causa que jugadores de la categoria "Escuelita Futbol" (grupo 6-7) aparezcan como "8-9" si su fecha de nacimiento los ubica en ese rango, o peor, aparezcan como "8-9" por default cuando no tienen fecha de nacimiento registrada.
 
-### 1. Selector de tallas con medidas visibles
-Reemplazar los grupos colapsables por un `<select>` dropdown nativo que muestre las medidas directamente en cada opción (como en la imagen de referencia):
-- "Infantil corte recto: Talla 4 (Alto 41 cm, Ancho 34 cm)"
-- "Masculino S (Alto 67 cm, Ancho 54 cm)"
-- etc.
+Segun la gobernanza del producto, **la categoria es la fuente de verdad** para el grupo de edad, no la fecha de nacimiento del jugador.
 
-Más simple, menos fricción, medidas siempre visibles.
+## Causa raiz
 
-### 2. Colores STRYK
-Cambiar la paleta del formulario de negro puro (#0A0A0A) + dorado (#C9A84C) a los colores oficiales STRYK:
-- Fondo: Deep Navy (#0d1a33)
-- Acentos: Gold (#d4a030)
-- Cards/inputs: Navy más claro (#1a2a4a)
-- Bordes: navy claro (#2a3a5a)
+En 4 puntos del codigo se usa `calculateAgeGroup(player.date_of_birth)` en lugar de `category.age_group`:
 
-### 3. Sin autenticación
-Ya está implementado así — la ruta `/uniforme/:token` es pública, la Edge Function tiene `verify_jwt = false`, y usa service role. No hay fricción de login. Sin cambios necesarios.
+1. **EvaluationsModule.tsx** (linea 43): al construir `playerStatuses`, calcula `age_group` desde `date_of_birth`
+2. **EvaluationsModule.tsx** (linea 63-67): al llamar `saveEvaluation`, no pasa `categoryAgeGroup`
+3. **DirectorEvaluationsView.tsx** (linea ~55): al construir `summaryRows`, usa `calculateAgeGroup(player.date_of_birth)` para `ageGroup`
+4. El campo `age_group` guardado en la tabla `evaluations` puede estar incorrecto en registros existentes
 
-### 4. Información de pago visible en el formulario
-Agregar una sección de datos bancarios **antes** del botón de enviar (no solo en la pantalla de confirmación), para que el padre vea a dónde transferir desde el inicio:
-- Carlos Mario Cortez Gurrola
-- Citibanamex
-- 5256 7840 0306 7195
+## Solucion
 
----
+### 1. EvaluationsModule.tsx
 
-## Archivo a modificar
+- En `playerStatuses`, cambiar `age_group: calculateAgeGroup(p.date_of_birth)` por el `age_group` de la categoria seleccionada
+- En `handleSave`, pasar `categoryAgeGroup` al llamar `saveEvaluation.mutateAsync()`
+
+### 2. DirectorEvaluationsView.tsx
+
+- En `summaryRows`, reemplazar `calculateAgeGroup(player.date_of_birth)` por el `age_group` de la categoria seleccionada (obtenido de `activeCategories`)
+
+### 3. Migracion SQL (backfill)
+
+- Actualizar los registros existentes en `evaluations` donde `age_group` no coincida con el `age_group` de su categoria:
+
+```sql
+UPDATE evaluations e
+SET age_group = c.age_group
+FROM categories c
+WHERE e.category_id = c.id
+  AND e.age_group != c.age_group;
+```
+
+## Archivos a modificar
 
 | Archivo | Cambio |
 |---|---|
-| `src/pages/uniforms/UniformOrderPage.tsx` | Paleta STRYK, select nativo con medidas, sección de pago en formulario |
+| src/components/evaluations/EvaluationsModule.tsx | Usar `category.age_group` en `playerStatuses` y pasar `categoryAgeGroup` en `handleSave` |
+| src/components/evaluations/DirectorEvaluationsView.tsx | Usar `category.age_group` de la categoria seleccionada en `summaryRows` |
+| Migracion SQL | Backfill de `evaluations.age_group` desde `categories.age_group` |
 
+No se requieren cambios en `useEvaluations.ts` ya que el parametro `categoryAgeGroup` ya existe y tiene prioridad cuando se proporciona.
