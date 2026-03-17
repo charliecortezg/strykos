@@ -55,6 +55,10 @@ export default function AdministrativoDashboard() {
               <UserPlus className="w-4 h-4" />
               <span className="hidden sm:inline">Fichajes</span>
             </TabsTrigger>
+            <TabsTrigger value="uniformes" className="gap-2">
+              <Shirt className="w-4 h-4" />
+              <span className="hidden sm:inline">Uniformes</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="finanzas">
