@@ -8,6 +8,7 @@ import { OrdersTab } from './OrdersTab';
 import { NumbersGridTab } from './NumbersGridTab';
 import { ActivePlayersTab } from './ActivePlayersTab';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { getUniformPublicUrl } from '@/lib/uniform-utils';
 
 interface Props {
   campaignId: string;
@@ -29,7 +30,7 @@ export function CampaignDetail({ campaignId, onBack }: Props) {
   const paid = list.filter((o) => o.paid).length;
   const delivered = list.filter((o) => o.delivered).length;
 
-  const publicUrl = `${window.location.origin}/uniforme/${campaign.public_token}`;
+  const publicUrl = getUniformPublicUrl(campaign.public_token);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(publicUrl);

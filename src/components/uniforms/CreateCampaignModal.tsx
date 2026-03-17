@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Copy, Check } from 'lucide-react';
 import { useUniformCampaigns } from '@/hooks/useUniforms';
+import { getUniformPublicUrl } from '@/lib/uniform-utils';
 
 interface Props {
   open: boolean;
@@ -20,9 +21,7 @@ export function CreateCampaignModal({ open, onOpenChange }: Props) {
   const [copied, setCopied] = useState(false);
   const { createCampaign } = useUniformCampaigns();
 
-  const publicUrl = createdToken
-    ? `${window.location.origin}/uniforme/${createdToken}`
-    : '';
+  const publicUrl = createdToken ? getUniformPublicUrl(createdToken) : '';
 
   const handleCreate = async () => {
     const result = await createCampaign.mutateAsync({
