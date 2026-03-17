@@ -11,6 +11,7 @@ interface PlayerCardProps {
   radar: RadarAttributes;
   topBadges?: StrykBadge[];
   compact?: boolean;
+  jerseyNumber?: number | null;
 }
 
 const ICON_MAP: Record<string, typeof Trophy> = {
