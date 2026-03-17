@@ -173,6 +173,9 @@ const App = () => (
           
           {/* Portal Familiar - Isolated routing for guardians */}
           <Route path="/portal/*" element={<PortalFamiliarRoutes />} />
+
+          {/* Public uniform order form - No auth */}
+          <Route path="/uniforme/:token" element={<UniformOrderPage />} />
           
           {/* Academy routes - Everything else */}
           <Route path="/*" element={<AcademyRoutes />} />

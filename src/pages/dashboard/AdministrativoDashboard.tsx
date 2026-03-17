@@ -99,6 +99,10 @@ export default function AdministrativoDashboard() {
               </div>
             </div>
           </TabsContent>
+
+          <TabsContent value="uniformes">
+            <UniformsModule />
+          </TabsContent>
         </Tabs>
       </main>
     </div>
