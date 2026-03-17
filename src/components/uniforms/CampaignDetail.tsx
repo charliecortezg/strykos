@@ -112,7 +112,7 @@ export function CampaignDetail({ campaignId, onBack }: Props) {
         onOpenChange={setShowClose}
         title="¿Cerrar campaña?"
         description="No se podrán recibir más pedidos. Esta acción no se puede deshacer."
-        confirmLabel="Cerrar campaña"
+        confirmText="Cerrar campaña"
         onConfirm={() => closeCampaign.mutate(campaignId)}
         variant="destructive"
       />

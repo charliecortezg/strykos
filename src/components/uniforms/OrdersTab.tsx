@@ -15,7 +15,8 @@ interface Props {
 
 export function OrdersTab({ campaignId }: Props) {
   const { orders, updateOrder, confirmNumber, deleteOrder } = useUniformOrders(campaignId);
-  const { activeCategories } = useCategories();
+  const { categories } = useCategories();
+  const activeCategories = categories.filter(c => c.is_active);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
 

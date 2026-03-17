@@ -14,7 +14,8 @@ interface Props {
 }
 
 export function NumbersGridTab({ campaignId }: Props) {
-  const { activeCategories } = useCategories();
+  const { categories } = useCategories();
+  const activeCategories = categories.filter(c => c.is_active);
   const { orders } = useUniformOrders(campaignId);
   const { blocked } = useBlockedNumbers();
   const { organization } = useAuth();
