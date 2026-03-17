@@ -48,6 +48,7 @@ export function PlayerCard({
   radar, 
   topBadges = [],
   compact = false,
+  jerseyNumber,
 }: PlayerCardProps) {
   const tier = getOvrTier(ovr);
   const tierStyle = OVR_COLORS[tier];
