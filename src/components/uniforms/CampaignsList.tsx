@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useUniformCampaigns, useUniformOrders } from '@/hooks/useUniforms';
 import { CreateCampaignModal } from './CreateCampaignModal';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getUniformPublicUrl } from '@/lib/uniform-utils';
 
 interface Props {
   onSelectCampaign: (id: string) => void;
