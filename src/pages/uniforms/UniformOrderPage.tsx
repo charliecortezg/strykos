@@ -292,7 +292,6 @@ export default function UniformOrderPage() {
                 style={{
                   background: '#1A1A1A',
                   border: `1px solid ${uniformType === t.key ? GOLD : '#333'}`,
-                  ringColor: GOLD,
                   boxShadow: uniformType === t.key ? `0 0 0 2px ${GOLD}` : undefined,
                 }}
               >
