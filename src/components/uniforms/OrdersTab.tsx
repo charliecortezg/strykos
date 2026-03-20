@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Download, CheckCircle, Trash2 } from 'lucide-react';
 import { useUniformOrders } from '@/hooks/useUniforms';
 import { useCategories } from '@/hooks/useCategories';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
 
 interface Props {
