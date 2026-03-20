@@ -174,6 +174,21 @@ export function OrdersTab({ campaignId }: Props) {
           </TableBody>
         </Table>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="¿Eliminar pedido?"
+        description={`Estás a punto de eliminar el pedido de "${deleteTarget?.name}". Esta acción no se puede deshacer.`}
+        confirmText="Sí, eliminar"
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteOrder.mutate(deleteTarget.id);
+            setDeleteTarget(null);
+          }
+        }}
+        variant="destructive"
+      />
     </div>
   );
 }
