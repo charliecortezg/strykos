@@ -20,6 +20,7 @@ export function OrdersTab({ campaignId }: Props) {
   const activeCategories = categories.filter(c => c.is_active);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const list = (orders.data || []).filter((o) => {
     if (filterCategory !== 'all' && o.category_id !== filterCategory) return false;
