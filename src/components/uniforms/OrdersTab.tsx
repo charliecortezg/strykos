@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Download, CheckCircle, Trash2 } from 'lucide-react';
 import { useUniformOrders } from '@/hooks/useUniforms';
 import { useCategories } from '@/hooks/useCategories';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
 
 interface Props {
@@ -19,6 +20,7 @@ export function OrdersTab({ campaignId }: Props) {
   const activeCategories = categories.filter(c => c.is_active);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const list = (orders.data || []).filter((o) => {
     if (filterCategory !== 'all' && o.category_id !== filterCategory) return false;
@@ -153,7 +155,7 @@ export function OrdersTab({ campaignId }: Props) {
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => deleteOrder.mutate(o.id)}
+                      onClick={() => setDeleteTarget({ id: o.id, name: o.player_name })}
                       title="Eliminar"
                     >
                       <Trash2 className="w-4 h-4 text-destructive" />
@@ -172,6 +174,21 @@ export function OrdersTab({ campaignId }: Props) {
           </TableBody>
         </Table>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="¿Eliminar pedido?"
+        description={`Estás a punto de eliminar el pedido de "${deleteTarget?.name}". Esta acción no se puede deshacer.`}
+        confirmText="Sí, eliminar"
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteOrder.mutate(deleteTarget.id);
+            setDeleteTarget(null);
+          }
+        }}
+        variant="destructive"
+      />
     </div>
   );
 }
