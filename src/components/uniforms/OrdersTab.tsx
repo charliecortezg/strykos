@@ -155,7 +155,7 @@ export function OrdersTab({ campaignId }: Props) {
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => deleteOrder.mutate(o.id)}
+                      onClick={() => setDeleteTarget({ id: o.id, name: o.player_name })}
                       title="Eliminar"
                     >
                       <Trash2 className="w-4 h-4 text-destructive" />
