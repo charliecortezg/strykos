@@ -150,6 +150,35 @@ export function TrainerMatchesModule({ categories }: TrainerMatchesModuleProps) 
         onUpdatePlayers={handleUpdatePlayers}
         canEdit={false}
       />
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!matchToDelete} onOpenChange={(open) => !open && setMatchToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar partido programado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará el partido
+              {matchToDelete && (
+                <span className="font-medium"> vs {matchToDelete.rival_name}</span>
+              )}
+              . Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (matchToDelete) {
+                  deleteMatch.mutate(matchToDelete.id);
+                  setMatchToDelete(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
