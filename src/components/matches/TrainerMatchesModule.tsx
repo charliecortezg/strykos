@@ -96,7 +96,9 @@ export function TrainerMatchesModule({ categories }: TrainerMatchesModuleProps) 
                     match={match}
                     onView={() => setSelectedMatch(match)}
                     onLoadResults={() => setMatchForResults(match)}
+                    onDelete={() => setMatchToDelete(match)}
                     canLoadResults={true}
+                    canDelete={true}
                   />
                 ))}
               </div>
