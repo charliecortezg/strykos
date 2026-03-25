@@ -1,0 +1,2 @@
+DELETE FROM match_players WHERE match_id = '469c4023-3f23-4f50-a097-dc3612562a91';
+DELETE FROM matches WHERE id = '469c4023-3f23-4f50-a097-dc3612562a91';
