@@ -85,6 +85,7 @@ export interface MatchPlayer {
   assists: number;
   points: number;
   performance: MatchPerformance | null;
+  is_guest?: boolean | null;
   created_at: string;
   updated_at: string;
   player?: {

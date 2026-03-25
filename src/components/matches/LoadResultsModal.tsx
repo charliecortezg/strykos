@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Trophy, Target, Save, Camera, FileText, Plus, Minus, Check, X, ImageIcon, Crown, ChevronDown, CheckCheck, Users } from 'lucide-react';
+import { Trophy, Target, Save, Camera, FileText, Plus, Minus, Check, X, ImageIcon, Crown, ChevronDown, CheckCheck, Users, Search, UserPlus } from 'lucide-react';
 import { 
   Drawer, 
   DrawerContent, 
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -46,6 +47,8 @@ interface LocalPlayerAttendance {
   assists: number;
   points: number;
   absence_reason: string;
+  is_guest?: boolean;
+  category_name?: string;
 }
 
 const ABSENCE_REASONS = [
@@ -73,6 +76,14 @@ export function LoadResultsModal({
   
   // Local attendance state (used when no match_players exist yet)
   const [localAttendance, setLocalAttendance] = useState<LocalPlayerAttendance[]>([]);
+  
+  // Guest players state
+  const [guestPlayers, setGuestPlayers] = useState<LocalPlayerAttendance[]>([]);
+  const [guestSearch, setGuestSearch] = useState('');
+  const [guestSearchResults, setGuestSearchResults] = useState<any[]>([]);
+  const [showGuestSearch, setShowGuestSearch] = useState(false);
+  const guestSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   
   // Player stats state (derived from matchPlayers or localAttendance)
   const [playerStats, setPlayerStats] = useState<MatchPlayer[]>([]);
@@ -108,6 +119,45 @@ export function LoadResultsModal({
     enabled: !!match?.category_id && !!organization?.id && !hasExistingPlayers && isOpen,
   });
 
+  // Guest player search with debounce
+  const searchGuestPlayers = useCallback(async (query: string) => {
+    if (!query.trim() || !organization?.id || !match?.category_id) {
+      setGuestSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .select('id, full_name, position, category_id, category:categories(name)')
+        .eq('organization_id', organization.id)
+        .eq('is_active', true)
+        .neq('category_id', match.category_id)
+        .ilike('full_name', `%${query}%`)
+        .limit(10);
+      if (error) throw error;
+      setGuestSearchResults(data || []);
+    } catch {
+      setGuestSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [organization?.id, match?.category_id]);
+
+  useEffect(() => {
+    if (guestSearchTimeoutRef.current) clearTimeout(guestSearchTimeoutRef.current);
+    if (!guestSearch.trim()) {
+      setGuestSearchResults([]);
+      return;
+    }
+    guestSearchTimeoutRef.current = setTimeout(() => {
+      searchGuestPlayers(guestSearch);
+    }, 300);
+    return () => {
+      if (guestSearchTimeoutRef.current) clearTimeout(guestSearchTimeoutRef.current);
+    };
+  }, [guestSearch, searchGuestPlayers]);
+
   // Initialize state from match
   useEffect(() => {
     if (match) {
@@ -140,69 +190,79 @@ export function LoadResultsModal({
         assists: 0,
         points: 0,
         absence_reason: 'injustificada',
+        is_guest: false,
       })));
     }
   }, [categoryPlayers, hasExistingPlayers, localAttendance.length]);
 
-  // Reset local attendance when modal closes
+  // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
       setLocalAttendance([]);
+      setGuestPlayers([]);
+      setGuestSearch('');
+      setGuestSearchResults([]);
+      setShowGuestSearch(false);
     }
   }, [isOpen]);
+
+  // Combined list for stats calculations
+  const allLocalPlayers = useMemo(() => {
+    return [...localAttendance, ...guestPlayers];
+  }, [localAttendance, guestPlayers]);
 
   // Derive attending/absent from the right source
   const attendingPlayers = useMemo(() => {
     if (hasExistingPlayers) {
       return playerStats.filter(p => p.attended);
     }
-    return localAttendance.filter(p => p.attended);
-  }, [hasExistingPlayers, playerStats, localAttendance]);
+    return allLocalPlayers.filter(p => p.attended);
+  }, [hasExistingPlayers, playerStats, allLocalPlayers]);
 
   const absentPlayers = useMemo(() => {
     if (hasExistingPlayers) {
       return playerStats.filter(p => !p.attended);
     }
-    return localAttendance.filter(p => !p.attended);
-  }, [hasExistingPlayers, playerStats, localAttendance]);
+    return allLocalPlayers.filter(p => !p.attended);
+  }, [hasExistingPlayers, playerStats, allLocalPlayers]);
 
-  // Attendance stats
+  // Attendance stats (includes guests)
   const attendanceStats = useMemo(() => {
-    const source = hasExistingPlayers ? playerStats : localAttendance;
+    const source = hasExistingPlayers ? playerStats : allLocalPlayers;
     const present = source.filter(p => p.attended);
     return {
       total: source.length,
       present: present.length,
       absent: source.filter(p => !p.attended).length,
     };
-  }, [hasExistingPlayers, playerStats, localAttendance]);
+  }, [hasExistingPlayers, playerStats, allLocalPlayers]);
 
   // Auto-calculate goals from player stats
   const calculateTotalGoals = () => {
     if (hasExistingPlayers) {
       return playerStats.reduce((sum, p) => sum + (p.goals || 0), 0);
     }
-    return localAttendance.filter(p => p.attended).reduce((sum, p) => sum + p.goals, 0);
+    return allLocalPlayers.filter(p => p.attended).reduce((sum, p) => sum + p.goals, 0);
   };
 
   const calculateTotalAssists = () => {
     if (hasExistingPlayers) {
       return playerStats.reduce((sum, p) => sum + (p.assists || 0), 0);
     }
-    return localAttendance.filter(p => p.attended).reduce((sum, p) => sum + p.assists, 0);
+    return allLocalPlayers.filter(p => p.attended).reduce((sum, p) => sum + p.assists, 0);
   };
 
   const calculateTotalPoints = () => {
     if (hasExistingPlayers) {
       return playerStats.reduce((sum, p) => sum + (p.points || 0), 0);
     }
-    return localAttendance.filter(p => p.attended).reduce((sum, p) => sum + p.points, 0);
+    return allLocalPlayers.filter(p => p.attended).reduce((sum, p) => sum + p.points, 0);
   };
 
   // Sync goals with player stats
   useEffect(() => {
     if (isFutbol) {
-      const source = hasExistingPlayers ? playerStats : localAttendance.filter(p => p.attended);
+      const source = hasExistingPlayers ? playerStats : allLocalPlayers.filter(p => p.attended);
       if (source.length > 0) {
         const calculatedGoals = source.reduce((sum, p) => sum + (p.goals || 0), 0);
         if (calculatedGoals !== goalsFor) {
@@ -210,11 +270,15 @@ export function LoadResultsModal({
         }
       }
     }
-  }, [playerStats, localAttendance, isFutbol, hasExistingPlayers]);
+  }, [playerStats, allLocalPlayers, isFutbol, hasExistingPlayers]);
 
   // --- Attendance handlers ---
   const toggleAttendance = (playerId: string, attended: boolean) => {
-    setLocalAttendance(prev =>
+    // Check if it's a guest player
+    const isGuest = guestPlayers.some(g => g.player_id === playerId);
+    const setter = isGuest ? setGuestPlayers : setLocalAttendance;
+    
+    setter(prev =>
       prev.map(p => {
         if (p.player_id === playerId) {
           return {
@@ -241,25 +305,67 @@ export function LoadResultsModal({
         absence_reason: '',
       }))
     );
+    setGuestPlayers(prev =>
+      prev.map(p => ({
+        ...p,
+        attended: true,
+        performance: 'excellent' as MatchPerformance,
+        absence_reason: '',
+      }))
+    );
   };
 
   const updateLocalPerformance = (playerId: string, status: PerformanceStatus) => {
     const matchPerf: MatchPerformance = status === 'challenge' ? 'focus' : status;
-    setLocalAttendance(prev =>
+    const isGuest = guestPlayers.some(g => g.player_id === playerId);
+    const setter = isGuest ? setGuestPlayers : setLocalAttendance;
+    setter(prev =>
       prev.map(p => p.player_id === playerId ? { ...p, performance: matchPerf } : p)
     );
   };
 
   const updateLocalStat = (playerId: string, field: 'goals' | 'assists' | 'points', value: number) => {
-    setLocalAttendance(prev =>
+    const isGuest = guestPlayers.some(g => g.player_id === playerId);
+    const setter = isGuest ? setGuestPlayers : setLocalAttendance;
+    setter(prev =>
       prev.map(p => p.player_id === playerId ? { ...p, [field]: value } : p)
     );
   };
 
   const updateAbsenceReason = (playerId: string, reason: string) => {
-    setLocalAttendance(prev =>
+    const isGuest = guestPlayers.some(g => g.player_id === playerId);
+    const setter = isGuest ? setGuestPlayers : setLocalAttendance;
+    setter(prev =>
       prev.map(p => p.player_id === playerId ? { ...p, absence_reason: reason } : p)
     );
+  };
+
+  // --- Guest player handlers ---
+  const addGuestPlayer = (player: any) => {
+    const alreadyAdded = guestPlayers.some(g => g.player_id === player.id);
+    if (alreadyAdded) return;
+
+    setGuestPlayers(prev => [...prev, {
+      player_id: player.id,
+      full_name: player.full_name,
+      position: player.position,
+      payment_status: 'al_dia',
+      attended: false,
+      performance: null,
+      goals: 0,
+      assists: 0,
+      points: 0,
+      absence_reason: 'injustificada',
+      is_guest: true,
+      category_name: player.category?.name || '',
+    }]);
+    setGuestSearch('');
+    setGuestSearchResults([]);
+    setShowGuestSearch(false);
+  };
+
+  const removeGuestPlayer = (playerId: string) => {
+    setGuestPlayers(prev => prev.filter(g => g.player_id !== playerId));
   };
 
   // --- Existing player stats handlers ---
@@ -319,7 +425,7 @@ export function LoadResultsModal({
     // Validation: At least one player must be present
     const presentCount = hasExistingPlayers
       ? playerStats.filter(p => p.attended).length
-      : localAttendance.filter(p => p.attended).length;
+      : allLocalPlayers.filter(p => p.attended).length;
 
     if (presentCount === 0) {
       toast.error('Marca al menos un jugador como presente');
@@ -335,8 +441,13 @@ export function LoadResultsModal({
     
     try {
       if (!hasExistingPlayers) {
-        // INSERT batch: all players (present and absent)
-        const playersToInsert = localAttendance.map(p => ({
+        // Combine regular + guest players
+        const allMatchPlayers = [
+          ...localAttendance.map(p => ({ ...p, is_guest: false })),
+          ...guestPlayers.map(p => ({ ...p, is_guest: true })),
+        ];
+
+        const playersToInsert = allMatchPlayers.map(p => ({
           match_id: match.id,
           player_id: p.player_id,
           organization_id: organization.id,
@@ -345,6 +456,7 @@ export function LoadResultsModal({
           assists: p.attended ? p.assists : 0,
           points: p.attended ? p.points : 0,
           performance: p.attended ? (p.performance || 'excellent') : null,
+          is_guest: p.is_guest,
         }));
 
         await createMatchPlayers.mutateAsync(playersToInsert);
@@ -378,17 +490,17 @@ export function LoadResultsModal({
   const perfCounts = useMemo(() => {
     const attending = hasExistingPlayers
       ? playerStats.filter(p => p.attended)
-      : localAttendance.filter(p => p.attended);
+      : allLocalPlayers.filter(p => p.attended);
     const absent = hasExistingPlayers
       ? playerStats.filter(p => !p.attended)
-      : localAttendance.filter(p => !p.attended);
+      : allLocalPlayers.filter(p => !p.attended);
     return {
       outstanding: attending.filter(p => (p.performance || 'excellent') === 'outstanding').length,
       excellent: attending.filter(p => (p.performance || 'excellent') === 'excellent').length,
       focus: attending.filter(p => (p.performance || 'excellent') === 'focus').length,
       challenge: absent.length,
     };
-  }, [hasExistingPlayers, playerStats, localAttendance]);
+  }, [hasExistingPlayers, playerStats, allLocalPlayers]);
 
   const TAB_ORDER = ['attendance', 'stats', 'result', 'notes'] as const;
   const [activeTab, setActiveTab] = useState<string>(hasExistingPlayers ? 'result' : 'attendance');
@@ -428,13 +540,131 @@ export function LoadResultsModal({
 
   const isLoadingAny = loadingPlayers || loadingCategoryPlayers;
 
-  // Stats source: either matchPlayers or localAttendance (present only)
+  // Stats source: either matchPlayers or allLocalPlayers (present only)
   const statsAttending = hasExistingPlayers
     ? playerStats.filter(p => p.attended)
-    : localAttendance.filter(p => p.attended);
+    : allLocalPlayers.filter(p => p.attended);
   const statsAbsent = hasExistingPlayers
     ? playerStats.filter(p => !p.attended)
-    : localAttendance.filter(p => !p.attended);
+    : allLocalPlayers.filter(p => !p.attended);
+
+  // Render a single player attendance card
+  const renderPlayerCard = (player: LocalPlayerAttendance) => {
+    const isPresent = player.attended;
+    const isGuest = player.is_guest;
+
+    return (
+      <Card key={player.player_id} className="p-3">
+        {/* Player Info */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="font-medium text-base truncate">{player.full_name}</p>
+              {isGuest && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-border">
+                  INVITADO
+                </Badge>
+              )}
+              {isPresent && player.performance && (
+                <PerformanceIndicator
+                  status={player.performance as PerformanceStatus}
+                  onChange={(status) => updateLocalPerformance(player.player_id, status)}
+                  size="sm"
+                />
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              {player.position && (
+                <span className="text-xs text-muted-foreground">{player.position}</span>
+              )}
+              {isGuest && player.category_name && (
+                <span className="text-xs text-muted-foreground">• {player.category_name}</span>
+              )}
+            </div>
+          </div>
+          {isGuest && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive flex-shrink-0"
+              onClick={() => removeGuestPlayer(player.player_id)}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+
+        {/* Large Toggle Buttons */}
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant={isPresent ? 'default' : 'outline'}
+            onClick={() => toggleAttendance(player.player_id, true)}
+            className={cn(
+              'flex-1 h-14 text-lg font-semibold gap-2 transition-all',
+              isPresent
+                ? 'bg-success hover:bg-success/90 text-success-foreground shadow-md'
+                : 'border-success/30 text-success hover:bg-success/10'
+            )}
+          >
+            <Check className="w-6 h-6" />
+            Presente
+            {isPresent && player.performance && (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const cycle: MatchPerformance[] = ['outstanding', 'excellent', 'focus'];
+                  const currentIdx = cycle.indexOf(player.performance!);
+                  const nextIdx = (currentIdx + 1) % cycle.length;
+                  updateLocalPerformance(player.player_id, cycle[nextIdx] as PerformanceStatus);
+                }}
+                className={cn(
+                  'ml-2 w-6 h-6 rounded-full ring-2 ring-white/50 cursor-pointer',
+                  'active:scale-90 transition-transform',
+                  player.performance === 'outstanding' && 'bg-blue-500',
+                  player.performance === 'excellent' && 'bg-success-foreground',
+                  player.performance === 'focus' && 'bg-warning'
+                )}
+              />
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant={!isPresent ? 'default' : 'outline'}
+            onClick={() => toggleAttendance(player.player_id, false)}
+            className={cn(
+              'flex-1 h-14 text-lg font-semibold gap-2 transition-all',
+              !isPresent && player.absence_reason
+                ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-md'
+                : 'border-destructive/30 text-destructive hover:bg-destructive/10'
+            )}
+          >
+            <X className="w-6 h-6" />
+            Ausente
+          </Button>
+        </div>
+
+        {/* Absence Reason */}
+        {!isPresent && (
+          <div className="mt-3 pt-3 border-t border-border">
+            <Select
+              value={player.absence_reason || 'injustificada'}
+              onValueChange={(v) => updateAbsenceReason(player.player_id, v)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Motivo de ausencia" />
+              </SelectTrigger>
+              <SelectContent>
+                {ABSENCE_REASONS.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </Card>
+    );
+  };
 
   return (
     <Drawer open={isOpen} onOpenChange={() => onClose()}>
@@ -530,104 +760,114 @@ export function LoadResultsModal({
                     </Button>
                   </div>
 
-                  {/* Players List */}
+                  {/* Regular Players List */}
                   <div className="space-y-3">
-                    {localAttendance.map((player) => {
-                      const isPresent = player.attended;
-                      const isAbsent = !player.attended && player.absence_reason !== '';
+                    {localAttendance.map(renderPlayerCard)}
+                  </div>
 
-                      return (
-                        <Card key={player.player_id} className="p-3">
-                          {/* Player Info */}
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium text-base truncate">{player.full_name}</p>
-                                {isPresent && player.performance && (
-                                  <PerformanceIndicator
-                                    status={player.performance as PerformanceStatus}
-                                    onChange={(status) => updateLocalPerformance(player.player_id, status)}
-                                    size="sm"
-                                  />
-                                )}
-                              </div>
-                              {player.position && (
-                                <span className="text-xs text-muted-foreground">{player.position}</span>
-                              )}
-                            </div>
+                  {/* Guest Players */}
+                  {guestPlayers.length > 0 && (
+                    <div className="space-y-3 mt-4">
+                      <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <UserPlus className="w-4 h-4" />
+                        Invitados ({guestPlayers.length})
+                      </h4>
+                      {guestPlayers.map(renderPlayerCard)}
+                    </div>
+                  )}
+
+                  {/* Add Guest Player Section */}
+                  <div className="mt-4 pt-4 border-t border-border">
+                    {!showGuestSearch ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowGuestSearch(true)}
+                        className="w-full h-12 gap-2 border-dashed"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                        Agregar jugador de otra categoría
+                      </Button>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                              placeholder="Buscar jugador por nombre..."
+                              value={guestSearch}
+                              onChange={(e) => setGuestSearch(e.target.value)}
+                              className="pl-9 h-10"
+                              autoFocus
+                            />
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setShowGuestSearch(false);
+                              setGuestSearch('');
+                              setGuestSearchResults([]);
+                            }}
+                            className="h-10 w-10 flex-shrink-0"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
 
-                          {/* Large Toggle Buttons */}
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              variant={isPresent ? 'default' : 'outline'}
-                              onClick={() => toggleAttendance(player.player_id, true)}
-                              className={cn(
-                                'flex-1 h-14 text-lg font-semibold gap-2 transition-all',
-                                isPresent
-                                  ? 'bg-success hover:bg-success/90 text-success-foreground shadow-md'
-                                  : 'border-success/30 text-success hover:bg-success/10'
-                              )}
-                            >
-                              <Check className="w-6 h-6" />
-                              Presente
-                              {isPresent && player.performance && (
-                                <div
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const cycle: MatchPerformance[] = ['outstanding', 'excellent', 'focus'];
-                                    const currentIdx = cycle.indexOf(player.performance!);
-                                    const nextIdx = (currentIdx + 1) % cycle.length;
-                                    updateLocalPerformance(player.player_id, cycle[nextIdx] as PerformanceStatus);
-                                  }}
+                        {/* Search Results */}
+                        {isSearching && (
+                          <div className="flex items-center justify-center py-4">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+                          </div>
+                        )}
+                        {!isSearching && guestSearch.trim() && guestSearchResults.length === 0 && (
+                          <p className="text-sm text-muted-foreground text-center py-3">
+                            Sin resultados para "{guestSearch}"
+                          </p>
+                        )}
+                        {guestSearchResults.length > 0 && (
+                          <div className="space-y-1 max-h-48 overflow-y-auto rounded-lg border border-border">
+                            {guestSearchResults.map((player) => {
+                              const alreadyAdded = guestPlayers.some(g => g.player_id === player.id);
+                              return (
+                                <button
+                                  key={player.id}
+                                  type="button"
+                                  disabled={alreadyAdded}
+                                  onClick={() => addGuestPlayer(player)}
                                   className={cn(
-                                    'ml-2 w-6 h-6 rounded-full ring-2 ring-white/50 cursor-pointer',
-                                    'active:scale-90 transition-transform',
-                                    player.performance === 'outstanding' && 'bg-blue-500',
-                                    player.performance === 'excellent' && 'bg-success-foreground',
-                                    player.performance === 'focus' && 'bg-warning'
+                                    "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
+                                    alreadyAdded
+                                      ? "opacity-50 cursor-not-allowed bg-muted/50"
+                                      : "hover:bg-muted/50 active:bg-muted"
                                   )}
-                                />
-                              )}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={!isPresent ? 'default' : 'outline'}
-                              onClick={() => toggleAttendance(player.player_id, false)}
-                              className={cn(
-                                'flex-1 h-14 text-lg font-semibold gap-2 transition-all',
-                                !isPresent && player.absence_reason
-                                  ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-md'
-                                  : 'border-destructive/30 text-destructive hover:bg-destructive/10'
-                              )}
-                            >
-                              <X className="w-6 h-6" />
-                              Ausente
-                            </Button>
+                                >
+                                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground flex-shrink-0">
+                                    {player.full_name?.charAt(0)?.toUpperCase()}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{player.full_name}</p>
+                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                      <span>{player.category?.name || 'Sin categoría'}</span>
+                                      {player.position && (
+                                        <>
+                                          <span>•</span>
+                                          <span>{player.position}</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {alreadyAdded && (
+                                    <Check className="w-4 h-4 text-success flex-shrink-0" />
+                                  )}
+                                </button>
+                              );
+                            })}
                           </div>
-
-                          {/* Absence Reason */}
-                          {!isPresent && (
-                            <div className="mt-3 pt-3 border-t border-border">
-                              <Select
-                                value={player.absence_reason || 'injustificada'}
-                                onValueChange={(v) => updateAbsenceReason(player.player_id, v)}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Motivo de ausencia" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {ABSENCE_REASONS.map((r) => (
-                                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          )}
-                        </Card>
-                      );
-                    })}
+                        )}
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -777,6 +1017,7 @@ export function LoadResultsModal({
                       const playerId = hasExistingPlayers ? (player as MatchPlayer).player_id : (player as LocalPlayerAttendance).player_id;
                       const playerName = hasExistingPlayers ? (player as MatchPlayer).player?.full_name : (player as LocalPlayerAttendance).full_name;
                       const playerPosition = hasExistingPlayers ? (player as MatchPlayer).player?.position : (player as LocalPlayerAttendance).position;
+                      const isGuest = hasExistingPlayers ? (player as MatchPlayer).is_guest : (player as LocalPlayerAttendance).is_guest;
                       const perf = player.performance || 'excellent';
                       const goals = player.goals || 0;
                       const assists = player.assists || 0;
@@ -815,7 +1056,14 @@ export function LoadResultsModal({
                             />
 
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{playerName}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-medium text-sm truncate">{playerName}</p>
+                                {isGuest && (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-border">
+                                    INV
+                                  </Badge>
+                                )}
+                              </div>
                               <p className="text-xs text-muted-foreground">{playerPosition || 'Sin posición'}</p>
                             </div>
 
@@ -914,11 +1162,17 @@ export function LoadResultsModal({
                         {statsAbsent.map((player) => {
                           const playerId = hasExistingPlayers ? (player as MatchPlayer).player_id : (player as LocalPlayerAttendance).player_id;
                           const playerName = hasExistingPlayers ? (player as MatchPlayer).player?.full_name : (player as LocalPlayerAttendance).full_name;
+                          const isGuest = hasExistingPlayers ? (player as MatchPlayer).is_guest : (player as LocalPlayerAttendance).is_guest;
                           return (
                             <Card key={playerId} className="p-2.5 opacity-60">
                               <div className="flex items-center gap-2">
                                 <div className="w-5 h-5 min-w-[20px] rounded-full bg-destructive ring-2 ring-destructive/30 flex-shrink-0" />
                                 <p className="font-medium text-sm truncate flex-1">{playerName}</p>
+                                {isGuest && (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-border">
+                                    INV
+                                  </Badge>
+                                )}
                                 <span className="text-xs text-muted-foreground">Ausente</span>
                               </div>
                             </Card>
