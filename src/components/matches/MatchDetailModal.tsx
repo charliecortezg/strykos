@@ -454,6 +454,11 @@ export function MatchDetailModal({
                               <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
                             )}
                             {mp.player?.full_name}
+                            {mp.is_guest && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-border ml-1">
+                                INVITADO
+                              </Badge>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">{mp.player?.position || '—'}</TableCell>
