@@ -82,7 +82,7 @@ export function LoadResultsModal({
   const [guestSearch, setGuestSearch] = useState('');
   const [guestSearchResults, setGuestSearchResults] = useState<any[]>([]);
   const [showGuestSearch, setShowGuestSearch] = useState(false);
-  const guestSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const guestSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   
   // Player stats state (derived from matchPlayers or localAttendance)
