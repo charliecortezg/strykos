@@ -10,6 +10,7 @@ import { LoadResultsModal } from './LoadResultsModal';
 import { MatchDetailModal } from './MatchDetailModal';
 import { MatchCard } from './MatchCard';
 import { Match } from '@/types/matches';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface TrainerMatchesModuleProps {
   categories: TrainerCategory[];
