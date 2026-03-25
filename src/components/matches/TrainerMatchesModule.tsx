@@ -10,6 +10,7 @@ import { LoadResultsModal } from './LoadResultsModal';
 import { MatchDetailModal } from './MatchDetailModal';
 import { MatchCard } from './MatchCard';
 import { Match } from '@/types/matches';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface TrainerMatchesModuleProps {
   categories: TrainerCategory[];
@@ -19,10 +20,11 @@ export function TrainerMatchesModule({ categories }: TrainerMatchesModuleProps) 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [matchForResults, setMatchForResults] = useState<Match | null>(null);
+  const [matchToDelete, setMatchToDelete] = useState<Match | null>(null);
   
   // Get matches for this trainer's categories
   const categoryIds = categories.map(c => c.id);
-  const { matches, isLoading, updateMatch } = useMatches();
+  const { matches, isLoading, updateMatch, deleteMatch } = useMatches();
   const { updateMatchPlayers } = useMatchPlayers(matchForResults?.id || selectedMatch?.id || null);
   
   // Filter to only show matches from trainer's categories
@@ -94,7 +96,9 @@ export function TrainerMatchesModule({ categories }: TrainerMatchesModuleProps) 
                     match={match}
                     onView={() => setSelectedMatch(match)}
                     onLoadResults={() => setMatchForResults(match)}
+                    onDelete={() => setMatchToDelete(match)}
                     canLoadResults={true}
+                    canDelete={true}
                   />
                 ))}
               </div>
@@ -146,6 +150,35 @@ export function TrainerMatchesModule({ categories }: TrainerMatchesModuleProps) 
         onUpdatePlayers={handleUpdatePlayers}
         canEdit={false}
       />
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!matchToDelete} onOpenChange={(open) => !open && setMatchToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar partido programado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará el partido
+              {matchToDelete && (
+                <span className="font-medium"> vs {matchToDelete.rival_name}</span>
+              )}
+              . Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (matchToDelete) {
+                  deleteMatch.mutate(matchToDelete.id);
+                  setMatchToDelete(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

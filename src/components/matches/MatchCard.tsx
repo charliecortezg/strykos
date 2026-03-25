@@ -157,6 +157,19 @@ export function MatchCard({
                     <span className="hidden sm:inline">Resultado</span>
                   </Button>
                 )}
+                {canDelete && onDelete && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete();
+                    }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                )}
               </div>
             ) : (
               <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
