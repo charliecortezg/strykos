@@ -1065,6 +1065,9 @@ export function LoadResultsModal({
                       const goals = player.goals || 0;
                       const assists = player.assists || 0;
                       const points = player.points || 0;
+                      const playerNote = hasExistingPlayers
+                        ? ((player as any).note || '')
+                        : ((player as LocalPlayerAttendance).note || '');
 
                       return (
                         <Card key={playerId} className={cn(
