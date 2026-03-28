@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Trophy, Target, Save, Camera, FileText, Plus, Minus, Check, X, ImageIcon, Crown, ChevronDown, CheckCheck, Users, Search, UserPlus } from 'lucide-react';
+import { Trophy, Target, Save, Camera, FileText, Plus, Minus, Check, X, ImageIcon, Crown, ChevronDown, CheckCheck, Users, Search, UserPlus, AlertTriangle } from 'lucide-react';
 import { 
   Drawer, 
   DrawerContent, 
@@ -96,6 +96,10 @@ export function LoadResultsModal({
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Unsaved changes protection
+  const [isDirty, setIsDirty] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
   const sportName = match?.category?.sports?.name?.toLowerCase() || 'fútbol';
   const isFutbol = sportName.includes('fútbol') || sportName.includes('futbol') || sportName.includes('soccer');
 
@@ -166,6 +170,7 @@ export function LoadResultsModal({
       setNotes(match.notes || '');
       setTechnicalNotes(match.technical_notes || '');
       setMvpPlayerId(match.mvp_player_id || null);
+      setIsDirty(false);
     }
   }, [match]);
 
@@ -203,6 +208,8 @@ export function LoadResultsModal({
       setGuestSearch('');
       setGuestSearchResults([]);
       setShowGuestSearch(false);
+      setIsDirty(false);
+      setShowExitConfirm(false);
     }
   }, [isOpen]);
 
@@ -294,6 +301,7 @@ export function LoadResultsModal({
         return p;
       })
     );
+    setIsDirty(true);
   };
 
   const markAllPresent = () => {
@@ -313,6 +321,7 @@ export function LoadResultsModal({
         absence_reason: '',
       }))
     );
+    setIsDirty(true);
   };
 
   const updateLocalPerformance = (playerId: string, status: PerformanceStatus) => {
@@ -322,6 +331,7 @@ export function LoadResultsModal({
     setter(prev =>
       prev.map(p => p.player_id === playerId ? { ...p, performance: matchPerf } : p)
     );
+    setIsDirty(true);
   };
 
   const updateLocalStat = (playerId: string, field: 'goals' | 'assists' | 'points', value: number) => {
@@ -330,6 +340,7 @@ export function LoadResultsModal({
     setter(prev =>
       prev.map(p => p.player_id === playerId ? { ...p, [field]: value } : p)
     );
+    setIsDirty(true);
   };
 
   const updateAbsenceReason = (playerId: string, reason: string) => {
@@ -338,6 +349,7 @@ export function LoadResultsModal({
     setter(prev =>
       prev.map(p => p.player_id === playerId ? { ...p, absence_reason: reason } : p)
     );
+    setIsDirty(true);
   };
 
   // --- Guest player handlers ---
@@ -362,10 +374,12 @@ export function LoadResultsModal({
     setGuestSearch('');
     setGuestSearchResults([]);
     setShowGuestSearch(false);
+    setIsDirty(true);
   };
 
   const removeGuestPlayer = (playerId: string) => {
     setGuestPlayers(prev => prev.filter(g => g.player_id !== playerId));
+    setIsDirty(true);
   };
 
   // --- Existing player stats handlers ---
@@ -373,6 +387,7 @@ export function LoadResultsModal({
     setPlayerStats(prev => 
       prev.map(p => p.player_id === playerId ? { ...p, [field]: value } : p)
     );
+    setIsDirty(true);
   };
 
   // Handle image upload
@@ -519,12 +534,27 @@ export function LoadResultsModal({
     }
   };
 
+  // Close interceptor
+  const handleClose = () => {
+    if (isDirty) {
+      setShowExitConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const confirmClose = () => {
+    setShowExitConfirm(false);
+    onClose();
+  };
+
   if (!match) return null;
 
   const result = getMatchResult(goalsFor, goalsAgainst);
 
   const handleToggleMvp = (playerId: string) => {
     setMvpPlayerId(prev => prev === playerId ? null : playerId);
+    setIsDirty(true);
   };
 
   const handlePerformanceChange = (playerId: string, status: PerformanceStatus) => {
@@ -667,8 +697,8 @@ export function LoadResultsModal({
   };
 
   return (
-    <Drawer open={isOpen} onOpenChange={() => onClose()}>
-      <DrawerContent className="max-h-[95vh]">
+    <Drawer open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
+      <DrawerContent className="max-h-[95vh]" onPointerDownOutside={(e) => { if (isDirty) e.preventDefault(); }}>
         <DrawerHeader className="border-b border-border pb-3">
           <DrawerTitle className="flex items-center gap-2 text-lg">
             <Target className="w-5 h-5 text-primary" />
@@ -935,7 +965,7 @@ export function LoadResultsModal({
                         variant="outline"
                         size="icon"
                         className="h-8 w-8 sm:h-10 sm:w-10"
-                        onClick={() => setGoalsAgainst(Math.max(0, goalsAgainst - 1))}
+                        onClick={() => { setGoalsAgainst(Math.max(0, goalsAgainst - 1)); setIsDirty(true); }}
                       >
                         <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
@@ -946,7 +976,7 @@ export function LoadResultsModal({
                         variant="outline"
                         size="icon"
                         className="h-8 w-8 sm:h-10 sm:w-10"
-                        onClick={() => setGoalsAgainst(goalsAgainst + 1)}
+                        onClick={() => { setGoalsAgainst(goalsAgainst + 1); setIsDirty(true); }}
                       >
                         <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
@@ -1197,7 +1227,7 @@ export function LoadResultsModal({
                 <Label className="text-sm font-medium">Notas Técnicas</Label>
                 <Textarea
                   value={technicalNotes}
-                  onChange={(e) => setTechnicalNotes(e.target.value)}
+                  onChange={(e) => { setTechnicalNotes(e.target.value); setIsDirty(true); }}
                   placeholder="Análisis táctico, rendimiento del equipo..."
                   rows={3}
                   className="resize-none"
@@ -1209,7 +1239,7 @@ export function LoadResultsModal({
                 <Label className="text-sm font-medium">Observaciones</Label>
                 <Textarea
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => { setNotes(e.target.value); setIsDirty(true); }}
                   placeholder="Comentarios generales..."
                   rows={3}
                   className="resize-none"
@@ -1273,7 +1303,7 @@ export function LoadResultsModal({
 
         <DrawerFooter className="border-t border-border pt-3">
           <div className="flex gap-2 w-full">
-            <Button variant="outline" onClick={onClose} className="h-12">
+            <Button variant="outline" onClick={handleClose} className="h-12">
               Cancelar
             </Button>
             <Button 
@@ -1287,6 +1317,31 @@ export function LoadResultsModal({
           </div>
         </DrawerFooter>
       </DrawerContent>
+
+      {/* Unsaved changes confirmation */}
+      {showExitConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div className="bg-card border border-border rounded-lg p-6 mx-4 max-w-sm w-full shadow-xl">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-warning" />
+              </div>
+              <h3 className="font-display font-semibold text-foreground">¿Salir sin guardar?</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-5">
+              Tienes cambios sin guardar. Si sales ahora, perderás toda la información que ingresaste.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowExitConfirm(false)} className="flex-1 h-11">
+                Seguir editando
+              </Button>
+              <Button variant="destructive" onClick={confirmClose} className="flex-1 h-11">
+                Salir sin guardar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Drawer>
   );
 }
