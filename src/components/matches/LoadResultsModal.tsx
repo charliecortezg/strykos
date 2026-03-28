@@ -554,6 +554,7 @@ export function LoadResultsModal({
 
   const handleToggleMvp = (playerId: string) => {
     setMvpPlayerId(prev => prev === playerId ? null : playerId);
+    setIsDirty(true);
   };
 
   const handlePerformanceChange = (playerId: string, status: PerformanceStatus) => {
