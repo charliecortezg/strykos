@@ -534,6 +534,20 @@ export function LoadResultsModal({
     }
   };
 
+  // Close interceptor
+  const handleClose = () => {
+    if (isDirty) {
+      setShowExitConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const confirmClose = () => {
+    setShowExitConfirm(false);
+    onClose();
+  };
+
   if (!match) return null;
 
   const result = getMatchResult(goalsFor, goalsAgainst);
