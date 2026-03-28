@@ -387,6 +387,7 @@ export function LoadResultsModal({
     setPlayerStats(prev => 
       prev.map(p => p.player_id === playerId ? { ...p, [field]: value } : p)
     );
+    setIsDirty(true);
   };
 
   // Handle image upload
