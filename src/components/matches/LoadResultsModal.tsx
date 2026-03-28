@@ -349,6 +349,7 @@ export function LoadResultsModal({
     setter(prev =>
       prev.map(p => p.player_id === playerId ? { ...p, absence_reason: reason } : p)
     );
+    setIsDirty(true);
   };
 
   // --- Guest player handlers ---
