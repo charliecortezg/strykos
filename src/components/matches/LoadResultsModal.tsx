@@ -374,10 +374,12 @@ export function LoadResultsModal({
     setGuestSearch('');
     setGuestSearchResults([]);
     setShowGuestSearch(false);
+    setIsDirty(true);
   };
 
   const removeGuestPlayer = (playerId: string) => {
     setGuestPlayers(prev => prev.filter(g => g.player_id !== playerId));
+    setIsDirty(true);
   };
 
   // --- Existing player stats handlers ---
