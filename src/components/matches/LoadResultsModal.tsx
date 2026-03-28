@@ -1238,7 +1238,7 @@ export function LoadResultsModal({
                 <Label className="text-sm font-medium">Observaciones</Label>
                 <Textarea
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => { setNotes(e.target.value); setIsDirty(true); }}
                   placeholder="Comentarios generales..."
                   rows={3}
                   className="resize-none"
