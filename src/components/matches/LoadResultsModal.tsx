@@ -1226,7 +1226,7 @@ export function LoadResultsModal({
                 <Label className="text-sm font-medium">Notas Técnicas</Label>
                 <Textarea
                   value={technicalNotes}
-                  onChange={(e) => setTechnicalNotes(e.target.value)}
+                  onChange={(e) => { setTechnicalNotes(e.target.value); setIsDirty(true); }}
                   placeholder="Análisis táctico, rendimiento del equipo..."
                   rows={3}
                   className="resize-none"
