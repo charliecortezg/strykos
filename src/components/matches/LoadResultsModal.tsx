@@ -696,8 +696,8 @@ export function LoadResultsModal({
   };
 
   return (
-    <Drawer open={isOpen} onOpenChange={() => onClose()}>
-      <DrawerContent className="max-h-[95vh]">
+    <Drawer open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
+      <DrawerContent className="max-h-[95vh]" onPointerDownOutside={(e) => { if (isDirty) e.preventDefault(); }}>
         <DrawerHeader className="border-b border-border pb-3">
           <DrawerTitle className="flex items-center gap-2 text-lg">
             <Target className="w-5 h-5 text-primary" />
