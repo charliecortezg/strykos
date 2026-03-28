@@ -170,6 +170,7 @@ export function LoadResultsModal({
       setNotes(match.notes || '');
       setTechnicalNotes(match.technical_notes || '');
       setMvpPlayerId(match.mvp_player_id || null);
+      setIsDirty(false);
     }
   }, [match]);
 
