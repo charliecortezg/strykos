@@ -1192,6 +1192,25 @@ export function LoadResultsModal({
                               </div>
                             )}
                           </div>
+
+                          {/* Per-player note */}
+                          <div className="mt-2 pt-2 border-t border-border/50">
+                            <Input
+                              placeholder="📝 Nota del jugador..."
+                              value={playerNote}
+                              onChange={(e) => {
+                                if (hasExistingPlayers) {
+                                  setPlayerStats(prev =>
+                                    prev.map(p => p.player_id === playerId ? { ...p, note: e.target.value } : p)
+                                  );
+                                } else {
+                                  updatePlayerNote(playerId, e.target.value);
+                                }
+                                setIsDirty(true);
+                              }}
+                              className="h-8 text-xs bg-muted/30 border-border/50 placeholder:text-muted-foreground/50"
+                            />
+                          </div>
                         </Card>
                       );
                     })}
