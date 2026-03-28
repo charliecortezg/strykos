@@ -321,6 +321,7 @@ export function LoadResultsModal({
         absence_reason: '',
       }))
     );
+    setIsDirty(true);
   };
 
   const updateLocalPerformance = (playerId: string, status: PerformanceStatus) => {
