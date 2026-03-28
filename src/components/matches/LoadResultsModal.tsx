@@ -964,7 +964,7 @@ export function LoadResultsModal({
                         variant="outline"
                         size="icon"
                         className="h-8 w-8 sm:h-10 sm:w-10"
-                        onClick={() => setGoalsAgainst(Math.max(0, goalsAgainst - 1))}
+                        onClick={() => { setGoalsAgainst(Math.max(0, goalsAgainst - 1)); setIsDirty(true); }}
                       >
                         <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
