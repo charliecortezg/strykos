@@ -96,6 +96,10 @@ export function LoadResultsModal({
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Unsaved changes protection
+  const [isDirty, setIsDirty] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
   const sportName = match?.category?.sports?.name?.toLowerCase() || 'fútbol';
   const isFutbol = sportName.includes('fútbol') || sportName.includes('futbol') || sportName.includes('soccer');
 
