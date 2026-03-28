@@ -197,6 +197,7 @@ export function LoadResultsModal({
         points: 0,
         absence_reason: 'injustificada',
         is_guest: false,
+        note: '',
       })));
     }
   }, [categoryPlayers, hasExistingPlayers, localAttendance.length]);
