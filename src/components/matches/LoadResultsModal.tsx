@@ -301,6 +301,7 @@ export function LoadResultsModal({
         return p;
       })
     );
+    setIsDirty(true);
   };
 
   const markAllPresent = () => {
