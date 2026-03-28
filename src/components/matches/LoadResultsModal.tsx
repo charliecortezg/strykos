@@ -354,6 +354,15 @@ export function LoadResultsModal({
     setIsDirty(true);
   };
 
+  const updatePlayerNote = (playerId: string, note: string) => {
+    const isGuest = guestPlayers.some(g => g.player_id === playerId);
+    const setter = isGuest ? setGuestPlayers : setLocalAttendance;
+    setter(prev =>
+      prev.map(p => p.player_id === playerId ? { ...p, note } : p)
+    );
+    setIsDirty(true);
+  };
+
   // --- Guest player handlers ---
   const addGuestPlayer = (player: any) => {
     const alreadyAdded = guestPlayers.some(g => g.player_id === player.id);
