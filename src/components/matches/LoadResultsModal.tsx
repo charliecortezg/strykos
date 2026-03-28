@@ -331,6 +331,7 @@ export function LoadResultsModal({
     setter(prev =>
       prev.map(p => p.player_id === playerId ? { ...p, performance: matchPerf } : p)
     );
+    setIsDirty(true);
   };
 
   const updateLocalStat = (playerId: string, field: 'goals' | 'assists' | 'points', value: number) => {
