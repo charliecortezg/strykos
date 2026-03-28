@@ -49,6 +49,7 @@ interface LocalPlayerAttendance {
   absence_reason: string;
   is_guest?: boolean;
   category_name?: string;
+  note?: string;
 }
 
 const ABSENCE_REASONS = [
@@ -196,6 +197,7 @@ export function LoadResultsModal({
         points: 0,
         absence_reason: 'injustificada',
         is_guest: false,
+        note: '',
       })));
     }
   }, [categoryPlayers, hasExistingPlayers, localAttendance.length]);
@@ -352,6 +354,15 @@ export function LoadResultsModal({
     setIsDirty(true);
   };
 
+  const updatePlayerNote = (playerId: string, note: string) => {
+    const isGuest = guestPlayers.some(g => g.player_id === playerId);
+    const setter = isGuest ? setGuestPlayers : setLocalAttendance;
+    setter(prev =>
+      prev.map(p => p.player_id === playerId ? { ...p, note } : p)
+    );
+    setIsDirty(true);
+  };
+
   // --- Guest player handlers ---
   const addGuestPlayer = (player: any) => {
     const alreadyAdded = guestPlayers.some(g => g.player_id === player.id);
@@ -370,6 +381,7 @@ export function LoadResultsModal({
       absence_reason: 'injustificada',
       is_guest: true,
       category_name: player.category?.name || '',
+      note: '',
     }]);
     setGuestSearch('');
     setGuestSearchResults([]);
@@ -472,6 +484,7 @@ export function LoadResultsModal({
           points: p.attended ? p.points : 0,
           performance: p.attended ? (p.performance || 'excellent') : null,
           is_guest: p.is_guest,
+          note: p.note?.trim() || null,
         }));
 
         await createMatchPlayers.mutateAsync(playersToInsert);
@@ -1052,6 +1065,9 @@ export function LoadResultsModal({
                       const goals = player.goals || 0;
                       const assists = player.assists || 0;
                       const points = player.points || 0;
+                      const playerNote = hasExistingPlayers
+                        ? ((player as any).note || '')
+                        : ((player as LocalPlayerAttendance).note || '');
 
                       return (
                         <Card key={playerId} className={cn(
@@ -1175,6 +1191,25 @@ export function LoadResultsModal({
                                 </Button>
                               </div>
                             )}
+                          </div>
+
+                          {/* Per-player note */}
+                          <div className="mt-2 pt-2 border-t border-border/50">
+                            <Input
+                              placeholder="📝 Nota del jugador..."
+                              value={playerNote}
+                              onChange={(e) => {
+                                if (hasExistingPlayers) {
+                                  setPlayerStats(prev =>
+                                    prev.map(p => p.player_id === playerId ? { ...p, note: e.target.value } : p)
+                                  );
+                                } else {
+                                  updatePlayerNote(playerId, e.target.value);
+                                }
+                                setIsDirty(true);
+                              }}
+                              className="h-8 text-xs bg-muted/30 border-border/50 placeholder:text-muted-foreground/50"
+                            />
                           </div>
                         </Card>
                       );

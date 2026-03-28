@@ -449,15 +449,20 @@ export function MatchDetailModal({
                     {(isEditing ? editedPlayers : matchPlayers).map((mp) => (
                       <TableRow key={mp.id}>
                         <TableCell className="font-medium">
-                          <div className="flex items-center gap-1.5">
-                            {match.mvp_player_id === mp.player_id && (
-                              <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
-                            )}
-                            {mp.player?.full_name}
-                            {mp.is_guest && (
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-border ml-1">
-                                INVITADO
-                              </Badge>
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-1.5">
+                              {match.mvp_player_id === mp.player_id && (
+                                <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
+                              )}
+                              {mp.player?.full_name}
+                              {mp.is_guest && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-border ml-1">
+                                  INVITADO
+                                </Badge>
+                              )}
+                            </div>
+                            {(mp as any).note && (
+                              <p className="text-xs text-muted-foreground italic">📝 {(mp as any).note}</p>
                             )}
                           </div>
                         </TableCell>

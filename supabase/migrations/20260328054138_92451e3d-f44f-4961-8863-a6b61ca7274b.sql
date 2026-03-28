@@ -1,0 +1,1 @@
+ALTER TABLE public.match_players ADD COLUMN note text DEFAULT NULL;

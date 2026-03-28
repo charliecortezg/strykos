@@ -366,6 +366,12 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
                             )}
                           </div>
                         </div>
+                        {/* Player note from coach */}
+                        {(mp as any).note && (
+                          <p className="text-xs text-muted-foreground italic mt-2 pl-7">
+                            📝 {(mp as any).note}
+                          </p>
+                        )}
                       </div>
                     );
                   })}

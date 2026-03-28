@@ -1419,6 +1419,7 @@ export type Database = {
           id: string
           is_guest: boolean | null
           match_id: string
+          note: string | null
           organization_id: string
           performance: string | null
           player_id: string
@@ -1434,6 +1435,7 @@ export type Database = {
           id?: string
           is_guest?: boolean | null
           match_id: string
+          note?: string | null
           organization_id: string
           performance?: string | null
           player_id: string
@@ -1449,6 +1451,7 @@ export type Database = {
           id?: string
           is_guest?: boolean | null
           match_id?: string
+          note?: string | null
           organization_id?: string
           performance?: string | null
           player_id?: string
