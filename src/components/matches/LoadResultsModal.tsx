@@ -372,6 +372,7 @@ export function LoadResultsModal({
       absence_reason: 'injustificada',
       is_guest: true,
       category_name: player.category?.name || '',
+      note: '',
     }]);
     setGuestSearch('');
     setGuestSearchResults([]);
