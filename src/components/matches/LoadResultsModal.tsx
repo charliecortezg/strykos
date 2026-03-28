@@ -340,6 +340,7 @@ export function LoadResultsModal({
     setter(prev =>
       prev.map(p => p.player_id === playerId ? { ...p, [field]: value } : p)
     );
+    setIsDirty(true);
   };
 
   const updateAbsenceReason = (playerId: string, reason: string) => {
