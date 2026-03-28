@@ -208,6 +208,8 @@ export function LoadResultsModal({
       setGuestSearch('');
       setGuestSearchResults([]);
       setShowGuestSearch(false);
+      setIsDirty(false);
+      setShowExitConfirm(false);
     }
   }, [isOpen]);
 
