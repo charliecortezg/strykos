@@ -484,6 +484,7 @@ export function LoadResultsModal({
           points: p.attended ? p.points : 0,
           performance: p.attended ? (p.performance || 'excellent') : null,
           is_guest: p.is_guest,
+          note: p.note?.trim() || null,
         }));
 
         await createMatchPlayers.mutateAsync(playersToInsert);
