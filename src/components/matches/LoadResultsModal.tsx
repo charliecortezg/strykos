@@ -49,6 +49,7 @@ interface LocalPlayerAttendance {
   absence_reason: string;
   is_guest?: boolean;
   category_name?: string;
+  note?: string;
 }
 
 const ABSENCE_REASONS = [
