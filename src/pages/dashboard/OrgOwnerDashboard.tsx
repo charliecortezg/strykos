@@ -481,6 +481,7 @@ export default function OrgOwnerDashboard() {
         isLoading={isDeactivating}
         onConfirm={confirmToggleActive}
       />
+      <FounderCopilot />
     </div>
   );
 }
