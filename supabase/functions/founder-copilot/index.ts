@@ -159,28 +159,84 @@ Deno.serve(async (req) => {
 
     const coaches = (coachesRes.data || []).filter((p) => coachIds.has(p.id));
 
-    // Build context payload
+    // Build lookup maps from already-fetched data
+    const playerMap = Object.fromEntries(
+      (playersRes.data || []).map((p) => [p.id, p.name])
+    );
+    const categoryMap = Object.fromEntries(
+      (categoriesRes.data || []).map((c) => [c.id, c.name])
+    );
+    const coachMap = Object.fromEntries(
+      coaches.map((c) => [c.id, c.full_name])
+    );
+
+    // Build context payload with human-readable names (no UUIDs)
     const contextPayload: Record<string, any> = {
+      resumen: {
+        total_jugadores: (playersRes.data || []).length,
+        jugadores_activos: (playersRes.data || []).filter((p) => p.is_active).length,
+        total_entrenadores: coaches.length,
+        total_categorias: (categoriesRes.data || []).length,
+        evaluaciones_recientes: (evaluationsRes.data || []).length,
+        sesiones_asistencia: (attendanceRes.data || []).length,
+        pagos_registrados: (paymentsRes.data || []).length,
+      },
       jugadores: (playersRes.data || []).map((p) => ({
-        id: p.id,
         nombre: p.name,
-        categoria_id: p.category_id,
+        categoria: categoryMap[p.category_id] || "Sin categoría",
         activo: p.is_active,
         fecha_registro: p.created_at,
       })),
-      categorias: categoriesRes.data || [],
-      evaluaciones: (evaluationsRes.data || []).map((e) => ({
-        ...e,
-        scores: scoresData.filter((s) => s.evaluation_id === e.id),
+      categorias: (categoriesRes.data || []).map((c) => ({
+        nombre: c.name,
+        grupo_edad: c.age_group,
+        entrenador: coachMap[c.trainer_id] || "Sin entrenador",
+        activa: c.is_active,
       })),
-      asistencia: attendanceRes.data || [],
-      pagos: paymentsRes.data || [],
+      evaluaciones: (evaluationsRes.data || []).map((e) => ({
+        jugador: playerMap[e.player_id] || e.player_id,
+        categoria: categoryMap[e.category_id] || "Sin categoría",
+        periodo: e.period,
+        score_total: e.overall_score,
+        score_anterior: e.previous_overall,
+        estado: e.status,
+        fecha: e.created_at,
+        scores: scoresData.filter((s) => s.evaluation_id === e.id).map((s) => ({
+          pilar: s.stat_key,
+          puntuacion: s.score,
+        })),
+      })),
+      asistencia: (attendanceRes.data || []).map((a) => ({
+        jugador: playerMap[a.player_id] || a.player_id,
+        categoria: categoryMap[a.category_id] || "Sin categoría",
+        fecha: a.date,
+        estado: a.status,
+        rendimiento: a.performance_status,
+      })),
+      pagos: (paymentsRes.data || []).map((p) => ({
+        jugador: playerMap[p.player_id] || p.player_id,
+        monto: p.amount,
+        metodo: p.payment_method,
+        mes: p.payment_month,
+        concepto: p.concept,
+        notas: p.notes,
+        fecha: p.created_at,
+      })),
       entrenadores: coaches.map((c) => ({
-        id: c.id,
         nombre: c.full_name,
         email: c.email,
+        categorias: (categoriesRes.data || [])
+          .filter((cat) => cat.trainer_id === c.id)
+          .map((cat) => cat.name),
       })),
-      notas_partidos: matchNotesRes.data || [],
+      notas_partidos: (matchNotesRes.data || []).map((n) => ({
+        jugador: playerMap[n.player_id] || n.player_id,
+        nota: n.note,
+        goles: n.goals,
+        asistencias: n.assists,
+        rendimiento: n.performance,
+        fecha: n.created_at,
+      })),
     };
 
     let contextJson = JSON.stringify(contextPayload);
