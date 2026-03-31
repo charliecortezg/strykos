@@ -23,6 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ORG_ROLE_LABELS, type OrgRole } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useFeatureFlags } from '@/hooks/useStrykWay';
+import { FounderCopilot } from '@/components/founder/FounderCopilot';
 
 interface OrgUser {
   id: string;
