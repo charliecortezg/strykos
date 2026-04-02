@@ -51,6 +51,7 @@ export function MatchDetailDrawer({
   const [isEditing, setIsEditing] = useState(false);
   const [editedMatch, setEditedMatch] = useState<Partial<Match>>({});
   const [editedPlayers, setEditedPlayers] = useState<MatchPlayer[]>([]);
+  const [selectedPlayer, setSelectedPlayer] = useState<MatchPlayer | null>(null);
 
   useEffect(() => {
     if (match) {
