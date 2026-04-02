@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Trophy, Target, Save, Camera, FileText, Plus, Minus, Check, X, ImageIcon, Crown, ChevronDown, CheckCheck, Users, Search, UserPlus, AlertTriangle } from 'lucide-react';
+import { Trophy, Target, Save, Camera, FileText, Plus, Minus, Check, X, ImageIcon, Crown, ChevronDown, CheckCheck, Users, Search, UserPlus, AlertTriangle, ArrowUp, MessageSquare } from 'lucide-react';
 import { 
   Drawer, 
   DrawerContent, 
@@ -91,6 +91,12 @@ export function LoadResultsModal({
   
   // MVP + Performance state
   const [mvpPlayerId, setMvpPlayerId] = useState<string | null>(null);
+
+  // TikTok-style comment bar state
+  const [commentPlayerId, setCommentPlayerId] = useState<string | null>(null);
+  const [commentPlayerName, setCommentPlayerName] = useState('');
+  const [commentText, setCommentText] = useState('');
+  const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Evidence state
   const [uploadedImages, setUploadedImages] = useState<{ url: string; name: string }[]>([]);
@@ -1193,23 +1199,25 @@ export function LoadResultsModal({
                             )}
                           </div>
 
-                          {/* Per-player note */}
+                          {/* Per-player note button */}
                           <div className="mt-2 pt-2 border-t border-border/50">
-                            <Input
-                              placeholder="📝 Nota del jugador..."
-                              value={playerNote}
-                              onChange={(e) => {
-                                if (hasExistingPlayers) {
-                                  setPlayerStats(prev =>
-                                    prev.map(p => p.player_id === playerId ? { ...p, note: e.target.value } : p)
-                                  );
-                                } else {
-                                  updatePlayerNote(playerId, e.target.value);
-                                }
-                                setIsDirty(true);
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCommentPlayerId(playerId);
+                                setCommentPlayerName(playerName || '');
+                                setCommentText(playerNote);
+                                setTimeout(() => commentTextareaRef.current?.focus(), 100);
                               }}
-                              className="h-8 text-xs bg-muted/30 border-border/50 placeholder:text-muted-foreground/50"
-                            />
+                              className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                            >
+                              <MessageSquare className={cn("w-3.5 h-3.5 flex-shrink-0", playerNote ? "text-primary" : "text-muted-foreground/50")} />
+                              {playerNote ? (
+                                <span className="text-xs truncate flex-1">{playerNote}</span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground/50 flex-1">Agregar nota...</span>
+                              )}
+                            </button>
                           </div>
                         </Card>
                       );
@@ -1374,6 +1382,55 @@ export function LoadResultsModal({
                 Salir sin guardar
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* TikTok-style sticky comment bar */}
+      {commentPlayerId && (
+        <div className="fixed bottom-0 left-0 right-0 z-[80] bg-background border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <p className="text-xs text-muted-foreground mb-1.5">
+            Comentario para: <span className="font-medium text-foreground">{commentPlayerName}</span>
+          </p>
+          <div className="flex items-end gap-2">
+            <textarea
+              ref={commentTextareaRef}
+              className="flex-1 resize-none rounded-2xl bg-muted px-4 py-2 text-sm border-0 focus:ring-2 focus:ring-primary/30 focus:outline-none max-h-24 min-h-[36px]"
+              placeholder="Escribe un comentario..."
+              rows={1}
+              value={commentText}
+              onChange={(e) => {
+                setCommentText(e.target.value);
+                // Auto-resize
+                const ta = e.target;
+                ta.style.height = 'auto';
+                ta.style.height = Math.min(ta.scrollHeight, 96) + 'px';
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setCommentPlayerId(null);
+                }
+              }}
+            />
+            <button
+              type="button"
+              disabled={!commentText.trim()}
+              onClick={() => {
+                if (!commentPlayerId) return;
+                if (hasExistingPlayers) {
+                  setPlayerStats(prev =>
+                    prev.map(p => p.player_id === commentPlayerId ? { ...p, note: commentText.trim() } : p)
+                  );
+                } else {
+                  updatePlayerNote(commentPlayerId, commentText.trim());
+                }
+                setIsDirty(true);
+                setCommentPlayerId(null);
+                setCommentText('');
+              }}
+              className="flex-shrink-0 w-9 h-9 rounded-full bg-primary flex items-center justify-center disabled:opacity-40 transition-opacity"
+            >
+              <ArrowUp className="w-4 h-4 text-primary-foreground" />
+            </button>
           </div>
         </div>
       )}

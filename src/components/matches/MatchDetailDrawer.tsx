@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, MapPin, User, Trophy, Edit2, Save, XCircle, Shield, Target, Users, Trash2, ShieldCheck, Crown } from 'lucide-react';
+import { Calendar, MapPin, User, Trophy, Edit2, Save, XCircle, Shield, Target, Users, Trash2, ShieldCheck, Crown, MessageSquare } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Match, MatchPlayer, getMatchResult } from '@/types/matches';
 import { PerformanceIndicator } from '@/components/attendance/PerformanceIndicator';
@@ -49,6 +51,7 @@ export function MatchDetailDrawer({
   const [isEditing, setIsEditing] = useState(false);
   const [editedMatch, setEditedMatch] = useState<Partial<Match>>({});
   const [editedPlayers, setEditedPlayers] = useState<MatchPlayer[]>([]);
+  const [selectedPlayer, setSelectedPlayer] = useState<MatchPlayer | null>(null);
 
   useEffect(() => {
     if (match) {
@@ -122,6 +125,7 @@ export function MatchDetailDrawer({
   const currentResult = getMatchResult(goalsFor, goalsAgainst);
 
   return (
+    <>
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DrawerContent className="max-h-[92vh]">
         <DrawerHeader className="border-b border-border pb-4">
@@ -389,13 +393,20 @@ export function MatchDetailDrawer({
               ) : (
                 <div className="space-y-2">
                   {(isEditing ? editedPlayers : matchPlayers).map((mp) => (
-                    <div key={mp.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
+                    <div 
+                      key={mp.id} 
+                      className={cn(
+                        "flex items-center justify-between gap-2 min-w-0 w-full p-3 rounded-lg border border-border bg-card",
+                        !isEditing && "cursor-pointer active:bg-muted/50 transition-colors"
+                      )}
+                      onClick={() => { if (!isEditing) setSelectedPlayer(mp); }}
+                    >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         {/* MVP crown indicator */}
                         {match.mvp_player_id === mp.player_id && (
                           <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
                         )}
-                        {/* Performance indicator (read-only in detail view) */}
+                        {/* Performance indicator */}
                         {mp.attended && mp.performance && (
                           <PerformanceIndicator
                             status={mp.performance as PerformanceStatus}
@@ -407,17 +418,20 @@ export function MatchDetailDrawer({
                         {!mp.attended && (
                           <div className="w-5 h-5 min-w-[20px] rounded-full bg-destructive ring-2 ring-destructive/30 flex-shrink-0" />
                         )}
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{mp.player?.full_name}</p>
                           <p className="text-xs text-muted-foreground">{mp.player?.position || 'Sin posición'}</p>
-                          {mp.note && (
-                            <p className="text-xs text-muted-foreground mt-1 italic line-clamp-2">
+                          {!isEditing && mp.note && (
+                            <p className="text-xs text-muted-foreground mt-0.5 italic line-clamp-1">
                               💬 {mp.note}
+                              {mp.note.length > 60 && (
+                                <span className="text-primary ml-1 not-italic">ver más</span>
+                              )}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 flex items-center gap-2">
                         {isEditing ? (
                           <>
                             <Checkbox
@@ -425,13 +439,13 @@ export function MatchDetailDrawer({
                               onCheckedChange={(checked) => updatePlayerStat(mp.player_id, 'attended', !!checked)}
                             />
                             {isFutbol ? (
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
                                 <Input
                                   type="number"
                                   min="0"
                                   value={mp.goals}
                                   onChange={(e) => updatePlayerStat(mp.player_id, 'goals', parseInt(e.target.value) || 0)}
-                                  className="w-12 h-8 text-center text-sm"
+                                  className="w-14 h-8 text-center text-sm"
                                   placeholder="G"
                                 />
                                 <Input
@@ -439,7 +453,7 @@ export function MatchDetailDrawer({
                                   min="0"
                                   value={mp.assists}
                                   onChange={(e) => updatePlayerStat(mp.player_id, 'assists', parseInt(e.target.value) || 0)}
-                                  className="w-12 h-8 text-center text-sm"
+                                  className="w-14 h-8 text-center text-sm"
                                   placeholder="A"
                                 />
                               </div>
@@ -449,7 +463,7 @@ export function MatchDetailDrawer({
                                 min="0"
                                 value={mp.points}
                                 onChange={(e) => updatePlayerStat(mp.player_id, 'points', parseInt(e.target.value) || 0)}
-                                className="w-12 h-8 text-center text-sm"
+                                className="w-14 h-8 text-center text-sm"
                                 placeholder="Pts"
                               />
                             )}
@@ -608,5 +622,69 @@ export function MatchDetailDrawer({
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
+
+    {/* Player Detail Bottom Sheet */}
+    <Sheet open={!!selectedPlayer} onOpenChange={(open) => !open && setSelectedPlayer(null)}>
+      <SheetContent side="bottom" className="rounded-t-2xl max-h-[60vh] overflow-y-auto px-5 pb-6">
+        <SheetHeader className="pb-3">
+          <SheetTitle className="flex items-center gap-2">
+            {selectedPlayer?.player?.full_name || 'Jugador'}
+            <Badge variant={selectedPlayer?.attended ? 'default' : 'outline'} className="text-xs">
+              {selectedPlayer?.attended ? 'Presente' : 'Ausente'}
+            </Badge>
+            {match?.mvp_player_id === selectedPlayer?.player_id && (
+              <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400" />
+            )}
+          </SheetTitle>
+        </SheetHeader>
+
+        <div className="space-y-4">
+          {/* Stats */}
+          {selectedPlayer?.attended && (
+            <div className="flex items-center gap-4">
+              {selectedPlayer.performance && (
+                <div className="flex items-center gap-2">
+                  <PerformanceIndicator
+                    status={selectedPlayer.performance as PerformanceStatus}
+                    onChange={() => {}}
+                    disabled
+                    size="sm"
+                  />
+                  <span className="text-sm text-muted-foreground capitalize">
+                    {selectedPlayer.performance === 'outstanding' ? 'Sobresaliente' :
+                     selectedPlayer.performance === 'excellent' ? 'Excelente' : 'Enfoque'}
+                  </span>
+                </div>
+              )}
+              {isFutbol ? (
+                <div className="flex items-center gap-3 text-sm">
+                  <span className={cn("font-medium", (selectedPlayer?.goals || 0) > 0 && "text-success")}>
+                    {selectedPlayer?.goals || 0} Goles
+                  </span>
+                  <span className={cn("font-medium", (selectedPlayer?.assists || 0) > 0 && "text-primary")}>
+                    {selectedPlayer?.assists || 0} Asistencias
+                  </span>
+                </div>
+              ) : (
+                <span className="font-medium text-sm">{selectedPlayer?.points || 0} Puntos</span>
+              )}
+            </div>
+          )}
+
+          <Separator />
+
+          {/* Full coach comment */}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Comentario del entrenador</Label>
+            {selectedPlayer?.note ? (
+              <p className="text-sm whitespace-pre-wrap">{selectedPlayer.note}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Sin comentarios</p>
+            )}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+    </>
   );
 }
