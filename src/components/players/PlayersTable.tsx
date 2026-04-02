@@ -354,7 +354,7 @@ export function PlayersTable() {
       </p>
 
       {/* Table/Cards */}
-      <div className="stryk-card overflow-hidden">
+      <div className="stryk-card overflow-x-auto">
         {isLoading ? (
           <div className="p-8 text-center">
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />

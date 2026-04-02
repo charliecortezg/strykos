@@ -503,7 +503,7 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
       </p>
 
       {/* Payments Table */}
-      <Card className="stryk-card overflow-hidden">
+      <Card className="stryk-card">
         {/* Desktop table */}
         <div className="hidden md:block">
           <Table>
