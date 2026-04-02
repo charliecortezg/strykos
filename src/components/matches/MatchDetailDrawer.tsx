@@ -392,13 +392,20 @@ export function MatchDetailDrawer({
               ) : (
                 <div className="space-y-2">
                   {(isEditing ? editedPlayers : matchPlayers).map((mp) => (
-                    <div key={mp.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
+                    <div 
+                      key={mp.id} 
+                      className={cn(
+                        "flex items-center justify-between gap-2 min-w-0 w-full p-3 rounded-lg border border-border bg-card",
+                        !isEditing && "cursor-pointer active:bg-muted/50 transition-colors"
+                      )}
+                      onClick={() => { if (!isEditing) setSelectedPlayer(mp); }}
+                    >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         {/* MVP crown indicator */}
                         {match.mvp_player_id === mp.player_id && (
                           <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
                         )}
-                        {/* Performance indicator (read-only in detail view) */}
+                        {/* Performance indicator */}
                         {mp.attended && mp.performance && (
                           <PerformanceIndicator
                             status={mp.performance as PerformanceStatus}
@@ -410,17 +417,20 @@ export function MatchDetailDrawer({
                         {!mp.attended && (
                           <div className="w-5 h-5 min-w-[20px] rounded-full bg-destructive ring-2 ring-destructive/30 flex-shrink-0" />
                         )}
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{mp.player?.full_name}</p>
                           <p className="text-xs text-muted-foreground">{mp.player?.position || 'Sin posición'}</p>
-                          {mp.note && (
-                            <p className="text-xs text-muted-foreground mt-1 italic line-clamp-2">
+                          {!isEditing && mp.note && (
+                            <p className="text-xs text-muted-foreground mt-0.5 italic line-clamp-1">
                               💬 {mp.note}
+                              {mp.note.length > 60 && (
+                                <span className="text-primary ml-1 not-italic">ver más</span>
+                              )}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 flex items-center gap-2">
                         {isEditing ? (
                           <>
                             <Checkbox
@@ -428,13 +438,13 @@ export function MatchDetailDrawer({
                               onCheckedChange={(checked) => updatePlayerStat(mp.player_id, 'attended', !!checked)}
                             />
                             {isFutbol ? (
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
                                 <Input
                                   type="number"
                                   min="0"
                                   value={mp.goals}
                                   onChange={(e) => updatePlayerStat(mp.player_id, 'goals', parseInt(e.target.value) || 0)}
-                                  className="w-12 h-8 text-center text-sm"
+                                  className="w-14 h-8 text-center text-sm"
                                   placeholder="G"
                                 />
                                 <Input
@@ -442,7 +452,7 @@ export function MatchDetailDrawer({
                                   min="0"
                                   value={mp.assists}
                                   onChange={(e) => updatePlayerStat(mp.player_id, 'assists', parseInt(e.target.value) || 0)}
-                                  className="w-12 h-8 text-center text-sm"
+                                  className="w-14 h-8 text-center text-sm"
                                   placeholder="A"
                                 />
                               </div>
@@ -452,7 +462,7 @@ export function MatchDetailDrawer({
                                 min="0"
                                 value={mp.points}
                                 onChange={(e) => updatePlayerStat(mp.player_id, 'points', parseInt(e.target.value) || 0)}
-                                className="w-12 h-8 text-center text-sm"
+                                className="w-14 h-8 text-center text-sm"
                                 placeholder="Pts"
                               />
                             )}
