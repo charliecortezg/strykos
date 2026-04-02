@@ -81,7 +81,7 @@ export function TrainersModule({ readOnly = false }: TrainersModuleProps) {
       </div>
 
       {/* Trainers table */}
-      <div className="stryk-card overflow-hidden">
+      <div className="stryk-card">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted/50">

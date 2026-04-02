@@ -47,7 +47,7 @@ export function MatchesTable({ matches, isLoading, onViewMatch }: MatchesTablePr
   }
 
   return (
-    <div className="rounded-lg border border-border overflow-hidden">
+    <div className="rounded-lg border border-border">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">

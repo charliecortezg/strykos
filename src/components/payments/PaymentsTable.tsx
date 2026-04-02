@@ -200,7 +200,7 @@ export function PaymentsTable() {
       </div>
 
       {/* Table */}
-      <div className="stryk-card overflow-hidden">
+      <div className="stryk-card">
         <Table>
           <TableHeader>
             <TableRow>

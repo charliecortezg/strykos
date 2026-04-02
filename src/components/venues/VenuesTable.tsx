@@ -45,7 +45,7 @@ export function VenuesTable() {
         </Button>
       </div>
 
-      <div className="stryk-card overflow-hidden">
+      <div className="stryk-card">
         <Table>
           <TableHeader>
             <TableRow>
