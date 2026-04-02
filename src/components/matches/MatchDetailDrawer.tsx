@@ -621,5 +621,69 @@ export function MatchDetailDrawer({
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
+
+    {/* Player Detail Bottom Sheet */}
+    <Sheet open={!!selectedPlayer} onOpenChange={(open) => !open && setSelectedPlayer(null)}>
+      <SheetContent side="bottom" className="rounded-t-2xl max-h-[60vh] overflow-y-auto px-5 pb-6">
+        <SheetHeader className="pb-3">
+          <SheetTitle className="flex items-center gap-2">
+            {selectedPlayer?.player?.full_name || 'Jugador'}
+            <Badge variant={selectedPlayer?.attended ? 'default' : 'outline'} className="text-xs">
+              {selectedPlayer?.attended ? 'Presente' : 'Ausente'}
+            </Badge>
+            {match?.mvp_player_id === selectedPlayer?.player_id && (
+              <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400" />
+            )}
+          </SheetTitle>
+        </SheetHeader>
+
+        <div className="space-y-4">
+          {/* Stats */}
+          {selectedPlayer?.attended && (
+            <div className="flex items-center gap-4">
+              {selectedPlayer.performance && (
+                <div className="flex items-center gap-2">
+                  <PerformanceIndicator
+                    status={selectedPlayer.performance as PerformanceStatus}
+                    onChange={() => {}}
+                    disabled
+                    size="sm"
+                  />
+                  <span className="text-sm text-muted-foreground capitalize">
+                    {selectedPlayer.performance === 'outstanding' ? 'Sobresaliente' :
+                     selectedPlayer.performance === 'excellent' ? 'Excelente' : 'Enfoque'}
+                  </span>
+                </div>
+              )}
+              {isFutbol ? (
+                <div className="flex items-center gap-3 text-sm">
+                  <span className={cn("font-medium", (selectedPlayer?.goals || 0) > 0 && "text-success")}>
+                    {selectedPlayer?.goals || 0} Goles
+                  </span>
+                  <span className={cn("font-medium", (selectedPlayer?.assists || 0) > 0 && "text-primary")}>
+                    {selectedPlayer?.assists || 0} Asistencias
+                  </span>
+                </div>
+              ) : (
+                <span className="font-medium text-sm">{selectedPlayer?.points || 0} Puntos</span>
+              )}
+            </div>
+          )}
+
+          <Separator />
+
+          {/* Full coach comment */}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Comentario del entrenador</Label>
+            {selectedPlayer?.note ? (
+              <p className="text-sm whitespace-pre-wrap">{selectedPlayer.note}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Sin comentarios</p>
+            )}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+    </>
   );
 }
