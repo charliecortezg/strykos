@@ -410,6 +410,11 @@ export function MatchDetailDrawer({
                         <div className="min-w-0">
                           <p className="font-medium text-sm truncate">{mp.player?.full_name}</p>
                           <p className="text-xs text-muted-foreground">{mp.player?.position || 'Sin posición'}</p>
+                          {mp.note && (
+                            <p className="text-xs text-muted-foreground mt-1 italic line-clamp-2">
+                              💬 {mp.note}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
