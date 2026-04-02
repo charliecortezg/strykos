@@ -294,7 +294,7 @@ export default function OrgOwnerDashboard() {
         <h2 className="text-xl font-display font-semibold text-foreground mb-4">
           Equipo de la academia
         </h2>
-        <div className="stryk-card overflow-hidden">
+        <div className="stryk-card">
           {isLoading ? (
             <div className="p-8 text-center">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />

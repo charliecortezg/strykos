@@ -196,7 +196,7 @@ export function MatchCard({
 
   // Full variant (for history grid - more details, delete action)
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow">
       {/* Header: Date, Type, Status */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 bg-muted/30 border-b border-border">
         <div className="flex items-center gap-2 text-sm">
