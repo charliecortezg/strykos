@@ -92,6 +92,12 @@ export function LoadResultsModal({
   // MVP + Performance state
   const [mvpPlayerId, setMvpPlayerId] = useState<string | null>(null);
 
+  // TikTok-style comment bar state
+  const [commentPlayerId, setCommentPlayerId] = useState<string | null>(null);
+  const [commentPlayerName, setCommentPlayerName] = useState('');
+  const [commentText, setCommentText] = useState('');
+  const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
+
   // Evidence state
   const [uploadedImages, setUploadedImages] = useState<{ url: string; name: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
