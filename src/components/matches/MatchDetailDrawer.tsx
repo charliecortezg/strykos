@@ -125,7 +125,7 @@ export function MatchDetailDrawer({
   const currentResult = getMatchResult(goalsFor, goalsAgainst);
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <>
       <DrawerContent className="max-h-[92vh]">
         <DrawerHeader className="border-b border-border pb-4">
           <div className="flex items-center justify-between">
