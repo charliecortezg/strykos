@@ -86,6 +86,7 @@ export interface MatchPlayer {
   points: number;
   performance: MatchPerformance | null;
   is_guest?: boolean | null;
+  note?: string | null;
   created_at: string;
   updated_at: string;
   player?: {
