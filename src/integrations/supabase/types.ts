@@ -2784,6 +2784,147 @@ export type Database = {
           },
         ]
       }
+      restriction_bank: {
+        Row: {
+          age_group: string
+          created_at: string | null
+          descripcion: string | null
+          es_recomendada: boolean | null
+          fundamento: string
+          id: string
+          organization_id: string | null
+          restriccion: string
+        }
+        Insert: {
+          age_group: string
+          created_at?: string | null
+          descripcion?: string | null
+          es_recomendada?: boolean | null
+          fundamento: string
+          id?: string
+          organization_id?: string | null
+          restriccion: string
+        }
+        Update: {
+          age_group?: string
+          created_at?: string | null
+          descripcion?: string | null
+          es_recomendada?: boolean | null
+          fundamento?: string
+          id?: string
+          organization_id?: string | null
+          restriccion?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restriction_bank_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_plans: {
+        Row: {
+          autoevaluacion: Json | null
+          category_id: string
+          created_at: string | null
+          foco_partido: string | null
+          fundamento_mes: string
+          fundamento_nivel: string
+          id: string
+          juego_posicional: string | null
+          macrocycle_month: string
+          macrocycle_period: string
+          notas_entrenador: string | null
+          observaciones_partido: Json | null
+          organization_id: string
+          partido_finalizado_at: string | null
+          partido_iniciado_at: string | null
+          period_color: string | null
+          pregunta_cierre: string | null
+          restriccion_rondo: string | null
+          session_date: string
+          sincronizado_stryk: boolean | null
+          status: string | null
+          trainer_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          autoevaluacion?: Json | null
+          category_id: string
+          created_at?: string | null
+          foco_partido?: string | null
+          fundamento_mes: string
+          fundamento_nivel: string
+          id?: string
+          juego_posicional?: string | null
+          macrocycle_month: string
+          macrocycle_period: string
+          notas_entrenador?: string | null
+          observaciones_partido?: Json | null
+          organization_id: string
+          partido_finalizado_at?: string | null
+          partido_iniciado_at?: string | null
+          period_color?: string | null
+          pregunta_cierre?: string | null
+          restriccion_rondo?: string | null
+          session_date: string
+          sincronizado_stryk?: boolean | null
+          status?: string | null
+          trainer_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          autoevaluacion?: Json | null
+          category_id?: string
+          created_at?: string | null
+          foco_partido?: string | null
+          fundamento_mes?: string
+          fundamento_nivel?: string
+          id?: string
+          juego_posicional?: string | null
+          macrocycle_month?: string
+          macrocycle_period?: string
+          notas_entrenador?: string | null
+          observaciones_partido?: Json | null
+          organization_id?: string
+          partido_finalizado_at?: string | null
+          partido_iniciado_at?: string | null
+          period_color?: string | null
+          pregunta_cierre?: string | null
+          restriccion_rondo?: string | null
+          session_date?: string
+          sincronizado_stryk?: boolean | null
+          status?: string | null
+          trainer_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_plans_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_plans_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_plans_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sports: {
         Row: {
           created_at: string | null
