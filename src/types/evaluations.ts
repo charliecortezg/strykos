@@ -1,14 +1,39 @@
-export const WLA_STATS = [
-  { key: 'actitud_esfuerzo', label: 'Actitud y Esfuerzo', group: 'mentalidad' },
-  { key: 'disciplina_constancia', label: 'Disciplina y Constancia', group: 'mentalidad' },
-  { key: 'autonomia_liderazgo', label: 'Autonomía y Liderazgo', group: 'mentalidad' },
-  { key: 'control_conduccion', label: 'Control y Conducción', group: 'tecnica' },
-  { key: 'pase_recepcion', label: 'Pase y Recepción', group: 'tecnica' },
-  { key: 'decision_juego', label: 'Decisión y Juego Colectivo', group: 'juego' },
+export const WL_DEFAULT_STATS = [
+  {
+    key: 'tecnico',
+    label: 'Técnico',
+    shortLabel: 'TÉC',
+    pillar: 'tecnico',
+    description: 'Ejecución de fundamentos técnicos en situación de juego real',
+  },
+  {
+    key: 'tactico',
+    label: 'Táctico',
+    shortLabel: 'TÁC',
+    pillar: 'tactico',
+    description: 'Aplicación del modelo de juego: momentos, zonas, triggers, posiciones',
+  },
+  {
+    key: 'coordinativo',
+    label: 'Coordinativo',
+    shortLabel: 'COO',
+    pillar: 'coordinativo',
+    description: 'Ventanas sensibles: coordinación ojo-pie, orientación espacial, velocidad de reacción',
+  },
+  {
+    key: 'psicologico',
+    label: 'Psicológico',
+    shortLabel: 'PSI',
+    pillar: 'psicologico',
+    description: 'Actitud, resiliencia, comunicación vocal, liderazgo, respuesta al error',
+  },
 ] as const;
 
-export type StatKey = typeof WLA_STATS[number]['key'];
-export type StatGroup = 'mentalidad' | 'tecnica' | 'juego';
+/** Backward-compatible alias */
+export const WLA_STATS = WL_DEFAULT_STATS;
+
+export type StatKey = string;
+export type StatGroup = string;
 
 export interface Evaluation {
   id: string;
@@ -54,11 +79,7 @@ export interface EvaluationWeights {
   id: string;
   organization_id: string;
   age_group: string;
-  weights: {
-    mentalidad: number;
-    tecnica: number;
-    juego: number;
-  };
+  weights: Record<string, number>;
   created_at: string;
 }
 
@@ -82,9 +103,15 @@ export interface PlayerEvaluationStatus {
   scores: Record<StatKey, number>;
 }
 
-export const DEFAULT_WEIGHTS: Record<string, { mentalidad: number; tecnica: number; juego: number }> = {
-  '6-7': { mentalidad: 0.50, tecnica: 0.30, juego: 0.20 },
-  '8-9': { mentalidad: 0.40, tecnica: 0.35, juego: 0.25 },
-  '10-11': { mentalidad: 0.30, tecnica: 0.40, juego: 0.30 },
-  '12-13': { mentalidad: 0.25, tecnica: 0.45, juego: 0.30 },
+/** Default weights for WL 4-dimension model */
+export const WL_DEFAULT_WEIGHTS: Record<string, Record<string, number>> = {
+  'default': { tecnico: 0.30, tactico: 0.30, coordinativo: 0.20, psicologico: 0.20 },
+};
+
+/** Legacy weights kept for backward compatibility */
+export const DEFAULT_WEIGHTS: Record<string, Record<string, number>> = {
+  '6-7': { tecnico: 0.30, tactico: 0.20, coordinativo: 0.30, psicologico: 0.20 },
+  '8-9': { tecnico: 0.30, tactico: 0.25, coordinativo: 0.25, psicologico: 0.20 },
+  '10-11': { tecnico: 0.30, tactico: 0.30, coordinativo: 0.20, psicologico: 0.20 },
+  '12-13': { tecnico: 0.30, tactico: 0.30, coordinativo: 0.20, psicologico: 0.20 },
 };

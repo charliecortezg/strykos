@@ -18,16 +18,24 @@ interface PlayerEvaluationSheetProps {
   isSaving: boolean;
 }
 
-const GROUP_COLORS: Record<string, string> = {
+const PILLAR_COLORS: Record<string, string> = {
   mentalidad: 'bg-blue-500/10 text-blue-700 border-blue-200',
   tecnica: 'bg-emerald-500/10 text-emerald-700 border-emerald-200',
   juego: 'bg-amber-500/10 text-amber-700 border-amber-200',
+  tecnico: 'bg-blue-500/10 text-blue-700 border-blue-200',
+  tactico: 'bg-purple-500/10 text-purple-700 border-purple-200',
+  coordinativo: 'bg-teal-500/10 text-teal-700 border-teal-200',
+  psicologico: 'bg-amber-500/10 text-amber-700 border-amber-200',
 };
 
-const GROUP_LABELS: Record<string, string> = {
+const PILLAR_LABELS: Record<string, string> = {
   mentalidad: 'Mentalidad',
   tecnica: 'Técnica',
   juego: 'Juego',
+  tecnico: 'Técnico',
+  tactico: 'Táctico',
+  coordinativo: 'Coordinativo',
+  psicologico: 'Psicológico',
 };
 
 export function PlayerEvaluationSheet({
@@ -74,8 +82,8 @@ export function PlayerEvaluationSheet({
                 <div key={stat.key} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${GROUP_COLORS[stat.group]}`}>
-                        {GROUP_LABELS[stat.group]}
+                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${PILLAR_COLORS[stat.pillar] || ''}`}>
+                        {PILLAR_LABELS[stat.pillar] || stat.pillar}
                       </Badge>
                       <span className="text-sm font-medium">{stat.label}</span>
                     </div>

@@ -138,7 +138,7 @@ export function useEvaluations(categoryId: string | null, period: string) {
 
   // Close evaluations for the entire category (director action)
   const closeEvaluations = useMutation({
-    mutationFn: async (weightsForAgeGroups: Record<string, { mentalidad: number; tecnica: number; juego: number }>) => {
+    mutationFn: async (weightsForAgeGroups: Record<string, Record<string, number>>) => {
       if (!orgId || !categoryId) throw new Error('Missing org/category');
 
       const userId = (await supabase.auth.getUser()).data.user?.id;

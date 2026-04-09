@@ -19,7 +19,10 @@ export function calculateAgeGroup(dateOfBirth: string | null): string {
 }
 
 /**
- * Calculate weighted overall score (0-100) from 6 stats (0-20)
+ * Calculate weighted overall score (0-100) from N stats (0-20).
+ * Dimension-agnostic: works with 4 WL dimensions or 6 legacy WLA stats.
+ * If weights contain pillar keys matching the score keys, uses weighted average.
+ * Otherwise falls back to simple average.
  */
 export function calculateOverall(
   scores: Record<StatKey, number>,
@@ -28,6 +31,31 @@ export function calculateOverall(
 ): number {
   const w = weights?.weights || DEFAULT_WEIGHTS[ageGroup] || DEFAULT_WEIGHTS['8-9'];
 
+  const scoreKeys = Object.keys(scores).filter(k => scores[k] !== undefined);
+  if (scoreKeys.length === 0) return 0;
+
+  // Check if weights map to the score keys directly (WL model)
+  const hasDirectWeights = scoreKeys.some(k => w[k] !== undefined);
+
+  if (hasDirectWeights) {
+    let weightedSum = 0;
+    let totalWeight = 0;
+    for (const key of scoreKeys) {
+      const score = scores[key] || 0;
+      const weight = w[key] || 0;
+      weightedSum += score * weight;
+      totalWeight += weight;
+    }
+    if (totalWeight === 0) {
+      // Fallback to simple average
+      const avg = scoreKeys.reduce((sum, k) => sum + (scores[k] || 0), 0) / scoreKeys.length;
+      return Math.round(avg * (100 / 20));
+    }
+    const overall = weightedSum / totalWeight;
+    return Math.round(overall * (100 / 20));
+  }
+
+  // Legacy pillar-based calculation (mentalidad/tecnica/juego)
   const mentalidad = (
     (scores.actitud_esfuerzo || 0) +
     (scores.disciplina_constancia || 0) +
@@ -41,7 +69,11 @@ export function calculateOverall(
 
   const juego = scores.decision_juego || 0;
 
-  const overall = mentalidad * w.mentalidad + tecnica * w.tecnica + juego * w.juego;
+  const mW = w.mentalidad || w['mentalidad'] || 0.33;
+  const tW = w.tecnica || w['tecnica'] || 0.34;
+  const jW = w.juego || w['juego'] || 0.33;
+
+  const overall = mentalidad * mW + tecnica * tW + juego * jW;
   return Math.round(overall * (100 / 20));
 }
 
@@ -72,7 +104,8 @@ export function formatPeriod(period: string): string {
 }
 
 /**
- * Detect achievements based on current vs previous scores
+ * Detect achievements based on current vs previous scores.
+ * Dimension-agnostic: iterates over whatever stats exist.
  */
 export function detectAchievements(
   currentScores: Record<StatKey, number>,
@@ -82,9 +115,10 @@ export function detectAchievements(
 
   // Superación: any stat +3 vs previous month
   if (previousScores) {
-    const hasSuperacion = WLA_STATS.some(stat => {
-      const current = currentScores[stat.key] || 0;
-      const previous = previousScores[stat.key] || 0;
+    const allKeys = new Set([...Object.keys(currentScores), ...Object.keys(previousScores)]);
+    const hasSuperacion = Array.from(allKeys).some(key => {
+      const current = currentScores[key] || 0;
+      const previous = previousScores[key] || 0;
       return current - previous >= 3;
     });
     if (hasSuperacion) {
@@ -92,8 +126,9 @@ export function detectAchievements(
     }
   }
 
-  // Genio Creativo: stat6 (decision_juego) >= 16
-  if ((currentScores.decision_juego || 0) >= 16) {
+  // Genio Creativo: any stat >= 16 (generalized from legacy decision_juego check)
+  const hasHighScore = Object.values(currentScores).some(v => v >= 16);
+  if (hasHighScore) {
     achievements.push({ key: 'genio_creativo', xp_bonus: 50 });
   }
 
