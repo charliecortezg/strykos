@@ -333,7 +333,7 @@ export function PartidoObservacion({ sessionPlan, categoryId, ageGroup, tipoPart
       </div>
 
       {/* PLAYER LIST */}
-      <div className="flex-1 overflow-y-auto px-3 py-2">
+      <div className="flex-1 overflow-y-auto px-3 py-2 pb-[140px]">
         {players.map(player => {
           const obs = observaciones[player.id] || {};
           const isExpanded = jugadorExpandido === player.id;
@@ -440,7 +440,7 @@ export function PartidoObservacion({ sessionPlan, categoryId, ageGroup, tipoPart
       </div>
 
       {/* FOOTER */}
-      <div className="shrink-0 h-16 px-4 flex items-center justify-between border-t border-white/10 pb-safe">
+      <div className="shrink-0 h-16 px-4 flex items-center justify-between border-t border-white/10 pb-safe fixed bottom-16 left-0 right-0 z-50 bg-[#0F1117]">
         <Button
           variant="outline"
           size="sm"
