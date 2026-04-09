@@ -217,6 +217,8 @@ export default function EntrenadorDashboard() {
             </Tabs>
           </>
         )}
+
+        <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
       </main>
     </div>
   );
