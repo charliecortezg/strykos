@@ -31,6 +31,7 @@ export function useTrainerCategories() {
         .select(`
           id,
           name,
+          age_group,
           sport_id,
           venue_id,
           sport:sports(id, name),
