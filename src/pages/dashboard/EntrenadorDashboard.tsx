@@ -24,7 +24,7 @@ export default function EntrenadorDashboard() {
   const { categories, hasCategories, isLoading } = useTrainerCategories();
   const { players } = usePlayers();
   // Asistencia is the default - it's the most frequent action for trainers
-  const [activeTab, setActiveTab] = useState('asistencia');
+  const [activeTab, setActiveTab] = useState('sesion');
   const { feature_evaluations_enabled } = useFeatureFlags();
 
   // Filter players to only show those in trainer's categories
