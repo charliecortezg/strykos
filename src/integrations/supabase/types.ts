@@ -435,6 +435,7 @@ export type Database = {
           closed_by: string | null
           created_at: string
           created_by: string | null
+          evaluation_type: string | null
           event_date: string | null
           id: string
           organization_id: string
@@ -446,6 +447,7 @@ export type Database = {
           closed_by?: string | null
           created_at?: string
           created_by?: string | null
+          evaluation_type?: string | null
           event_date?: string | null
           id?: string
           organization_id: string
@@ -457,6 +459,7 @@ export type Database = {
           closed_by?: string | null
           created_at?: string
           created_by?: string | null
+          evaluation_type?: string | null
           event_date?: string | null
           id?: string
           organization_id?: string
@@ -3505,6 +3508,7 @@ export type Database = {
           closed_by: string | null
           created_at: string
           created_by: string | null
+          evaluation_type: string | null
           event_date: string | null
           id: string
           organization_id: string
