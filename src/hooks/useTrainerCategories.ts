@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export interface TrainerCategory {
   id: string;
   name: string;
+  age_group: string;
   sport_id: string | null;
   venue_id: string | null;
   sport?: {
