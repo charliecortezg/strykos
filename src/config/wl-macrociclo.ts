@@ -33,6 +33,8 @@ export interface MacroCycleMonth {
     coordinativo: string;
     psicologico: string;
   };
+  juegosPosicionales: string[];
+  focosSugeridos: string[];
 }
 
 export const WL_MACROCICLO: MacroCycleMonth[] = [
@@ -56,6 +58,16 @@ export const WL_MACROCICLO: MacroCycleMonth[] = [
       psicologico:
         'Actitud activa: busca el balón, no abandona ante el error',
     },
+    juegosPosicionales: [
+      '4v4 libre en 20×30m. Sin restricción táctica — el entrenador solo observa.',
+      'Rondo lúdico 5v2 en círculo. El que toca 3 veces seguidas defiende.',
+      'Partido libre 5v5. El entrenador no interviene en ningún momento.',
+    ],
+    focosSugeridos: [
+      '¿Conduce con cabeza levantada?',
+      '¿Busca el balón activamente?',
+      '¿Disfruta y no abandona ante el error?',
+    ],
   },
   {
     month: 'septiembre_2025',
@@ -77,6 +89,16 @@ export const WL_MACROCICLO: MacroCycleMonth[] = [
       coordinativo: 'Equilibrio dinámico en cambios de dirección',
       psicologico: 'Usa vocabulario WL en cancha con recordatorio',
     },
+    juegosPosicionales: [
+      '4v4 con transición. Trigger: al recuperar, dar 3 pases antes de rematar.',
+      'Rondo 5v2 + transición. Al recuperar: disponemos. Al perder: recuperamos.',
+      'Partido 5v5. Solo puede rematar el jugador que orientó el balón al recibirlo.',
+    ],
+    focosSugeridos: [
+      '¿El equipo dice \'disponemos\' al recuperar?',
+      '¿Reacciona al trigger en menos de 3 segundos?',
+      '¿Ocupa las zonas ZA-ZD con amplitud?',
+    ],
   },
   {
     month: 'octubre_2025',
@@ -97,6 +119,16 @@ export const WL_MACROCICLO: MacroCycleMonth[] = [
       coordinativo: 'Orientación espacial en campo completo',
       psicologico: 'Acepta la corrección con actitud abierta',
     },
+    juegosPosicionales: [
+      '5v4 posicional. Las 3 líneas deben estar ocupadas para que el gol valga.',
+      'Juego de posición 6v3 en 25×30m. Punto si hay jugador en cada pasillo.',
+      'Partido con regla: el pase entre líneas vale 2 puntos.',
+    ],
+    focosSugeridos: [
+      '¿Gira la cabeza al menos 1 vez antes de recibir?',
+      '¿Orienta el primer toque fuera del defensor?',
+      '¿Está en su línea posicional cuando el equipo tiene el balón?',
+    ],
   },
   {
     month: 'noviembre_2025',
@@ -119,6 +151,16 @@ export const WL_MACROCICLO: MacroCycleMonth[] = [
       coordinativo: 'Velocidad de reacción al cambio de posesión',
       psicologico: 'Compromiso constante independiente del resultado',
     },
+    juegosPosicionales: [
+      '4v4 con bandas. El balón en banda izquierda obliga al equipo a compactarse a ese lado.',
+      'Juego de posición 5v3. Restricción: no puedes pasar a un compañero en tu misma línea.',
+      'Partido con regla: al perder, los 2 más cercanos presionan en 3 segundos.',
+    ],
+    focosSugeridos: [
+      '¿Conduce con ambos perfiles sin perder el balón?',
+      '¿Se posiciona según si el balón está en banda propia o contraria?',
+      '¿Reacciona al cambio de posesión en menos de 2 segundos?',
+    ],
   },
   {
     month: 'diciembre_2025',
@@ -139,6 +181,16 @@ export const WL_MACROCICLO: MacroCycleMonth[] = [
       coordinativo: 'Todos los indicadores coordinativos del M1',
       psicologico: 'Retroalimentación positiva y cierre emocional',
     },
+    juegosPosicionales: [
+      'Partido de evaluación libre. El entrenador solo observa y registra en Stryk.',
+      '5v5 sin restricción táctica. Evaluación de todos los indicadores del M1.',
+      'Juego libre elegido por los jugadores. El entrenador participa.',
+    ],
+    focosSugeridos: [
+      '¿Cuántos indicadores del M1 aplica en partido real?',
+      '¿El equipo aplica los 2 momentos sin instrucción?',
+      '¿Qué indicador consolidó y cuál necesita más trabajo?',
+    ],
   },
   {
     month: 'enero_2026',
@@ -160,6 +212,16 @@ export const WL_MACROCICLO: MacroCycleMonth[] = [
       psicologico:
         'Retoma el compromiso y motivación tras el descanso',
     },
+    juegosPosicionales: [
+      '3v2 con portería. El gol solo vale si el receptor del pase en profundidad corre antes de recibirlo.',
+      '4v3 con transición. Superioridad 2v1 activa en los primeros 3 segundos tras recuperar.',
+      'Partido con regla: el pase en profundidad entre líneas vale 2 puntos.',
+    ],
+    focosSugeridos: [
+      '¿El pase en profundidad llega al espacio — no al pie?',
+      '¿Activa la superioridad 2v1 en menos de 3 segundos?',
+      '¿Retomó el nivel del M1 tras las vacaciones?',
+    ],
   },
   {
     month: 'febrero_2026',
@@ -181,6 +243,16 @@ export const WL_MACROCICLO: MacroCycleMonth[] = [
       coordinativo: 'Anticipación en pressing coordinado',
       psicologico: 'Comunicación vocal espontánea con compañeros',
     },
+    juegosPosicionales: [
+      '1v1 rotativo en carril 5×15m. El atacante tiene 5 segundos para superar al defensor.',
+      '3v2 con regate obligatorio antes del remate. Finta antes de tirar.',
+      'Partido con regla: regate exitoso en ZC o ZD vale 2 puntos.',
+    ],
+    focosSugeridos: [
+      '¿Hace la finta antes de intentar el regate?',
+      '¿Reacciona a la transición ofensiva en los primeros 3 segundos?',
+      '¿Comunica vocalmente con compañeros sin instrucción?',
+    ],
   },
   {
     month: 'marzo_2026',
@@ -205,6 +277,16 @@ export const WL_MACROCICLO: MacroCycleMonth[] = [
       psicologico:
         'Liderazgo emergente: organiza a compañeros en pressing',
     },
+    juegosPosicionales: [
+      '3v3 con transición. Al perder: los 3 deben presionar coordinados en 5 segundos.',
+      '4v4 con roles asignados de pressing: uno presiona, uno tapa canal, dos cierran líneas.',
+      'Partido con regla: recuperación en zona de ataque vale 3 puntos.',
+    ],
+    focosSugeridos: [
+      '¿Los 2 más cercanos presionan juntos en menos de 2 segundos?',
+      '¿Aplica las 3 funciones de recuperación en partido?',
+      '¿El líder de pressing organiza al grupo vocalmente?',
+    ],
   },
   {
     month: 'abril_2026',
@@ -229,6 +311,16 @@ export const WL_MACROCICLO: MacroCycleMonth[] = [
       psicologico:
         'Autonomía y liderazgo vocal sin intervención del entrenador',
     },
+    juegosPosicionales: [
+      'Partido completo. El entrenador hace máximo 1 intervención en todo el partido.',
+      '5v5 sin instrucciones previas. El equipo se organiza solo desde el inicio.',
+      'Juego de posición 6v4. El entrenador observa en silencio — solo registra en Stryk.',
+    ],
+    focosSugeridos: [
+      '¿El equipo se organiza solo en los primeros 30 segundos?',
+      '¿Aplica el modelo posicional completo sin instrucción?',
+      '¿Comunicación vocal activa y autónoma en partido?',
+    ],
   },
   {
     month: 'mayo_2026',
@@ -252,6 +344,16 @@ export const WL_MACROCICLO: MacroCycleMonth[] = [
       psicologico:
         'Puede explicar el modelo WL a un jugador nuevo',
     },
+    juegosPosicionales: [
+      'Partido completo en silencio metodológico. Cero intervenciones del entrenador.',
+      '5v5 libre. Los jugadores eligen la formación y la táctica.',
+      'Partido con capitán designado. El capitán toma todas las decisiones tácticas.',
+    ],
+    focosSugeridos: [
+      '¿El automatismo técnico se mantiene sin corrección?',
+      '¿El equipo se adapta táctico sin instrucción verbal?',
+      '¿El liderazgo vocal organiza las transiciones?',
+    ],
   },
   {
     month: 'junio_2026',
@@ -274,6 +376,16 @@ export const WL_MACROCICLO: MacroCycleMonth[] = [
       psicologico:
         'Cierre emocional: fortalezas del año + objetivo para la siguiente temporada',
     },
+    juegosPosicionales: [
+      'Partido de evaluación final. Comparativa con agosto — solo observación.',
+      'Juego libre elegido por los jugadores. Cierre emocional de temporada.',
+      '5v5 amistoso. El entrenador participa como un jugador más.',
+    ],
+    focosSugeridos: [
+      '¿Qué indicador mejoró más respecto a agosto?',
+      '¿El jugador aplica el modelo de forma autónoma?',
+      '¿Muestra liderazgo y disfrute genuino del juego?',
+    ],
   },
 ];
 
