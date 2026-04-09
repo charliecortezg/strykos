@@ -1005,6 +1005,7 @@ export type Database = {
           idp_cycle_id: string
           initial_score: number
           organization_id: string
+          pending_checkin: boolean | null
           stat_key: string
           target_score: number
         }
@@ -1015,6 +1016,7 @@ export type Database = {
           idp_cycle_id: string
           initial_score: number
           organization_id: string
+          pending_checkin?: boolean | null
           stat_key: string
           target_score: number
         }
@@ -1025,6 +1027,7 @@ export type Database = {
           idp_cycle_id?: string
           initial_score?: number
           organization_id?: string
+          pending_checkin?: boolean | null
           stat_key?: string
           target_score?: number
         }
@@ -1041,6 +1044,80 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      idp_monthly_checkins: {
+        Row: {
+          check_in_date: string
+          check_in_number: number
+          coach_message: string | null
+          created_at: string | null
+          dimension_changes: Json
+          evaluation_event_id: string | null
+          exercises_updated: boolean | null
+          id: string
+          idp_cycle_id: string
+          organization_id: string
+          player_id: string
+          scores_snapshot: Json
+        }
+        Insert: {
+          check_in_date: string
+          check_in_number: number
+          coach_message?: string | null
+          created_at?: string | null
+          dimension_changes?: Json
+          evaluation_event_id?: string | null
+          exercises_updated?: boolean | null
+          id?: string
+          idp_cycle_id: string
+          organization_id: string
+          player_id: string
+          scores_snapshot?: Json
+        }
+        Update: {
+          check_in_date?: string
+          check_in_number?: number
+          coach_message?: string | null
+          created_at?: string | null
+          dimension_changes?: Json
+          evaluation_event_id?: string | null
+          exercises_updated?: boolean | null
+          id?: string
+          idp_cycle_id?: string
+          organization_id?: string
+          player_id?: string
+          scores_snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idp_monthly_checkins_evaluation_event_id_fkey"
+            columns: ["evaluation_event_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idp_monthly_checkins_idp_cycle_id_fkey"
+            columns: ["idp_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "idp_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idp_monthly_checkins_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idp_monthly_checkins_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
             referencedColumns: ["id"]
           },
         ]

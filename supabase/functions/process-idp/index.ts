@@ -6,132 +6,35 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const PILAR_TECNICO_KEYS = ['control_conduccion', 'pase_recepcion', 'decision_juego'];
-const PILAR_MENTALIDAD_KEYS = ['actitud_esfuerzo', 'disciplina_constancia', 'autonomia_liderazgo'];
-const MENTALIDAD_THRESHOLD = 12;
+// WL 4-dimension model
+const WL_DIMENSIONS = ['tecnico', 'tactico', 'coordinativo', 'psicologico'] as const;
 
-const STAT_LABELS: Record<string, string> = {
-  actitud_esfuerzo: 'Actitud y Esfuerzo',
-  disciplina_constancia: 'Disciplina y Constancia',
-  autonomia_liderazgo: 'Autonomía y Liderazgo',
-  control_conduccion: 'Control y Conducción',
-  pase_recepcion: 'Pase y Recepción',
-  decision_juego: 'Decisión y Juego Colectivo',
+const DIMENSION_LABELS: Record<string, string> = {
+  tecnico: 'Técnico',
+  tactico: 'Táctico',
+  coordinativo: 'Coordinativo',
+  psicologico: 'Psicológico',
 };
 
-interface ProcessIDPRequest {
-  organization_id: string;
-  category_id: string;
-  period: string;
+function scoreToLevel(score: number): number {
+  if (score <= 7) return 1;
+  if (score <= 13) return 2;
+  return 3;
 }
 
-interface InsightsJSON {
-  fortalezas: string[];
-  debilidades: string[];
-  habitos: string[];
-  riesgo: string;
-  palabras_clave: string[];
+function levelLabel(level: number): string {
+  if (level === 1) return 'Nivel 1 (Desarrollo)';
+  if (level === 2) return 'Nivel 2 (Consolidación)';
+  return 'Nivel 3 (Dominio)';
 }
 
-async function generateAIRecommendations(
-  playerName: string,
-  ageGroup: string,
-  categoryName: string,
-  scoresMap: Record<string, number>,
-  focusAreas: { stat_key: string; score: number; focus_type: string }[],
-  mentalidadLow: { stat_key: string; score: number }[],
-  rubrics: { stat_key: string; band_min: number; band_max: number; bullets: string[] }[],
-  insights: InsightsJSON | null,
-  deltaScores: Record<string, number> | null,
-  attendanceContext: { presente: number; total: number; pct: number } | null,
-): Promise<{
-  ai_comment: string;
-  ai_recommendations: string[];
-  ai_weekly_plan: string;
-  diagnostico: string;
-  foco_conductual: string | null;
-}> {
+// ─── AI helper ─────────────────────────────────────────────────
+async function callAI(prompt: string, systemPrompt: string, toolDef: any): Promise<any | null> {
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
   if (!LOVABLE_API_KEY) {
-    console.warn('[process-idp] No LOVABLE_API_KEY, using static fallback');
-    return {
-      ai_comment: `${playerName} muestra un perfil de desarrollo interesante para su grupo de edad (${ageGroup}).`,
-      ai_recommendations: [
-        'Practicar ejercicios de control de balón 15 minutos diarios',
-        'Realizar circuitos de pase corto con cambio de dirección',
-        'Jugar partidos reducidos enfocándose en la toma de decisiones',
-      ],
-      ai_weekly_plan: 'Lunes y Miércoles: Ejercicios técnicos individuales (20 min). Viernes: Partido reducido con enfoque táctico.',
-      diagnostico: `${playerName} presenta un nivel en desarrollo para su grupo de edad.`,
-      foco_conductual: null,
-    };
+    console.warn('[process-idp] No LOVABLE_API_KEY');
+    return null;
   }
-
-  const scoresText = Object.entries(scoresMap)
-    .map(([k, v]) => `${STAT_LABELS[k] || k}: ${v}/20`)
-    .join(', ');
-
-  const focusText = focusAreas
-    .map(fa => `${STAT_LABELS[fa.stat_key]} (${fa.score}/20, ${fa.focus_type === 'strengthen' ? 'POTENCIAR' : 'MEJORAR'})`)
-    .join('; ');
-
-  const mentalidadText = mentalidadLow.length > 0
-    ? mentalidadLow.map(m => `${STAT_LABELS[m.stat_key]}: ${m.score}/20`).join(', ')
-    : 'Todos los stats de mentalidad están en nivel aceptable.';
-
-  const rubricsText = rubrics.length > 0
-    ? rubrics.map(r => `${STAT_LABELS[r.stat_key] || r.stat_key} (${r.band_min}-${r.band_max}): ${(r.bullets as string[]).join('; ')}`).join('\n')
-    : '';
-
-  // Build delta text
-  let deltaText = 'Primera evaluación (sin datos anteriores).';
-  if (deltaScores) {
-    deltaText = Object.entries(deltaScores)
-      .map(([k, v]) => `${STAT_LABELS[k] || k}: ${v > 0 ? '+' : ''}${v}`)
-      .join(', ');
-  }
-
-  // Build insights text
-  let insightsText = 'Sin comentarios del entrenador.';
-  if (insights) {
-    insightsText = `Fortalezas: ${insights.fortalezas.join(', ')}
-  Debilidades: ${insights.debilidades.join(', ')}
-  Hábitos observados: ${insights.habitos.join(', ')}
-  Nivel de riesgo: ${insights.riesgo}`;
-  }
-
-  // Build attendance text
-  let attendanceText = 'Sin datos de asistencia.';
-  if (attendanceContext && attendanceContext.total > 0) {
-    attendanceText = `${attendanceContext.presente}/${attendanceContext.total} (${attendanceContext.pct}%)`;
-  }
-
-  const prompt = `Eres un Director Deportivo experto en fútbol formativo. Genera un plan de desarrollo personalizado.
-
-JUGADOR: ${playerName}
-CATEGORÍA: ${categoryName}
-GRUPO DE EDAD: ${ageGroup}
-
-SCORES ACTUALES: ${scoresText}
-ÁREAS DE ENFOQUE TÉCNICO: ${focusText}
-MENTALIDAD (stats bajos): ${mentalidadText}
-DELTA VS ANTERIOR: ${deltaText}
-
-INSIGHTS DEL ENTRENADOR:
-  ${insightsText}
-
-ASISTENCIA (30 días): ${attendanceText}
-
-${rubricsText ? `RÚBRICAS DEL NIVEL:\n${rubricsText}` : ''}
-
-Genera:
-1. DIAGNÓSTICO SINTÉTICO: 2-3 oraciones que crucen números + comentario del entrenador + asistencia. Si la asistencia es baja (<70%), mencionarlo como factor limitante.
-2. COMENTARIO GENERAL: 2-3 oraciones positivas pero realistas sobre el jugador.
-3. FOCO TÉCNICO: 3 recomendaciones específicas y accionables priorizando stats débiles + debilidades del entrenador + delta negativo.
-4. FOCO CONDUCTUAL: Si los insights del entrenador indican hábitos problemáticos o riesgo medio/alto, escribir 1-2 oraciones sobre rutina y consistencia. Si no aplica, dejar vacío.
-5. PLAN SEMANAL: Plan concreto de 3 días con actividades específicas de fútbol.
-
-Sé específico con ejercicios reales de fútbol. No uses lenguaje genérico.`;
 
   try {
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -143,71 +46,740 @@ Sé específico con ejercicios reales de fútbol. No uses lenguaje genérico.`;
       body: JSON.stringify({
         model: 'google/gemini-3-flash-preview',
         messages: [
-          { role: 'system', content: 'Eres un experto en desarrollo deportivo juvenil de fútbol. Responde siempre en español.' },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt },
         ],
-        tools: [{
-          type: 'function',
-          function: {
-            name: 'generate_idp_report',
-            description: 'Generate personalized IDP report for a youth soccer player',
-            parameters: {
-              type: 'object',
-              properties: {
-                diagnostico: { type: 'string', description: 'Synthetic diagnosis crossing numbers + comments + attendance (2-3 sentences in Spanish)' },
-                ai_comment: { type: 'string', description: 'General positive comment about the player (2-3 sentences in Spanish)' },
-                ai_recommendations: {
-                  type: 'array',
-                  items: { type: 'string' },
-                  description: 'Array of 3 specific actionable recommendations in Spanish',
-                },
-                ai_weekly_plan: { type: 'string', description: 'Concrete weekly plan with 3 training days in Spanish' },
-                foco_conductual: { type: 'string', description: 'Behavioral focus if applicable, or empty string if not needed' },
-              },
-              required: ['diagnostico', 'ai_comment', 'ai_recommendations', 'ai_weekly_plan', 'foco_conductual'],
-              additionalProperties: false,
-            },
-          },
-        }],
-        tool_choice: { type: 'function', function: { name: 'generate_idp_report' } },
+        tools: [toolDef],
+        tool_choice: { type: 'function', function: { name: toolDef.function.name } },
       }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('[process-idp] AI gateway error:', response.status, errText);
-      throw new Error('AI gateway error');
+      console.error('[process-idp] AI error:', response.status, errText);
+      return null;
     }
 
     const result = await response.json();
     const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
     if (toolCall?.function?.arguments) {
-      const parsed = JSON.parse(toolCall.function.arguments);
-      return {
-        diagnostico: parsed.diagnostico || '',
-        ai_comment: parsed.ai_comment || '',
-        ai_recommendations: parsed.ai_recommendations || [],
-        ai_weekly_plan: parsed.ai_weekly_plan || '',
-        foco_conductual: parsed.foco_conductual || null,
-      };
+      return JSON.parse(toolCall.function.arguments);
     }
-    throw new Error('No tool call in AI response');
+    return null;
   } catch (err) {
-    console.error('[process-idp] AI generation failed, using fallback:', err);
-    return {
-      diagnostico: `${playerName} presenta un nivel en desarrollo para su grupo de edad (${ageGroup}).`,
-      ai_comment: `${playerName} muestra un perfil de desarrollo interesante para su grupo de edad (${ageGroup}).`,
-      ai_recommendations: [
-        'Practicar ejercicios de control de balón 15 minutos diarios',
-        'Realizar circuitos de pase corto con cambio de dirección',
-        'Jugar partidos reducidos enfocándose en la toma de decisiones',
-      ],
-      ai_weekly_plan: 'Lunes y Miércoles: Ejercicios técnicos individuales (20 min). Viernes: Partido reducido con enfoque táctico.',
-      foco_conductual: null,
-    };
+    console.error('[process-idp] AI call failed:', err);
+    return null;
   }
 }
 
+// ─── Generate mode AI ──────────────────────────────────────────
+async function generatePlanAI(
+  playerName: string,
+  age: number,
+  scoresMap: Record<string, number>,
+  focusDimensions: { key: string; score: number; level: number }[],
+  exerciseNames: Record<string, string[]>,
+): Promise<{ coach_message: string; diagnostico: string; weekly_plan: string; recommendations: string[] }> {
+  const scoresText = Object.entries(scoresMap)
+    .map(([k, v]) => `${DIMENSION_LABELS[k] || k}: ${v}/20 (${levelLabel(scoreToLevel(v))})`)
+    .join(', ');
+
+  const focusText = focusDimensions
+    .map(f => `${DIMENSION_LABELS[f.key]} (${f.score}/20, ${levelLabel(f.level)})`)
+    .join('; ');
+
+  const exercisesText = Object.entries(exerciseNames)
+    .map(([dim, names]) => `${DIMENSION_LABELS[dim]}: ${names.join(', ')}`)
+    .join('\n');
+
+  const prompt = `JUGADOR: ${playerName}, ${age} años
+SCORES: ${scoresText}
+DIMENSIONES FOCO: ${focusText}
+EJERCICIOS ASIGNADOS:
+${exercisesText}
+
+Genera:
+1. MENSAJE MOTIVADOR para la familia (3 oraciones máximo, en español)
+2. DIAGNÓSTICO SINTÉTICO (2-3 oraciones, analítico, en español)
+3. PLAN SEMANAL concreto de 3 días usando los ejercicios listados
+4. 3 RECOMENDACIONES accionables para casa`;
+
+  const toolDef = {
+    type: 'function',
+    function: {
+      name: 'generate_idp_plan',
+      description: 'Generate IDP plan for a youth player',
+      parameters: {
+        type: 'object',
+        properties: {
+          coach_message: { type: 'string', description: 'Motivational message for the family (3 sentences max, Spanish)' },
+          diagnostico: { type: 'string', description: 'Synthetic diagnosis (2-3 sentences, Spanish)' },
+          weekly_plan: { type: 'string', description: 'Concrete 3-day weekly plan using assigned exercises (Spanish)' },
+          recommendations: { type: 'array', items: { type: 'string' }, description: '3 actionable recommendations (Spanish)' },
+        },
+        required: ['coach_message', 'diagnostico', 'weekly_plan', 'recommendations'],
+        additionalProperties: false,
+      },
+    },
+  };
+
+  const result = await callAI(prompt, 'Eres un experto en desarrollo deportivo juvenil. Responde siempre en español.', toolDef);
+
+  return result || {
+    coach_message: `${playerName} comenzará un plan de desarrollo de 90 días enfocado en sus áreas de mejora. ¡Contamos con el apoyo de la familia!`,
+    diagnostico: `${playerName} presenta áreas claras de desarrollo en las dimensiones evaluadas.`,
+    weekly_plan: 'Lunes: Ejercicios técnicos (20 min). Miércoles: Trabajo táctico (20 min). Viernes: Sesión coordinativa.',
+    recommendations: ['Practicar 15 minutos diarios los ejercicios asignados', 'Registrar cada sesión de entrenamiento', 'Mantener constancia durante todo el ciclo'],
+  };
+}
+
+// ─── Check-in mode AI ──────────────────────────────────────────
+async function generateCheckinMessage(
+  playerName: string,
+  improved: string[],
+  newFocus: string[],
+  checkInNumber: number,
+): Promise<string> {
+  const improvedText = improved.length > 0
+    ? `mejoraron: ${improved.map(k => DIMENSION_LABELS[k] || k).join(', ')}`
+    : 'se mantuvieron estables';
+  const focusText = newFocus.map(k => DIMENSION_LABELS[k] || k).join(', ');
+
+  const prompt = `Genera un mensaje en español de máximo 3 oraciones para la familia del jugador ${playerName}. Este mes ${improvedText}. El siguiente mes trabajará en ${focusText}. Es el check-in número ${checkInNumber} de 3.`;
+
+  const toolDef = {
+    type: 'function',
+    function: {
+      name: 'generate_checkin_message',
+      description: 'Generate check-in message for family',
+      parameters: {
+        type: 'object',
+        properties: { message: { type: 'string' } },
+        required: ['message'],
+        additionalProperties: false,
+      },
+    },
+  };
+
+  const result = await callAI(prompt, 'Eres un entrenador deportivo positivo. Máximo 3 oraciones en español.', toolDef);
+  return result?.message || `Check-in ${checkInNumber}: ${playerName} continúa su plan de desarrollo. ${improved.length > 0 ? `¡Felicidades por la mejora en ${improvedText}!` : 'Seguimos trabajando con constancia.'} El próximo mes se enfocará en ${focusText}.`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODE A: generate — Creates a new 90-day IDP cycle
+// ═══════════════════════════════════════════════════════════════
+async function handleGenerate(supabaseAdmin: any, body: any): Promise<Response> {
+  const { organization_id, player_id, evaluation_event_id, category_id, period } = body;
+
+  // Support both new WL mode (player_id + evaluation_event_id) and legacy batch mode (category_id + period)
+  if (category_id && period) {
+    return handleLegacyGenerate(supabaseAdmin, body);
+  }
+
+  if (!organization_id || !player_id || !evaluation_event_id) {
+    return new Response(JSON.stringify({ error: 'Missing: organization_id, player_id, evaluation_event_id' }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // 1. Get player info
+  const { data: player } = await supabaseAdmin
+    .from('players')
+    .select('full_name, date_of_birth')
+    .eq('id', player_id)
+    .single();
+
+  if (!player) {
+    return new Response(JSON.stringify({ error: 'Player not found' }), {
+      status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const playerAge = player.date_of_birth
+    ? Math.floor((Date.now() - new Date(player.date_of_birth).getTime()) / (365.25 * 86400000))
+    : 10;
+
+  // 2. Get evaluation scores from the event
+  const { data: evaluation } = await supabaseAdmin
+    .from('evaluations')
+    .select('id')
+    .eq('organization_id', organization_id)
+    .eq('player_id', player_id)
+    .eq('event_id', evaluation_event_id)
+    .eq('status', 'closed')
+    .maybeSingle();
+
+  if (!evaluation) {
+    return new Response(JSON.stringify({ error: 'No closed evaluation found for this player/event' }), {
+      status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const { data: scores } = await supabaseAdmin
+    .from('evaluation_scores')
+    .select('stat_key, score')
+    .eq('evaluation_id', evaluation.id);
+
+  if (!scores || scores.length === 0) {
+    return new Response(JSON.stringify({ error: 'No scores found' }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const scoresMap: Record<string, number> = {};
+  scores.forEach((s: any) => { scoresMap[s.stat_key] = s.score; });
+
+  // 3. Close any existing active IDP for this player
+  await supabaseAdmin
+    .from('idp_cycles')
+    .update({ status: 'completed', updated_at: new Date().toISOString() })
+    .eq('organization_id', organization_id)
+    .eq('player_id', player_id)
+    .in('status', ['active', 'overdue']);
+
+  // 4. Select focus dimensions (max 3, Levels 1 and 2 only, lowest first)
+  const dimensionScores = WL_DIMENSIONS
+    .map(key => ({ key, score: scoresMap[key] || 0, level: scoreToLevel(scoresMap[key] || 0) }))
+    .filter(d => d.level <= 2)
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 3);
+
+  if (dimensionScores.length === 0) {
+    // All dimensions at Level 3 — pick the two lowest anyway
+    const allSorted = WL_DIMENSIONS
+      .map(key => ({ key, score: scoresMap[key] || 0, level: scoreToLevel(scoresMap[key] || 0) }))
+      .sort((a, b) => a.score - b.score);
+    dimensionScores.push(allSorted[0], allSorted[1]);
+  }
+
+  // 5. Find exercises for each focus dimension
+  const exercisesByDimension: Record<string, any[]> = {};
+  const exerciseNames: Record<string, string[]> = {};
+
+  for (const dim of dimensionScores) {
+    // Try with age filter first
+    let { data: exercises } = await supabaseAdmin
+      .from('exercise_library')
+      .select('id, title, category, difficulty')
+      .eq('organization_id', organization_id)
+      .eq('dimension', dim.key)
+      .eq('is_active', true)
+      .lte('age_min', playerAge)
+      .gte('age_max', playerAge)
+      .limit(3);
+
+    // Fallback: just dimension + active
+    if (!exercises || exercises.length === 0) {
+      const { data: fallback } = await supabaseAdmin
+        .from('exercise_library')
+        .select('id, title, category, difficulty')
+        .eq('organization_id', organization_id)
+        .eq('dimension', dim.key)
+        .eq('is_active', true)
+        .limit(3);
+      exercises = fallback || [];
+    }
+
+    exercisesByDimension[dim.key] = exercises;
+    exerciseNames[dim.key] = exercises.map((e: any) => e.title);
+  }
+
+  // 6. Generate AI content
+  const aiResult = await generatePlanAI(
+    player.full_name, playerAge, scoresMap, dimensionScores, exerciseNames,
+  );
+
+  // 7. Create IDP cycle
+  const today = new Date().toISOString().slice(0, 10);
+  const endsAt = new Date();
+  endsAt.setDate(endsAt.getDate() + 90);
+
+  const planJSON = {
+    focus_areas: dimensionScores.map(d => ({
+      stat_key: d.key,
+      stat_label: DIMENSION_LABELS[d.key],
+      type: d.level === 1 ? 'improve' : 'strengthen',
+      initial: d.score,
+      target: d.level === 1 ? Math.min(20, d.score + 3) : Math.min(20, d.score + 2),
+    })),
+    exercises: exercisesByDimension,
+    weekly_plan: {
+      description: aiResult.weekly_plan,
+      sessions_per_week: 3,
+      focus_rotation: dimensionScores.map(d => DIMENSION_LABELS[d.key]),
+    },
+    ai_comment: aiResult.coach_message,
+    ai_recommendations: aiResult.recommendations,
+    diagnostico: aiResult.diagnostico,
+  };
+
+  const planText = buildPlanTextWL(dimensionScores, aiResult);
+
+  const { data: newIDP, error: insertError } = await supabaseAdmin
+    .from('idp_cycles')
+    .insert({
+      organization_id,
+      player_id,
+      status: 'active',
+      starts_at: today,
+      ends_at: endsAt.toISOString().slice(0, 10),
+      stage: '0_30',
+      initial_evaluation_id: evaluation.id,
+      latest_evaluation_id: evaluation.id,
+      plan_json: planJSON,
+      plan_text: planText,
+    })
+    .select('id')
+    .single();
+
+  if (insertError) {
+    console.error('[process-idp] Error creating IDP:', insertError);
+    return new Response(JSON.stringify({ error: insertError.message }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // 8. Create focus areas (months 2 & 3 marked pending_checkin)
+  const focusRows = dimensionScores.map(d => ({
+    organization_id,
+    idp_cycle_id: newIDP.id,
+    stat_key: d.key,
+    focus_type: d.level === 1 ? 'improve' : 'strengthen',
+    initial_score: d.score,
+    target_score: d.level === 1 ? Math.min(20, d.score + 3) : Math.min(20, d.score + 2),
+    pending_checkin: true, // exercises for months 2-3 pending check-in update
+  }));
+
+  await supabaseAdmin.from('idp_focus_areas').insert(focusRows);
+
+  // 9. Register event
+  await supabaseAdmin.from('stryk_events').insert({
+    organization_id,
+    player_id,
+    source_type: 'idp_started',
+    source_id: newIDP.id,
+    xp_delta: 0,
+  }).then(() => {});
+
+  return new Response(JSON.stringify({
+    success: true,
+    idp_cycle_id: newIDP.id,
+    focus_dimensions: dimensionScores.map(d => d.key),
+    exercises_per_dimension: Object.fromEntries(
+      Object.entries(exercisesByDimension).map(([k, v]) => [k, (v as any[]).length])
+    ),
+  }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODE B: checkin — Monthly check-in (days ~30 and ~60)
+// ═══════════════════════════════════════════════════════════════
+async function handleCheckin(supabaseAdmin: any, body: any): Promise<Response> {
+  const { organization_id, player_id, idp_cycle_id, evaluation_event_id, check_in_number } = body;
+
+  if (!organization_id || !player_id || !idp_cycle_id || !evaluation_event_id || !check_in_number) {
+    return new Response(JSON.stringify({ error: 'Missing required fields for checkin' }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (check_in_number < 1 || check_in_number > 3) {
+    return new Response(JSON.stringify({ error: 'check_in_number must be 1, 2 or 3' }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // 1. Get IDP cycle
+  const { data: cycle } = await supabaseAdmin
+    .from('idp_cycles')
+    .select('*')
+    .eq('id', idp_cycle_id)
+    .eq('organization_id', organization_id)
+    .eq('player_id', player_id)
+    .in('status', ['active', 'overdue'])
+    .single();
+
+  if (!cycle) {
+    return new Response(JSON.stringify({ error: 'Active IDP cycle not found' }), {
+      status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // 2. Get current evaluation scores
+  const { data: evaluation } = await supabaseAdmin
+    .from('evaluations')
+    .select('id')
+    .eq('organization_id', organization_id)
+    .eq('player_id', player_id)
+    .eq('event_id', evaluation_event_id)
+    .eq('status', 'closed')
+    .maybeSingle();
+
+  if (!evaluation) {
+    return new Response(JSON.stringify({ error: 'No closed evaluation for this event/player' }), {
+      status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const { data: currentScores } = await supabaseAdmin
+    .from('evaluation_scores')
+    .select('stat_key, score')
+    .eq('evaluation_id', evaluation.id);
+
+  const currentMap: Record<string, number> = {};
+  (currentScores || []).forEach((s: any) => { currentMap[s.stat_key] = s.score; });
+
+  // 3. Get focus areas from IDP cycle
+  const { data: focusAreas } = await supabaseAdmin
+    .from('idp_focus_areas')
+    .select('*')
+    .eq('idp_cycle_id', idp_cycle_id);
+
+  // 4. Calculate dimension_changes
+  const dimensionChanges: Record<string, any> = {};
+  const improved: string[] = [];
+  const mastered: string[] = [];
+
+  for (const fa of (focusAreas || [])) {
+    const initialLevel = scoreToLevel(fa.initial_score);
+    const currentScore = currentMap[fa.stat_key] ?? fa.initial_score;
+    const currentLevel = scoreToLevel(currentScore);
+    const changed = currentLevel > initialLevel;
+
+    dimensionChanges[fa.stat_key] = {
+      from: initialLevel,
+      to: currentLevel,
+      changed,
+      initial_score: fa.initial_score,
+      current_score: currentScore,
+    };
+
+    if (changed) {
+      improved.push(fa.stat_key);
+      if (currentLevel >= 3) mastered.push(fa.stat_key);
+    }
+  }
+
+  // 5. Determine new focus for next month
+  const currentFocusKeys = (focusAreas || []).map((f: any) => f.stat_key);
+  let newFocusKeys = currentFocusKeys.filter((k: string) => !mastered.includes(k));
+
+  // If a dimension was mastered, find the next-lowest dimension not already in focus
+  if (mastered.length > 0 && newFocusKeys.length < 3) {
+    const available = WL_DIMENSIONS
+      .filter(d => !newFocusKeys.includes(d))
+      .map(d => ({ key: d, score: currentMap[d] || 0 }))
+      .sort((a, b) => a.score - b.score);
+    
+    for (const av of available) {
+      if (newFocusKeys.length >= 3) break;
+      if (scoreToLevel(av.score) < 3) {
+        newFocusKeys.push(av.key);
+      }
+    }
+  }
+
+  // 6. Update pending_checkin on focus areas
+  await supabaseAdmin
+    .from('idp_focus_areas')
+    .update({ pending_checkin: false })
+    .eq('idp_cycle_id', idp_cycle_id);
+
+  // 7. Update IDP cycle stage and latest evaluation
+  const startDate = new Date(cycle.starts_at);
+  const daysSinceStart = Math.floor((Date.now() - startDate.getTime()) / (86400000));
+  let stage = '0_30';
+  if (daysSinceStart > 60) stage = '61_90';
+  else if (daysSinceStart > 30) stage = '31_60';
+
+  await supabaseAdmin
+    .from('idp_cycles')
+    .update({ latest_evaluation_id: evaluation.id, stage, updated_at: new Date().toISOString() })
+    .eq('id', idp_cycle_id);
+
+  // 8. Generate AI coach message
+  const { data: playerData } = await supabaseAdmin
+    .from('players')
+    .select('full_name')
+    .eq('id', player_id)
+    .single();
+
+  const coachMessage = await generateCheckinMessage(
+    playerData?.full_name || 'Jugador',
+    improved,
+    newFocusKeys,
+    check_in_number,
+  );
+
+  // 9. Create check-in record
+  const { data: checkin, error: checkinError } = await supabaseAdmin
+    .from('idp_monthly_checkins')
+    .insert({
+      organization_id,
+      idp_cycle_id,
+      player_id,
+      check_in_number,
+      check_in_date: new Date().toISOString().slice(0, 10),
+      evaluation_event_id,
+      scores_snapshot: currentMap,
+      dimension_changes: dimensionChanges,
+      coach_message: coachMessage,
+      exercises_updated: improved.length > 0,
+    })
+    .select('id')
+    .single();
+
+  if (checkinError) {
+    console.error('[process-idp] Check-in insert error:', checkinError);
+    return new Response(JSON.stringify({ error: checkinError.message }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  return new Response(JSON.stringify({
+    success: true,
+    checkin_id: checkin.id,
+    check_in_number,
+    dimension_changes: dimensionChanges,
+    improved_dimensions: improved,
+    mastered_dimensions: mastered,
+    new_focus: newFocusKeys,
+    coach_message: coachMessage,
+  }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Legacy generate mode (batch by category/period)
+// ═══════════════════════════════════════════════════════════════
+async function handleLegacyGenerate(supabaseAdmin: any, body: any): Promise<Response> {
+  const { organization_id, category_id, period } = body;
+
+  if (!organization_id || !category_id || !period) {
+    return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Get category info
+  const { data: categoryData } = await supabaseAdmin
+    .from('categories')
+    .select('name, age_group')
+    .eq('id', category_id)
+    .single();
+
+  // Get closed evaluations for this batch
+  const { data: evaluations, error: evalError } = await supabaseAdmin
+    .from('evaluations')
+    .select('id, player_id, age_group')
+    .eq('organization_id', organization_id)
+    .eq('category_id', category_id)
+    .eq('period', period)
+    .eq('status', 'closed');
+
+  if (evalError) throw evalError;
+  if (!evaluations || evaluations.length === 0) {
+    return new Response(JSON.stringify({ processed: 0, message: 'No closed evaluations found' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const playerIds = evaluations.map((e: any) => e.player_id);
+  const { data: players } = await supabaseAdmin
+    .from('players')
+    .select('id, full_name, date_of_birth')
+    .in('id', playerIds);
+
+  const playerMap: Record<string, any> = {};
+  players?.forEach((p: any) => { playerMap[p.id] = p; });
+
+  let processed = 0;
+  let created = 0;
+
+  for (const evaluation of evaluations) {
+    const { data: scores } = await supabaseAdmin
+      .from('evaluation_scores')
+      .select('stat_key, score')
+      .eq('evaluation_id', evaluation.id);
+
+    if (!scores || scores.length === 0) continue;
+
+    const scoresMap: Record<string, number> = {};
+    scores.forEach((s: any) => { scoresMap[s.stat_key] = s.score; });
+
+    const player = playerMap[evaluation.player_id];
+    const playerAge = player?.date_of_birth
+      ? Math.floor((Date.now() - new Date(player.date_of_birth).getTime()) / (365.25 * 86400000))
+      : 10;
+
+    // Close existing active IDPs
+    await supabaseAdmin
+      .from('idp_cycles')
+      .update({ status: 'completed', updated_at: new Date().toISOString() })
+      .eq('organization_id', organization_id)
+      .eq('player_id', evaluation.player_id)
+      .in('status', ['active', 'overdue']);
+
+    // Determine focus dimensions from whatever stat_keys exist
+    const statKeys = Object.keys(scoresMap);
+    const dimensionScores = statKeys
+      .map(key => ({ key, score: scoresMap[key] || 0, level: scoreToLevel(scoresMap[key] || 0) }))
+      .filter(d => d.level <= 2)
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 3);
+
+    if (dimensionScores.length === 0) {
+      const allSorted = statKeys
+        .map(key => ({ key, score: scoresMap[key] || 0, level: scoreToLevel(scoresMap[key] || 0) }))
+        .sort((a, b) => a.score - b.score);
+      if (allSorted.length >= 2) {
+        dimensionScores.push(allSorted[0], allSorted[1]);
+      } else if (allSorted.length >= 1) {
+        dimensionScores.push(allSorted[0]);
+      }
+    }
+
+    // Find exercises
+    const exercisesByDimension: Record<string, any[]> = {};
+    const exerciseNames: Record<string, string[]> = {};
+    for (const dim of dimensionScores) {
+      let { data: exercises } = await supabaseAdmin
+        .from('exercise_library')
+        .select('id, title, category, difficulty')
+        .eq('organization_id', organization_id)
+        .eq('dimension', dim.key)
+        .eq('is_active', true)
+        .limit(3);
+      exercisesByDimension[dim.key] = exercises || [];
+      exerciseNames[dim.key] = (exercises || []).map((e: any) => e.title);
+    }
+
+    const aiResult = await generatePlanAI(
+      player?.full_name || 'Jugador', playerAge, scoresMap, dimensionScores, exerciseNames,
+    );
+
+    const today = new Date().toISOString().slice(0, 10);
+    const endsAt = new Date();
+    endsAt.setDate(endsAt.getDate() + 90);
+
+    const planJSON = {
+      focus_areas: dimensionScores.map(d => ({
+        stat_key: d.key,
+        stat_label: DIMENSION_LABELS[d.key] || d.key,
+        type: d.level === 1 ? 'improve' : 'strengthen',
+        initial: d.score,
+        target: d.level === 1 ? Math.min(20, d.score + 3) : Math.min(20, d.score + 2),
+      })),
+      exercises: exercisesByDimension,
+      weekly_plan: {
+        description: aiResult.weekly_plan,
+        sessions_per_week: 3,
+        focus_rotation: dimensionScores.map(d => DIMENSION_LABELS[d.key] || d.key),
+      },
+      ai_comment: aiResult.coach_message,
+      ai_recommendations: aiResult.recommendations,
+      diagnostico: aiResult.diagnostico,
+    };
+
+    const planText = buildPlanTextWL(dimensionScores, aiResult);
+
+    const { data: newIDP, error: insertError } = await supabaseAdmin
+      .from('idp_cycles')
+      .insert({
+        organization_id,
+        player_id: evaluation.player_id,
+        status: 'active',
+        starts_at: today,
+        ends_at: endsAt.toISOString().slice(0, 10),
+        stage: '0_30',
+        initial_evaluation_id: evaluation.id,
+        latest_evaluation_id: evaluation.id,
+        plan_json: planJSON,
+        plan_text: planText,
+      })
+      .select('id')
+      .single();
+
+    if (insertError) {
+      console.error(`[process-idp] Error creating IDP for player ${evaluation.player_id}:`, insertError);
+      continue;
+    }
+
+    const focusRows = dimensionScores.map(d => ({
+      organization_id,
+      idp_cycle_id: newIDP.id,
+      stat_key: d.key,
+      focus_type: d.level === 1 ? 'improve' : 'strengthen',
+      initial_score: d.score,
+      target_score: d.level === 1 ? Math.min(20, d.score + 3) : Math.min(20, d.score + 2),
+      pending_checkin: true,
+    }));
+
+    await supabaseAdmin.from('idp_focus_areas').insert(focusRows);
+
+    await supabaseAdmin.from('stryk_events').insert({
+      organization_id,
+      player_id: evaluation.player_id,
+      source_type: 'idp_started',
+      source_id: newIDP.id,
+      xp_delta: 0,
+    }).then(() => {});
+
+    created++;
+    processed++;
+  }
+
+  // Trigger email reports
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    await fetch(`${supabaseUrl}/functions/v1/send-idp-report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseServiceKey}` },
+      body: JSON.stringify({ organization_id, player_ids: playerIds, period }),
+    });
+  } catch (emailErr) {
+    console.error('[process-idp] Email trigger failed:', emailErr);
+  }
+
+  return new Response(JSON.stringify({ processed, created }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+// ─── Helpers ───────────────────────────────────────────────────
+function buildPlanTextWL(
+  dimensions: { key: string; score: number; level: number }[],
+  ai: { coach_message: string; diagnostico: string; weekly_plan: string; recommendations: string[] },
+): string {
+  let text = '🎯 Plan de Desarrollo Individual (90 días)\n\n';
+
+  if (ai.diagnostico) text += `📊 Diagnóstico: ${ai.diagnostico}\n\n`;
+  if (ai.coach_message) text += `💬 ${ai.coach_message}\n\n`;
+
+  text += '📊 Dimensiones Foco:\n';
+  for (const d of dimensions) {
+    const tag = d.level === 1 ? '🟡 Mejorar' : '🟢 Potenciar';
+    const target = d.level === 1 ? Math.min(20, d.score + 3) : Math.min(20, d.score + 2);
+    text += `  ${tag} ${DIMENSION_LABELS[d.key] || d.key}: ${d.score} → ${target}\n`;
+  }
+
+  if (ai.recommendations?.length > 0) {
+    text += '\n📋 Recomendaciones:\n';
+    for (const rec of ai.recommendations) text += `  • ${rec}\n`;
+  }
+
+  if (ai.weekly_plan) text += `\n📅 Plan semanal: ${ai.weekly_plan}`;
+
+  return text;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Main router
+// ═══════════════════════════════════════════════════════════════
 serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -218,353 +790,21 @@ serve(async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { organization_id, category_id, period }: ProcessIDPRequest = await req.json();
+    const body = await req.json();
+    const mode = body.mode || 'generate'; // Default to generate for backward compat
 
-    if (!organization_id || !category_id || !period) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    console.log(`[process-idp] Mode: ${mode}`);
 
-    // Get category name and age_group
-    const { data: categoryData } = await supabaseAdmin
-      .from('categories')
-      .select('name, age_group')
-      .eq('id', category_id)
-      .single();
-    const categoryName = categoryData?.name || 'Categoría';
-    const categoryAgeGroup = categoryData?.age_group || '8-9';
-
-    // Get closed evaluations for this batch
-    const { data: evaluations, error: evalError } = await supabaseAdmin
-      .from('evaluations')
-      .select('id, player_id, age_group, insights_json')
-      .eq('organization_id', organization_id)
-      .eq('category_id', category_id)
-      .eq('period', period)
-      .eq('status', 'closed');
-
-    if (evalError) throw evalError;
-    if (!evaluations || evaluations.length === 0) {
-      return new Response(JSON.stringify({ processed: 0, message: 'No closed evaluations found' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Get player names
-    const playerIds = evaluations.map(e => e.player_id);
-    const { data: players } = await supabaseAdmin
-      .from('players')
-      .select('id, full_name')
-      .in('id', playerIds);
-    const playerNames: Record<string, string> = {};
-    players?.forEach(p => { playerNames[p.id] = p.full_name; });
-
-    // Get rubrics for the age groups involved
-    const ageGroups = [...new Set(evaluations.map(e => e.age_group || categoryAgeGroup))];
-    const { data: rubrics } = await supabaseAdmin
-      .from('evaluation_rubrics')
-      .select('age_group, stat_key, band_min, band_max, bullets')
-      .in('age_group', ageGroups);
-
-    // Get previous period scores for delta calculation
-    const [prevYear, prevMonth] = period.split('-').map(Number);
-    const prevPeriod = prevMonth === 1 ? `${prevYear - 1}-12` : `${prevYear}-${String(prevMonth - 1).padStart(2, '0')}`;
-    
-    const { data: prevEvals } = await supabaseAdmin
-      .from('evaluations')
-      .select('id, player_id')
-      .eq('organization_id', organization_id)
-      .eq('category_id', category_id)
-      .eq('period', prevPeriod)
-      .eq('status', 'closed');
-
-    const prevEvalIds = prevEvals?.map(e => e.id) || [];
-    const prevEvalPlayerMap = new Map(prevEvals?.map(e => [e.id, e.player_id]) || []);
-    let prevScoresMap = new Map<string, Record<string, number>>();
-    if (prevEvalIds.length > 0) {
-      const { data: prevScoresData } = await supabaseAdmin
-        .from('evaluation_scores')
-        .select('evaluation_id, stat_key, score')
-        .in('evaluation_id', prevEvalIds);
-      if (prevScoresData) {
-        prevScoresData.forEach(s => {
-          const pid = prevEvalPlayerMap.get(s.evaluation_id);
-          if (!pid) return;
-          if (!prevScoresMap.has(pid)) prevScoresMap.set(pid, {});
-          prevScoresMap.get(pid)![s.stat_key] = s.score;
+    switch (mode) {
+      case 'generate':
+        return await handleGenerate(supabaseAdmin, body);
+      case 'checkin':
+        return await handleCheckin(supabaseAdmin, body);
+      default:
+        return new Response(JSON.stringify({ error: `Unknown mode: ${mode}` }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
-      }
     }
-
-    // Get attendance for last 30 days for all players
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const { data: attendanceData } = await supabaseAdmin
-      .from('attendance')
-      .select('player_id, status')
-      .eq('organization_id', organization_id)
-      .eq('category_id', category_id)
-      .in('player_id', playerIds)
-      .gte('date', thirtyDaysAgo.toISOString().slice(0, 10));
-
-    const attendanceMap = new Map<string, { presente: number; total: number }>();
-    attendanceData?.forEach(a => {
-      if (!attendanceMap.has(a.player_id)) attendanceMap.set(a.player_id, { presente: 0, total: 0 });
-      const entry = attendanceMap.get(a.player_id)!;
-      entry.total++;
-      if (a.status === 'presente') entry.presente++;
-    });
-
-    // Get comments for insights generation
-    const evalIds = evaluations.map(e => e.id);
-    const { data: allComments } = await supabaseAdmin
-      .from('evaluation_comments')
-      .select('evaluation_id, comment')
-      .in('evaluation_id', evalIds);
-
-    // Generate insights for evaluations that don't have them yet
-    for (const evaluation of evaluations) {
-      if (!evaluation.insights_json) {
-        const evalComments = (allComments || [])
-          .filter(c => c.evaluation_id === evaluation.id)
-          .map(c => c.comment);
-        
-        if (evalComments.length > 0) {
-          try {
-            const insightsResponse = await fetch(`${supabaseUrl}/functions/v1/generate-insights`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${supabaseServiceKey}`,
-              },
-              body: JSON.stringify({
-                evaluation_id: evaluation.id,
-                comments: evalComments,
-                scores: {},
-                age_group: evaluation.age_group || categoryAgeGroup,
-              }),
-            });
-            if (insightsResponse.ok) {
-              const insightsResult = await insightsResponse.json();
-              evaluation.insights_json = insightsResult.insights;
-            }
-          } catch (err) {
-            console.error(`[process-idp] Insights generation failed for eval ${evaluation.id}:`, err);
-          }
-        }
-      }
-    }
-
-    let processed = 0;
-    let created = 0;
-    let updated = 0;
-
-    for (const evaluation of evaluations) {
-      // Get scores for this evaluation
-      const { data: scores } = await supabaseAdmin
-        .from('evaluation_scores')
-        .select('stat_key, score')
-        .eq('evaluation_id', evaluation.id);
-
-      if (!scores || scores.length < 6) continue;
-
-      const scoresMap: Record<string, number> = {};
-      scores.forEach(s => { scoresMap[s.stat_key] = s.score; });
-
-      // Calculate delta vs previous
-      const prevScores = prevScoresMap.get(evaluation.player_id);
-      let deltaScores: Record<string, number> | null = null;
-      if (prevScores) {
-        deltaScores = {};
-        for (const [key, value] of Object.entries(scoresMap)) {
-          if (prevScores[key] !== undefined) {
-            deltaScores[key] = value - prevScores[key];
-          }
-        }
-      }
-
-      // Attendance context
-      const att = attendanceMap.get(evaluation.player_id);
-      const attendanceContext = att && att.total > 0
-        ? { presente: att.presente, total: att.total, pct: Math.round((att.presente / att.total) * 100) }
-        : null;
-
-      // === PILAR TECNICO: Focus Areas ===
-      const tecnicoScores = PILAR_TECNICO_KEYS
-        .map(key => ({ stat_key: key, score: scoresMap[key] || 0 }))
-        .sort((a, b) => b.score - a.score);
-
-      const focusAreas = [
-        { ...tecnicoScores[0], focus_type: 'strengthen' as const },
-        { ...tecnicoScores[1], focus_type: 'strengthen' as const },
-        { ...tecnicoScores[2], focus_type: 'improve' as const },
-      ];
-
-      // === PILAR MENTALIDAD: Low stats ===
-      const mentalidadLow = PILAR_MENTALIDAD_KEYS
-        .filter(key => (scoresMap[key] || 0) < MENTALIDAD_THRESHOLD)
-        .map(key => ({ stat_key: key, score: scoresMap[key] || 0 }));
-
-      // Get relevant rubrics
-      const evalAgeGroup = evaluation.age_group || categoryAgeGroup;
-      const playerRubrics = (rubrics || [])
-        .filter(r => r.age_group === evalAgeGroup)
-        .filter(r => {
-          const score = scoresMap[r.stat_key];
-          return score !== undefined && score >= r.band_min && score <= r.band_max;
-        })
-        .map(r => ({
-          stat_key: r.stat_key,
-          band_min: r.band_min,
-          band_max: r.band_max,
-          bullets: (r.bullets as unknown as string[]) || [],
-        }));
-
-      // Generate AI recommendations with enriched context
-      const playerName = playerNames[evaluation.player_id] || 'Jugador';
-      const insights = evaluation.insights_json as InsightsJSON | null;
-      const aiResult = await generateAIRecommendations(
-        playerName, evalAgeGroup, categoryName, scoresMap,
-        focusAreas, mentalidadLow, playerRubrics,
-        insights, deltaScores, attendanceContext,
-      );
-
-      // Build mentalidad actions
-      const mentalidadActions = PILAR_MENTALIDAD_KEYS
-        .filter(key => (scoresMap[key] || 0) < MENTALIDAD_THRESHOLD)
-        .map(key => ({
-          stat_key: key,
-          stat_label: STAT_LABELS[key],
-          score: scoresMap[key] || 0,
-          actions: getDefaultMentalidadActions(key),
-          duration_days: 30,
-        }));
-
-      // Check for existing active IDP
-      const { data: existingIDP } = await supabaseAdmin
-        .from('idp_cycles')
-        .select('id, starts_at')
-        .eq('organization_id', organization_id)
-        .eq('player_id', evaluation.player_id)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      const today = new Date().toISOString().slice(0, 10);
-
-      if (existingIDP) {
-        const startDate = new Date(existingIDP.starts_at);
-        const daysSinceStart = Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-
-        // If more than 90 days, close old and create new
-        if (daysSinceStart > 90) {
-          await supabaseAdmin
-            .from('idp_cycles')
-            .update({ status: 'completed', updated_at: new Date().toISOString() })
-            .eq('id', existingIDP.id);
-
-          // Create new IDP below
-        } else {
-          // Update existing IDP
-          let stage = '0_30';
-          if (daysSinceStart > 60) stage = '61_90';
-          else if (daysSinceStart > 30) stage = '31_60';
-
-          await supabaseAdmin
-            .from('idp_cycles')
-            .update({
-              latest_evaluation_id: evaluation.id,
-              stage,
-              plan_json: buildPlanJSON(focusAreas, mentalidadActions, scoresMap, aiResult, insights, attendanceContext),
-            })
-            .eq('id', existingIDP.id);
-
-          await supabaseAdmin.from('stryk_events').insert({
-            organization_id,
-            player_id: evaluation.player_id,
-            source_type: 'idp_updated',
-            source_id: existingIDP.id,
-            xp_delta: 0,
-          }).then(() => {});
-
-          updated++;
-          processed++;
-          continue;
-        }
-      }
-
-      // Create new IDP
-      const endsAt = new Date();
-      endsAt.setDate(endsAt.getDate() + 90);
-
-      const planJSON = buildPlanJSON(focusAreas, mentalidadActions, scoresMap, aiResult, insights, attendanceContext);
-      const planText = buildPlanText(focusAreas, mentalidadActions, aiResult);
-
-      const { data: newIDP, error: insertError } = await supabaseAdmin
-        .from('idp_cycles')
-        .insert({
-          organization_id,
-          player_id: evaluation.player_id,
-          status: 'active',
-          starts_at: today,
-          ends_at: endsAt.toISOString().slice(0, 10),
-          stage: '0_30',
-          initial_evaluation_id: evaluation.id,
-          latest_evaluation_id: evaluation.id,
-          plan_json: planJSON,
-          plan_text: planText,
-        })
-        .select('id')
-        .single();
-
-      if (insertError) {
-        console.error(`[process-idp] Error creating IDP for player ${evaluation.player_id}:`, insertError);
-        continue;
-      }
-
-      const focusRows = focusAreas.map(fa => ({
-        organization_id,
-        idp_cycle_id: newIDP.id,
-        stat_key: fa.stat_key,
-        focus_type: fa.focus_type,
-        initial_score: fa.score,
-        target_score: fa.focus_type === 'strengthen'
-          ? Math.min(20, fa.score + 2)
-          : Math.min(20, fa.score + 3),
-      }));
-
-      await supabaseAdmin.from('idp_focus_areas').insert(focusRows);
-
-      await supabaseAdmin.from('stryk_events').insert({
-        organization_id,
-        player_id: evaluation.player_id,
-        source_type: 'idp_started',
-        source_id: newIDP.id,
-        xp_delta: 0,
-      }).then(() => {});
-
-      created++;
-      processed++;
-    }
-
-    // Trigger email reports
-    try {
-      await fetch(`${supabaseUrl}/functions/v1/send-idp-report`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseServiceKey}`,
-        },
-        body: JSON.stringify({ organization_id, player_ids: playerIds, period }),
-      });
-    } catch (emailErr) {
-      console.error('[process-idp] Email trigger failed (non-blocking):', emailErr);
-    }
-
-    return new Response(JSON.stringify({ processed, created, updated }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('[process-idp] Error:', message);
@@ -573,108 +813,3 @@ serve(async (req: Request): Promise<Response> => {
     });
   }
 });
-
-function getDefaultMentalidadActions(statKey: string): string[] {
-  const map: Record<string, string[]> = {
-    actitud_esfuerzo: [
-      'Llegar 10 minutos antes al entrenamiento',
-      'Dar 3 palabras de ánimo a compañeros por sesión',
-      'Completar todos los ejercicios sin quejarse',
-    ],
-    disciplina_constancia: [
-      'Preparar su mochila la noche anterior',
-      'Cumplir con la rutina de calentamiento en casa',
-      'Registrar en una libreta qué practicó cada día',
-    ],
-    autonomia_liderazgo: [
-      'Elegir 1 ejercicio y liderarlo en grupo',
-      'Proponer una jugada nueva al equipo por semana',
-      'Organizar el material al inicio y final del entrenamiento',
-    ],
-  };
-  return map[statKey] || [];
-}
-
-function buildPlanJSON(
-  focusAreas: { stat_key: string; score: number; focus_type: 'strengthen' | 'improve' }[],
-  mentalidadActions: { stat_key: string; stat_label: string; score: number; actions: string[]; duration_days: number }[],
-  _scoresMap: Record<string, number>,
-  aiResult: { ai_comment: string; ai_recommendations: string[]; ai_weekly_plan: string; diagnostico: string; foco_conductual: string | null },
-  insights: InsightsJSON | null,
-  attendanceContext: { presente: number; total: number; pct: number } | null,
-) {
-  return {
-    focus_areas: focusAreas.map(fa => ({
-      stat_key: fa.stat_key,
-      stat_label: STAT_LABELS[fa.stat_key] || fa.stat_key,
-      type: fa.focus_type,
-      initial: fa.score,
-      target: fa.focus_type === 'strengthen'
-        ? Math.min(20, fa.score + 2)
-        : Math.min(20, fa.score + 3),
-    })),
-    mentalidad_actions: mentalidadActions,
-    weekly_plan: {
-      description: aiResult.ai_weekly_plan || 'Practica 2-3 veces por semana enfocándote en tus áreas de desarrollo.',
-      sessions_per_week: 3,
-      focus_rotation: focusAreas.map(fa => STAT_LABELS[fa.stat_key] || fa.stat_key),
-    },
-    ai_comment: aiResult.ai_comment,
-    ai_recommendations: aiResult.ai_recommendations,
-    diagnostico: aiResult.diagnostico,
-    foco_conductual: aiResult.foco_conductual || null,
-    insights: insights || null,
-    attendance_context: attendanceContext || null,
-  };
-}
-
-function buildPlanText(
-  focusAreas: { stat_key: string; score: number; focus_type: 'strengthen' | 'improve' }[],
-  mentalidadActions: { stat_key: string; stat_label: string; score: number; actions: string[]; duration_days: number }[],
-  aiResult: { ai_comment: string; ai_recommendations: string[]; ai_weekly_plan: string; diagnostico: string; foco_conductual: string | null },
-): string {
-  let text = '🎯 Plan de Desarrollo Individual (90 días)\n\n';
-
-  if (aiResult.diagnostico) {
-    text += `📊 Diagnóstico: ${aiResult.diagnostico}\n\n`;
-  }
-
-  if (aiResult.ai_comment) {
-    text += `💬 ${aiResult.ai_comment}\n\n`;
-  }
-
-  text += '📊 Enfoque Técnico:\n';
-  for (const fa of focusAreas) {
-    const label = STAT_LABELS[fa.stat_key] || fa.stat_key;
-    const tag = fa.focus_type === 'strengthen' ? '🟢 Potenciar' : '🟡 Mejorar';
-    const target = fa.focus_type === 'strengthen' ? Math.min(20, fa.score + 2) : Math.min(20, fa.score + 3);
-    text += `  ${tag} ${label}: ${fa.score} → ${target}\n`;
-  }
-
-  if (aiResult.ai_recommendations?.length > 0) {
-    text += '\n📋 Recomendaciones:\n';
-    for (const rec of aiResult.ai_recommendations) {
-      text += `  • ${rec}\n`;
-    }
-  }
-
-  if (aiResult.foco_conductual) {
-    text += `\n🧠 Foco Conductual: ${aiResult.foco_conductual}\n`;
-  }
-
-  if (mentalidadActions.length > 0) {
-    text += '\n🧠 Indicaciones de Mentalidad:\n';
-    for (const ma of mentalidadActions) {
-      text += `  ${ma.stat_label} (${ma.score}/20):\n`;
-      for (const action of ma.actions) {
-        text += `    • ${action}\n`;
-      }
-    }
-  }
-
-  if (aiResult.ai_weekly_plan) {
-    text += `\n📅 Plan semanal: ${aiResult.ai_weekly_plan}`;
-  }
-
-  return text;
-}
