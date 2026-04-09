@@ -4,16 +4,26 @@ import { useSessionPlans } from '@/hooks/useSessionPlans';
 import { getCurrentMacroMonth } from '@/config/wl-macrociclo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, CalendarDays, Sparkles } from 'lucide-react';
+import { CheckCircle, CalendarDays, Sparkles, Play, Dumbbell, Trophy, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlanificarSesion } from './PlanificarSesion';
+import { PartidoObservacion } from './PartidoObservacion';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
 export function SessionHome() {
   const { categories } = useTrainerCategories();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [showPlanForm, setShowPlanForm] = useState(false);
+  const [showPartido, setShowPartido] = useState(false);
+  const [showTipoSelector, setShowTipoSelector] = useState(false);
+  const [tipoPartido, setTipoPartido] = useState<'practica' | 'competicion'>('practica');
 
   const activeCategoryId = selectedCategoryId || categories[0]?.id || null;
   const activeCategory = categories.find(c => c.id === activeCategoryId);
@@ -30,6 +40,24 @@ export function SessionHome() {
     desar: 'bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/30',
     cons: 'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30',
   };
+
+  const handleSelectTipo = (tipo: 'practica' | 'competicion') => {
+    setTipoPartido(tipo);
+    setShowTipoSelector(false);
+    setShowPartido(true);
+  };
+
+  if (showPartido && todaySession && activeCategory) {
+    return (
+      <PartidoObservacion
+        sessionPlan={todaySession}
+        categoryId={activeCategory.id}
+        ageGroup={activeCategory.age_group}
+        tipoPartido={tipoPartido}
+        onClose={() => setShowPartido(false)}
+      />
+    );
+  }
 
   if (showPlanForm && activeCategory) {
     return (
@@ -112,25 +140,74 @@ export function SessionHome() {
           Planificar sesión de hoy
         </Button>
       ) : (
-        <div className="rounded-xl p-4 border border-green-500/30 bg-green-500/10">
-          <div className="flex items-center gap-2 mb-1">
-            <CheckCircle className="w-5 h-5 text-green-500" />
-            <span className="text-green-600 dark:text-green-400 font-semibold">Sesión planificada</span>
+        <div className="space-y-3">
+          <div className="rounded-xl p-4 border border-green-500/30 bg-green-500/10">
+            <div className="flex items-center gap-2 mb-1">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span className="text-green-600 dark:text-green-400 font-semibold">Sesión planificada</span>
+            </div>
+            <p className="text-xs text-muted-foreground ml-7">
+              {todaySession.fundamento_mes}
+              {todaySession.restriccion_rondo && ` · ${todaySession.restriccion_rondo}`}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3 ml-7"
+              onClick={() => {/* TODO: detail view */}}
+            >
+              Ver detalle
+            </Button>
           </div>
-          <p className="text-xs text-muted-foreground ml-7">
-            {todaySession.fundamento_mes}
-            {todaySession.restriccion_rondo && ` · ${todaySession.restriccion_rondo}`}
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3 ml-7"
-            onClick={() => {/* TODO: detail view */}}
-          >
-            Ver detalle
-          </Button>
+
+          {/* Activate match button — only if session is active */}
+          {todaySession.status === 'activa' && (
+            <Button
+              variant="outline"
+              onClick={() => setShowTipoSelector(true)}
+              className="w-full h-12 border-[#C9A227]/40 text-[#C9A227] hover:bg-[#C9A227]/10 font-medium gap-2"
+            >
+              <Play className="w-5 h-5" />
+              Activar partido
+            </Button>
+          )}
         </div>
       )}
+
+      {/* Match type selector sheet */}
+      <Sheet open={showTipoSelector} onOpenChange={setShowTipoSelector}>
+        <SheetContent side="bottom" className="bg-card rounded-t-2xl">
+          <SheetHeader>
+            <SheetTitle>Tipo de partido</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-3 py-4">
+            <button
+              onClick={() => handleSelectTipo('practica')}
+              className="w-full flex items-center gap-4 p-4 rounded-xl border border-border hover:border-[#C9A227]/40 hover:bg-muted/50 transition-all text-left"
+            >
+              <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                <Dumbbell className="w-6 h-6 text-blue-500" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Partido de práctica</p>
+                <p className="text-xs text-muted-foreground">Último bloque de la sesión de hoy</p>
+              </div>
+            </button>
+            <button
+              onClick={() => handleSelectTipo('competicion')}
+              className="w-full flex items-center gap-4 p-4 rounded-xl border border-border hover:border-[#C9A227]/40 hover:bg-muted/50 transition-all text-left"
+            >
+              <div className="w-12 h-12 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                <Trophy className="w-6 h-6 text-amber-500" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Partido de competición</p>
+                <p className="text-xs text-muted-foreground">Partido oficial de esta semana</p>
+              </div>
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Recent Sessions */}
       {recentSessions.length > 0 && (
