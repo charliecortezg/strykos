@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export interface TrainerCategory {
   id: string;
   name: string;
+  age_group: string;
   sport_id: string | null;
   venue_id: string | null;
   sport?: {
@@ -30,6 +31,7 @@ export function useTrainerCategories() {
         .select(`
           id,
           name,
+          age_group,
           sport_id,
           venue_id,
           sport:sports(id, name),
