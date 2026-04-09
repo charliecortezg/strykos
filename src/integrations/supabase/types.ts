@@ -739,6 +739,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           difficulty: string | null
+          dimension: string | null
           duration_minutes: number | null
           equipment_needed: string | null
           id: string
@@ -760,6 +761,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           difficulty?: string | null
+          dimension?: string | null
           duration_minutes?: number | null
           equipment_needed?: string | null
           id?: string
@@ -781,6 +783,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           difficulty?: string | null
+          dimension?: string | null
           duration_minutes?: number | null
           equipment_needed?: string | null
           id?: string
