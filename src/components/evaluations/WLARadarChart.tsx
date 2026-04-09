@@ -2,21 +2,39 @@ import { useMemo } from 'react';
 import type { StatKey } from '@/types/evaluations';
 import { WLA_STATS } from '@/types/evaluations';
 
+interface StatConfig {
+  key: string;
+  label: string;
+  shortLabel?: string;
+  [k: string]: unknown;
+}
+
 interface WLARadarChartProps {
   scores: Record<StatKey, number>;
   previousScores?: Record<StatKey, number> | null;
+  stats?: readonly StatConfig[] | StatConfig[];
   size?: number;
   className?: string;
 }
 
-const AXES = WLA_STATS.map((stat, i) => ({
-  ...stat,
-  angle: -90 + (i * 360) / 6,
-}));
-
-export function WLARadarChart({ scores, previousScores, size = 220, className = '' }: WLARadarChartProps) {
+export function WLARadarChart({
+  scores,
+  previousScores,
+  stats = WLA_STATS,
+  size = 220,
+  className = '',
+}: WLARadarChartProps) {
   const center = size / 2;
   const maxRadius = (size / 2) - 35;
+  const numAxes = stats.length;
+
+  const axes = useMemo(
+    () => stats.map((stat, i) => ({
+      ...stat,
+      angle: -90 + (i * 360) / numAxes,
+    })),
+    [stats, numAxes],
+  );
 
   const getPoint = (value: number, angle: number) => {
     const norm = Math.min(20, Math.max(0, value)) / 20;
@@ -25,15 +43,23 @@ export function WLARadarChart({ scores, previousScores, size = 220, className = 
     return { x: center + r * Math.cos(rad), y: center + r * Math.sin(rad) };
   };
 
-  const currentPoints = useMemo(() =>
-    AXES.map(a => ({ ...a, ...getPoint(scores[a.key] || 0, a.angle), value: scores[a.key] || 0 })),
-    [scores, center, maxRadius]
+  const currentPoints = useMemo(
+    () => axes.map(a => ({
+      ...a,
+      ...getPoint(scores[a.key] || 0, a.angle),
+      value: scores[a.key] || 0,
+    })),
+    [scores, axes, center, maxRadius],
   );
 
   const previousPoints = useMemo(() => {
     if (!previousScores) return null;
-    return AXES.map(a => ({ ...a, ...getPoint(previousScores[a.key] || 0, a.angle), value: previousScores[a.key] || 0 }));
-  }, [previousScores, center, maxRadius]);
+    return axes.map(a => ({
+      ...a,
+      ...getPoint(previousScores[a.key] || 0, a.angle),
+      value: previousScores[a.key] || 0,
+    }));
+  }, [previousScores, axes, center, maxRadius]);
 
   const gridLevels = [5, 10, 15, 20];
 
@@ -60,7 +86,7 @@ export function WLARadarChart({ scores, previousScores, size = 220, className = 
       ))}
 
       {/* Axis lines */}
-      {AXES.map((a, i) => {
+      {axes.map((a, i) => {
         const end = getPoint(20, a.angle);
         return <line key={i} x1={center} y1={center} x2={end.x} y2={end.y} stroke="currentColor" strokeOpacity={0.1} strokeWidth={1} />;
       })}
@@ -92,24 +118,15 @@ export function WLARadarChart({ scores, previousScores, size = 220, className = 
       ))}
 
       {/* Labels */}
-      {AXES.map((a, i) => {
+      {axes.map((a, i) => {
         const labelR = maxRadius + 22;
         const rad = (a.angle * Math.PI) / 180;
         const lx = center + labelR * Math.cos(rad);
         const ly = center + labelR * Math.sin(rad);
-        // Short labels for compactness
-        const shortLabels: Record<string, string> = {
-          actitud_esfuerzo: 'Actitud',
-          disciplina_constancia: 'Disciplina',
-          autonomia_liderazgo: 'Autonomía',
-          control_conduccion: 'Control',
-          pase_recepcion: 'Pase',
-          decision_juego: 'Decisión',
-        };
         return (
           <text key={i} x={lx} y={ly} textAnchor="middle" dominantBaseline="middle"
             className="text-[9px] fill-muted-foreground font-medium">
-            {shortLabels[a.key] || a.label}
+            {a.shortLabel || a.label}
           </text>
         );
       })}
