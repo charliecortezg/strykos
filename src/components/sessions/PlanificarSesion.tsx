@@ -37,17 +37,19 @@ interface FormData {
 }
 
 function normalizeAgeGroup(categoryAgeGroup: string): string {
-  const ag = categoryAgeGroup?.toLowerCase() || '';
-  if (ag.includes('5') && ag.includes('6')) return 'sub-6';
-  if (ag.includes('biberón') || ag.includes('biberon')) return 'sub-5';
+  const ag = categoryAgeGroup?.toLowerCase().trim() || '';
+  // Formato limpio sub-X — directo
+  if (['sub-5','sub-6','sub-8','sub-10','sub-12','sub-13'].includes(ag)) {
+    return ag;
+  }
+  // Fallback por si alguna categoría futura tiene formato viejo
+  if (ag.includes('biberon') || ag.includes('biberón')) return 'sub-5';
   if (ag.includes('escuelita')) return 'sub-6';
-  if (ag.includes('sub-5') || ag === '5') return 'sub-5';
-  if (ag.includes('sub-6') || ag === '6') return 'sub-6';
-  if (ag.includes('sub-8') || ag.includes('8')) return 'sub-8';
-  if (ag.includes('sub-10') || ag.includes('10')) return 'sub-10';
-  if (ag.includes('sub-12') || ag.includes('12')) return 'sub-12';
-  if (ag.includes('sub-13') || ag.includes('13')) return 'sub-13';
   if (ag.includes('juvenil')) return 'sub-13';
+  if (ag.includes('6-7') || ag.includes('6')) return 'sub-6';
+  if (ag.includes('8-9') || ag.includes('8')) return 'sub-8';
+  if (ag.includes('10-11') || ag.includes('10')) return 'sub-10';
+  if (ag.includes('12-13') || ag.includes('12')) return 'sub-12';
   return 'sub-10';
 }
 
