@@ -15,6 +15,8 @@ import { EvaluationsModule } from '@/components/evaluations/EvaluationsModule';
 import { CoachExternalEvaluationsView } from '@/components/evaluations/CoachExternalEvaluationsView';
 import { EvaluationsTabsWrapper } from '@/components/evaluations/EvaluationsTabsWrapper';
 import { useFeatureFlags } from '@/hooks/useStrykWay';
+import { BottomNavBar } from '@/components/sessions/BottomNavBar';
+import { SessionHome } from '@/components/sessions/SessionHome';
 
 export default function EntrenadorDashboard() {
   const navigate = useNavigate();
