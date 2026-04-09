@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -239,6 +239,31 @@ export function PlanificarSesion({ categoryId: initialCategoryId, categoryName: 
             {loadingRestrictions ? (
               <div className="flex justify-center py-6">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#C9A227]" />
+              </div>
+            ) : restrictions.length === 0 ? (
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-4 rounded-lg border border-border bg-muted/50">
+                  <Info className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-foreground">No hay restricciones predefinidas para este fundamento en esta categoría.</p>
+                    <p className="text-xs text-muted-foreground mt-1">Puedes escribir la tuya o avanzar sin restricción.</p>
+                  </div>
+                </div>
+                {!showCustomRestriction ? (
+                  <button
+                    onClick={() => setShowCustomRestriction(true)}
+                    className="text-xs text-[#C9A227] hover:underline"
+                  >
+                    Escribir restricción propia →
+                  </button>
+                ) : (
+                  <Input
+                    autoFocus
+                    placeholder="Ej: el receptor orienta el primer toque fuera del cuadrado"
+                    value={formData.restriccion_rondo}
+                    onChange={e => update('restriccion_rondo', e.target.value)}
+                  />
+                )}
               </div>
             ) : (
               <div className="space-y-2">
