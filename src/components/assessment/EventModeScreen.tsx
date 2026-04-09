@@ -181,8 +181,8 @@ export function EventModeScreen({ event, onExit }: EventModeScreenProps) {
                 <div key={stat.key} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${GROUP_COLORS[stat.group]}`}>
-                        {GROUP_LABELS[stat.group]}
+                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${PILLAR_COLORS[stat.pillar] || ''}`}>
+                        {PILLAR_LABELS[stat.pillar] || stat.pillar}
                       </Badge>
                       <span className="text-sm font-medium">{stat.label}</span>
                     </div>
