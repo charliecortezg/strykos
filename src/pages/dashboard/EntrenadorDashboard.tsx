@@ -48,7 +48,7 @@ export default function EntrenadorDashboard() {
     <div className="min-h-screen bg-background">
       <DashboardHeader />
 
-      <main className="container px-3 sm:px-4 py-4 sm:py-6">
+      <main className="container px-3 sm:px-4 py-4 sm:py-6 pb-20 lg:pb-6">
         {/* Compact Header for Mobile */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div>
