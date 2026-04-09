@@ -102,11 +102,14 @@ export default function EntrenadorDashboard() {
 
             {/* Tabs - Priority Order: Asistencia, Partidos, Jugadores */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className={`w-full grid mb-4 h-12 ${feature_evaluations_enabled ? 'grid-cols-5' : 'grid-cols-4'}`}>
+              <TabsList className={`w-full hidden lg:grid mb-4 h-12 ${feature_evaluations_enabled ? 'grid-cols-6' : 'grid-cols-5'}`}>
+                <TabsTrigger value="sesion" className="gap-1.5 text-xs sm:text-sm">
+                  <ClipboardList className="w-4 h-4" />
+                  Sesión
+                </TabsTrigger>
                 <TabsTrigger value="asistencia" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <CheckCircle className="w-4 h-4" />
-                  <span className="hidden xs:inline">Asistencia</span>
-                  <span className="xs:hidden">Lista</span>
+                  Asistencia
                 </TabsTrigger>
                 <TabsTrigger value="partidos" className="gap-1.5 text-xs sm:text-sm">
                   <Trophy className="w-4 h-4" />
@@ -114,21 +117,23 @@ export default function EntrenadorDashboard() {
                 </TabsTrigger>
                 <TabsTrigger value="jugadores" className="gap-1.5 text-xs sm:text-sm">
                   <Users className="w-4 h-4" />
-                  <span className="hidden sm:inline">Jugadores</span>
-                  <span className="sm:hidden">{trainerPlayers.length}</span>
+                  Jugadores
                 </TabsTrigger>
                 <TabsTrigger value="fichajes" className="gap-1.5 text-xs sm:text-sm">
                   <UserPlus className="w-4 h-4" />
-                  <span className="hidden sm:inline">Fichajes</span>
+                  Fichajes
                 </TabsTrigger>
                 {feature_evaluations_enabled && (
                   <TabsTrigger value="evaluaciones" className="gap-1.5 text-xs sm:text-sm">
                     <ClipboardCheck className="w-4 h-4" />
-                    <span className="hidden sm:inline">Evaluaciones</span>
-                    <span className="sm:hidden">Eval</span>
+                    Evaluaciones
                   </TabsTrigger>
                 )}
               </TabsList>
+
+              <TabsContent value="sesion" className="mt-0">
+                <SessionHome />
+              </TabsContent>
 
               <TabsContent value="asistencia" className="mt-0">
                 <TrainingAttendanceModule categories={categories} />
