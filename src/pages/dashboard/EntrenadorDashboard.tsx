@@ -224,6 +224,14 @@ export default function EntrenadorDashboard() {
                   />
                 </TabsContent>
               )}
+
+              <TabsContent value="historial" className="mt-0">
+                <HistorialSesiones />
+              </TabsContent>
+
+              <TabsContent value="sincronizacion" className="mt-0">
+                <SincronizacionStryk onNavigateEvaluations={() => setActiveTab('evaluaciones')} />
+              </TabsContent>
             </Tabs>
           </>
         )}
