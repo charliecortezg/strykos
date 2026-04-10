@@ -45,7 +45,7 @@ export function EvaluationsModule({ categories }: EvaluationsModuleProps) {
         age_group: categoryAgeGroup,
         evaluation_id: evalRecord?.id || null,
         scores_count: evalScores.length,
-        status: evalScores.length >= 6 ? 'completado' : 'pendiente',
+        status: evalScores.length >= 4 ? 'completado' : 'pendiente',
         scores: scoresMap,
       };
     }),
