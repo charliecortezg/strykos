@@ -180,7 +180,7 @@ export function useEvaluations(categoryId: string | null, period: string) {
       // Process each open evaluation
       for (const evaluation of evaluations.filter(e => e.status === 'open')) {
         const evalScores = allScores.filter(s => s.evaluation_id === evaluation.id);
-        if (evalScores.length < 6) continue; // skip incomplete
+        if (evalScores.length < 4) continue; // skip incomplete (WL uses 4 dimensions)
 
         const scoresMap = {} as Record<StatKey, number>;
         evalScores.forEach(s => { scoresMap[s.stat_key as StatKey] = s.score; });
