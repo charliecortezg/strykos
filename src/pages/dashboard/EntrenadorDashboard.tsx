@@ -104,7 +104,7 @@ export default function EntrenadorDashboard() {
 
             {/* Tabs - Priority Order: Asistencia, Partidos, Jugadores */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className={`w-full hidden lg:grid mb-4 h-12 ${feature_evaluations_enabled ? 'grid-cols-6' : 'grid-cols-5'}`}>
+              <TabsList className={`w-full hidden lg:grid mb-4 h-12 ${feature_evaluations_enabled ? 'grid-cols-8' : 'grid-cols-7'}`}>
                 <TabsTrigger value="sesion" className="gap-1.5 text-xs sm:text-sm">
                   <ClipboardList className="w-4 h-4" />
                   Sesión
@@ -131,10 +131,18 @@ export default function EntrenadorDashboard() {
                     Evaluaciones
                   </TabsTrigger>
                 )}
+                <TabsTrigger value="historial" className="gap-1.5 text-xs sm:text-sm">
+                  <History className="w-4 h-4" />
+                  Historial
+                </TabsTrigger>
+                <TabsTrigger value="sincronizacion" className="gap-1.5 text-xs sm:text-sm">
+                  <ClipboardCheck className="w-4 h-4" />
+                  Sync
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="sesion" className="mt-0">
-                <SessionHome />
+                <SessionHome onShowHistorial={() => setActiveTab('historial')} />
               </TabsContent>
 
               <TabsContent value="asistencia" className="mt-0">
