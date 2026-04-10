@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, CheckCircle, Trophy, ClipboardList, UserPlus, ClipboardCheck } from 'lucide-react';
+import { Users, CheckCircle, Trophy, ClipboardList, UserPlus, ClipboardCheck, History } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,8 @@ import { EvaluationsTabsWrapper } from '@/components/evaluations/EvaluationsTabs
 import { useFeatureFlags } from '@/hooks/useStrykWay';
 import { BottomNavBar } from '@/components/sessions/BottomNavBar';
 import { SessionHome } from '@/components/sessions/SessionHome';
+import { HistorialSesiones } from '@/components/sessions/HistorialSesiones';
+import { SincronizacionStryk } from '@/components/sessions/SincronizacionStryk';
 
 export default function EntrenadorDashboard() {
   const navigate = useNavigate();
