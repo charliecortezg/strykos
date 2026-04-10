@@ -249,6 +249,15 @@ export function SessionHome() {
               </div>
             ))}
           </div>
+
+          {onShowHistorial && (
+            <button
+              onClick={onShowHistorial}
+              className="mt-3 text-sm text-[#C9A227] hover:underline font-medium"
+            >
+              Ver historial completo →
+            </button>
+          )}
         </div>
       )}
 
