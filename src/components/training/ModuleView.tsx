@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function ModuleView() {
   const { moduleId } = useParams<{ moduleId: string }>();
+  console.log('[ModuleView] moduleId:', moduleId);
   const navigate = useNavigate();
   const { data: components = [], isLoading: compsLoading } = useTrainingComponents(moduleId);
   const { data: progress, isLoading: progressLoading } = useTrainerProgress();
