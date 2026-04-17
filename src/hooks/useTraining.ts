@@ -10,13 +10,17 @@ import type {
   TrainerExamAttempt,
   TrainerCertification,
   CertificationLevel,
+  ModuleType,
 } from '@/types/training';
 
 // ====== CATÁLOGO ======
 
-export function useTrainingModules(level?: CertificationLevel) {
+export function useTrainingModules(
+  level?: CertificationLevel | 'categoria',
+  moduleType?: ModuleType
+) {
   return useQuery({
-    queryKey: ['training-modules', level ?? 'all'],
+    queryKey: ['training-modules', level ?? 'all', moduleType ?? 'all'],
     queryFn: async () => {
       let q = supabase
         .from('training_modules')
@@ -25,6 +29,7 @@ export function useTrainingModules(level?: CertificationLevel) {
         .order('certification_level')
         .order('module_order');
       if (level) q = q.eq('certification_level', level);
+      if (moduleType) q = q.eq('module_type', moduleType);
       const { data, error } = await q;
       if (error) throw error;
       return (data || []) as TrainingModule[];
