@@ -172,9 +172,9 @@ function DocumentUploader() {
         prev.map((c) => (c.id === componentId ? { ...c, document_url: publicUrl } : c))
       );
       toast.success(`${file.name} subido correctamente`);
-    } catch (err) {
-      console.error(err);
-      toast.error('Error al subir el documento');
+    } catch (err: any) {
+      console.error('Upload error:', err?.message || err);
+      toast.error(`Error: ${err?.message || 'No se pudo subir el archivo'}`);
     } finally {
       setUploadingId(null);
       e.target.value = '';
