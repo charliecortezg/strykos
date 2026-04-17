@@ -19,12 +19,6 @@ interface ComponentCardProps {
   totalComponents: number;
 }
 
-const TYPE_ICONS: Record<TrainingComponentType, typeof BookOpen> = {
-  lectura: BookOpen,
-  video: Video,
-  examen: FileQuestion,
-  tarea_campo: Target,
-};
 
 export function ComponentCard({ component, completed, isAccessible, componentIndex, totalComponents }: ComponentCardProps) {
   const navigate = useNavigate();
