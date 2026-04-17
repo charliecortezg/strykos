@@ -132,9 +132,10 @@ export function LecturaView({
               </div>
             )}
             <iframe
-              src={documentUrl!}
-              className="h-full w-full"
+              src={`https://docs.google.com/viewer?url=${encodeURIComponent(documentUrl!)}&embedded=true`}
+              className="h-full w-full border-0"
               title={title}
+              allow="autoplay"
               onLoad={() => {
                 setPdfLoaded(true);
                 if (!alreadyCompleted) {
