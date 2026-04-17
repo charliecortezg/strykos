@@ -76,7 +76,7 @@ export function ModuleView() {
         ))}
       </div>
 
-      <Card className="border-amber-500/30 bg-amber-500/5">
+      <Card className="border-warning/30 bg-warning/5">
         <CardContent className="p-4">
           <p className="text-sm text-muted-foreground">
             💡 Los componentes se desbloquean en orden. Completa cada uno para acceder al siguiente.

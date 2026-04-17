@@ -63,7 +63,7 @@ export function ExamView({ componentId, moduleId, examTitle }: ExamViewProps) {
               {result.score} de {result.total} respuestas correctas
             </p>
             {!result.passed && (
-              <Card className="border-amber-500/30 bg-amber-500/5">
+              <Card className="border-warning/30 bg-warning/5">
                 <CardContent className="p-4 text-left">
                   <p className="text-sm font-semibold">Umbral de aprobación: 70%</p>
                   <p className="mt-1 text-sm text-muted-foreground">Puedes reintentar este examen.</p>
