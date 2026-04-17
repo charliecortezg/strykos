@@ -10,7 +10,7 @@ import { useQueries } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export function TrainingHome() {
-  const { profile } = useAuth();
+  const { user } = useAuth();
   const { data: modules = [], isLoading: modulesLoading } = useTrainingModules('WL-C1');
   const { data: progress, isLoading: progressLoading } = useTrainerProgress();
   const { data: certifications = [], isLoading: certsLoading } = useTrainerCertifications();
@@ -73,7 +73,7 @@ export function TrainingHome() {
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Portal de Capacitación White Lions</h1>
         <p className="mt-1 text-muted-foreground">
-          Bienvenido{profile?.full_name ? `, ${profile.full_name}` : ''}
+          Bienvenido{user?.full_name ? `, ${user.full_name}` : ''}
         </p>
       </header>
 
