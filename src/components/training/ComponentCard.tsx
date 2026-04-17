@@ -23,7 +23,7 @@ interface ComponentCardProps {
 export function ComponentCard({ component, completed, isAccessible, componentIndex, totalComponents }: ComponentCardProps) {
   const navigate = useNavigate();
   const { moduleId } = useParams();
-  const TypeIcon = TYPE_ICONS[component.component_type];
+  const TypeIcon = TYPE_ICONS[component.component_type] ?? Circle;
 
   const handleClick = () => {
     if (!isAccessible) return;
