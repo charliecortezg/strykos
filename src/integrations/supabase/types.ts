@@ -3267,6 +3267,381 @@ export type Database = {
           },
         ]
       }
+      trainer_certifications: {
+        Row: {
+          certification_level: string
+          created_at: string
+          id: string
+          issued_at: string
+          issued_by: string | null
+          notes: string | null
+          organization_id: string
+          revoked_at: string | null
+          revoked_by: string | null
+          trainer_id: string
+        }
+        Insert: {
+          certification_level: string
+          created_at?: string
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          notes?: string | null
+          organization_id: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          trainer_id: string
+        }
+        Update: {
+          certification_level?: string
+          created_at?: string
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          notes?: string | null
+          organization_id?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_certifications_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_certifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_certifications_revoked_by_fkey"
+            columns: ["revoked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_certifications_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainer_component_progress: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          component_id: string
+          created_at: string
+          id: string
+          organization_id: string
+          trainer_id: string
+          updated_at: string
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          component_id: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          trainer_id: string
+          updated_at?: string
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          component_id?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          trainer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_component_progress_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "training_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_component_progress_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_component_progress_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainer_exam_attempts: {
+        Row: {
+          answers: Json | null
+          attempt_number: number
+          component_id: string
+          created_at: string
+          id: string
+          organization_id: string
+          passed: boolean
+          percentage: number
+          score: number
+          total_questions: number
+          trainer_id: string
+        }
+        Insert: {
+          answers?: Json | null
+          attempt_number?: number
+          component_id: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          passed?: boolean
+          percentage?: number
+          score?: number
+          total_questions?: number
+          trainer_id: string
+        }
+        Update: {
+          answers?: Json | null
+          attempt_number?: number
+          component_id?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          passed?: boolean
+          percentage?: number
+          score?: number
+          total_questions?: number
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_exam_attempts_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "training_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_exam_attempts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_exam_attempts_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainer_module_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          module_id: string
+          organization_id: string
+          started_at: string | null
+          status: string
+          trainer_id: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          module_id: string
+          organization_id: string
+          started_at?: string | null
+          status?: string
+          trainer_id: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          module_id?: string
+          organization_id?: string
+          started_at?: string | null
+          status?: string
+          trainer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_module_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_module_progress_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_module_progress_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_components: {
+        Row: {
+          component_order: number
+          component_type: string
+          content: string | null
+          created_at: string
+          estimated_minutes: number | null
+          id: string
+          is_active: boolean
+          module_id: string
+          passing_score: number | null
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          component_order: number
+          component_type: string
+          content?: string | null
+          created_at?: string
+          estimated_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          module_id: string
+          passing_score?: number | null
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          component_order?: number
+          component_type?: string
+          content?: string | null
+          created_at?: string
+          estimated_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          module_id?: string
+          passing_score?: number | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_components_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_exam_questions: {
+        Row: {
+          component_id: string
+          correct_option: string
+          created_at: string
+          explanation: string | null
+          id: string
+          options: Json
+          question_order: number
+          question_text: string
+        }
+        Insert: {
+          component_id: string
+          correct_option: string
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          options: Json
+          question_order: number
+          question_text: string
+        }
+        Update: {
+          component_id?: string
+          correct_option?: string
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          options?: Json
+          question_order?: number
+          question_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_exam_questions_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "training_components"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_modules: {
+        Row: {
+          certification_level: string
+          created_at: string
+          description: string | null
+          estimated_minutes: number | null
+          id: string
+          is_active: boolean
+          module_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          certification_level: string
+          created_at?: string
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          module_order: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          certification_level?: string
+          created_at?: string
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          module_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tutor_auth_tokens: {
         Row: {
           created_at: string
