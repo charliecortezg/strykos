@@ -82,7 +82,7 @@ export function LecturaView({ componentId, moduleId, title, content, alreadyComp
       <div>
         <Progress value={scrollProgress} className="h-1" />
         <p className="mt-2 text-sm text-muted-foreground">
-          {scrollProgress >= 100
+          {scrollProgress >= 80
             ? '✓ Has leído el material completo'
             : content.length < 500
             ? 'Lee el material para continuar'
