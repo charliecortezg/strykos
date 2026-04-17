@@ -1,50 +1,48 @@
 
-# Plan: Usar age_group de la categoria como fuente de verdad en evaluaciones
 
-## Problema
+## Sprint 3-A: Infraestructura de Capacitación y Certificación WL
 
-Actualmente, el modulo de evaluaciones usa `calculateAgeGroup(player.date_of_birth)` para determinar el grupo de edad de cada jugador. Esto causa que jugadores de la categoria "Escuelita Futbol" (grupo 6-7) aparezcan como "8-9" si su fecha de nacimiento los ubica en ese rango, o peor, aparezcan como "8-9" por default cuando no tienen fecha de nacimiento registrada.
+Construye la base de datos y la capa de acceso para el sistema de certificación de entrenadores WL (5 niveles, comenzando con WL-C1: 4 módulos, 60 preguntas de examen).
 
-Segun la gobernanza del producto, **la categoria es la fuente de verdad** para el grupo de edad, no la fecha de nacimiento del jugador.
+### Cambios
 
-## Causa raiz
+**1. Migración SQL — 7 tablas nuevas**
+- `training_modules` — módulos por nivel de certificación (globales con `organization_id NULL`)
+- `training_components` — lectura, video, examen, tarea_campo
+- `training_exam_questions` — preguntas con opciones JSONB y respuesta correcta
+- `trainer_module_progress` — progreso por módulo del entrenador
+- `trainer_component_progress` — progreso por componente
+- `trainer_exam_attempts` — intentos de examen con score
+- `trainer_certifications` — certificaciones emitidas por DD/owner
 
-En 4 puntos del codigo se usa `calculateAgeGroup(player.date_of_birth)` en lugar de `category.age_group`:
+RLS: lectura global de contenido; entrenador ve su progreso, DD/owner ve todos. Patrón consistente con tablas existentes (`get_current_org_id()`, `has_org_role`).
 
-1. **EvaluationsModule.tsx** (linea 43): al construir `playerStatuses`, calcula `age_group` desde `date_of_birth`
-2. **EvaluationsModule.tsx** (linea 63-67): al llamar `saveEvaluation`, no pasa `categoryAgeGroup`
-3. **DirectorEvaluationsView.tsx** (linea ~55): al construir `summaryRows`, usa `calculateAgeGroup(player.date_of_birth)` para `ageGroup`
-4. El campo `age_group` guardado en la tabla `evaluations` puede estar incorrecto en registros existentes
+**Nota:** El SQL del prompt usa `(SELECT get_current_org_id())` y CHECK constraints simples — válido y compatible con las funciones SECURITY DEFINER existentes.
 
-## Solucion
+**2. Seed WL-C1**
+- 4 módulos (Filosofía / Estructura de Sesión / Observación / Feedback)
+- 20 componentes (5 por módulo: 2 lecturas + 1 video + 1 examen + 1 tarea de campo)
+- 60 preguntas de examen distribuidas: 18 + 15 + 15 + 12
 
-### 1. EvaluationsModule.tsx
+**3. Verificación SQL** después del seed (3 queries de conteo).
 
-- En `playerStatuses`, cambiar `age_group: calculateAgeGroup(p.date_of_birth)` por el `age_group` de la categoria seleccionada
-- En `handleSave`, pasar `categoryAgeGroup` al llamar `saveEvaluation.mutateAsync()`
+**4. Archivos TypeScript nuevos**
+- `src/types/training.ts` — interfaces + `CertificationLevel` + labels
+- `src/hooks/useTraining.ts` — 9 hooks (React Query + Supabase) siguiendo el patrón de `useEvaluations.ts`:
+  - `useTrainingModules`, `useTrainingComponents`, `useExamQuestions`
+  - `useTrainerProgress`, `useCompleteComponent`, `useSubmitExam`
+  - `useTrainerCertifications`, `useIssueCertification`
+  - `useAllTrainersProgress` (vista DD)
 
-### 2. DirectorEvaluationsView.tsx
+### Lo que NO se toca
+- Ningún archivo existente
+- No se construye UI (eso es Prompt 3-B)
 
-- En `summaryRows`, reemplazar `calculateAgeGroup(player.date_of_birth)` por el `age_group` de la categoria seleccionada (obtenido de `activeCategories`)
+### Orden de ejecución
+1. Migración SQL (estructura + RLS) — un solo bloque
+2. Migración SQL (seed con bloque DO $$) — un segundo bloque
+3. Verificación SQL
+4. Crear `src/types/training.ts`
+5. Crear `src/hooks/useTraining.ts`
+6. `tsc` para validar build
 
-### 3. Migracion SQL (backfill)
-
-- Actualizar los registros existentes en `evaluations` donde `age_group` no coincida con el `age_group` de su categoria:
-
-```sql
-UPDATE evaluations e
-SET age_group = c.age_group
-FROM categories c
-WHERE e.category_id = c.id
-  AND e.age_group != c.age_group;
-```
-
-## Archivos a modificar
-
-| Archivo | Cambio |
-|---|---|
-| src/components/evaluations/EvaluationsModule.tsx | Usar `category.age_group` en `playerStatuses` y pasar `categoryAgeGroup` en `handleSave` |
-| src/components/evaluations/DirectorEvaluationsView.tsx | Usar `category.age_group` de la categoria seleccionada en `summaryRows` |
-| Migracion SQL | Backfill de `evaluations.age_group` desde `categories.age_group` |
-
-No se requieren cambios en `useEvaluations.ts` ya que el parametro `categoryAgeGroup` ya existe y tiene prioridad cuando se proporciona.
