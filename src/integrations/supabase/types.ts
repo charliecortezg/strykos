@@ -3518,11 +3518,14 @@ export type Database = {
           component_type: string
           content: string | null
           created_at: string
+          document_sections: string | null
+          document_url: string | null
           estimated_minutes: number | null
           id: string
           is_active: boolean
           module_id: string
           passing_score: number | null
+          reading_guide: string | null
           title: string
           updated_at: string
           video_url: string | null
@@ -3532,11 +3535,14 @@ export type Database = {
           component_type: string
           content?: string | null
           created_at?: string
+          document_sections?: string | null
+          document_url?: string | null
           estimated_minutes?: number | null
           id?: string
           is_active?: boolean
           module_id: string
           passing_score?: number | null
+          reading_guide?: string | null
           title: string
           updated_at?: string
           video_url?: string | null
@@ -3546,11 +3552,14 @@ export type Database = {
           component_type?: string
           content?: string | null
           created_at?: string
+          document_sections?: string | null
+          document_url?: string | null
           estimated_minutes?: number | null
           id?: string
           is_active?: boolean
           module_id?: string
           passing_score?: number | null
+          reading_guide?: string | null
           title?: string
           updated_at?: string
           video_url?: string | null
