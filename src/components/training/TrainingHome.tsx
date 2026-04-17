@@ -11,7 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 export function TrainingHome() {
   const { user } = useAuth();
-  const { data: modules = [], isLoading: modulesLoading } = useTrainingModules('WL-C1');
+  const { data: modules = [], isLoading: modulesLoading } = useTrainingModules('WL-C1', 'certificacion');
+  const { data: catModules = [], isLoading: catLoading } = useTrainingModules(undefined, 'categoria');
   const { data: progress, isLoading: progressLoading } = useTrainerProgress();
   const { data: certifications = [], isLoading: certsLoading } = useTrainerCertifications();
 
@@ -32,7 +33,7 @@ export function TrainingHome() {
     })),
   });
 
-  const isLoading = modulesLoading || progressLoading || certsLoading;
+  const isLoading = modulesLoading || progressLoading || certsLoading || catLoading;
 
   if (isLoading) {
     return (
@@ -119,6 +120,28 @@ export function TrainingHome() {
             progressPercent={progressPercent}
           />
         ))}
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h3 className="text-base font-bold">Guías Operativas por Categoría</h3>
+          <p className="text-sm text-muted-foreground">
+            Disponibles para todos los entrenadores. Conoce la guía específica de cada categoría.
+          </p>
+        </div>
+        {catModules.map((mod) => {
+          const modProgress = progress?.modules.find((mp) => mp.module_id === mod.id);
+          return (
+            <ModuleCard
+              key={mod.id}
+              module={mod}
+              status={modProgress?.status ?? 'not_started'}
+              completedComps={0}
+              totalComps={4}
+              progressPercent={0}
+            />
+          );
+        })}
       </section>
 
       <Card className="border-primary/30 bg-primary/5">
