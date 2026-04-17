@@ -23,19 +23,28 @@ export function LecturaView({ componentId, moduleId, title, content, alreadyComp
 
   useEffect(() => {
     const el = contentRef.current;
-    if (el && el.scrollHeight <= el.clientHeight) {
+    if (el && el.scrollHeight - el.clientHeight <= 10) {
       setScrollProgress(100);
     }
   }, [content]);
 
+  useEffect(() => {
+    const el = document.getElementById('lectura-content');
+    if (!el) return;
+    if (el.scrollHeight - el.clientHeight <= 10) {
+      setScrollProgress(100);
+    }
+  }, []);
+
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     const max = el.scrollHeight - el.clientHeight;
-    if (max <= 0) {
+    if (max <= 10) {
       setScrollProgress(100);
       return;
     }
-    setScrollProgress(Math.min(100, (el.scrollTop / max) * 100));
+    const pct = (el.scrollTop / max) * 100;
+    setScrollProgress(Math.min(100, pct));
   };
 
   const handleCompleted = async () => {
@@ -48,7 +57,7 @@ export function LecturaView({ componentId, moduleId, title, content, alreadyComp
     }
   };
 
-  const isFullyScrolled = scrollProgress >= 100 || alreadyCompleted;
+  const isUnlocked = scrollProgress >= 80 || alreadyCompleted;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-6">
@@ -73,7 +82,7 @@ export function LecturaView({ componentId, moduleId, title, content, alreadyComp
       <div>
         <Progress value={scrollProgress} className="h-1" />
         <p className="mt-2 text-sm text-muted-foreground">
-          {scrollProgress >= 100
+          {scrollProgress >= 80
             ? '✓ Has leído el material completo'
             : content.length < 500
             ? 'Lee el material para continuar'
@@ -83,7 +92,7 @@ export function LecturaView({ componentId, moduleId, title, content, alreadyComp
 
       <Button
         onClick={handleCompleted}
-        disabled={!isFullyScrolled || completeComponent.isPending || alreadyCompleted}
+        disabled={!isUnlocked || completeComponent.isPending || alreadyCompleted}
         className="w-full"
         size="lg"
       >
