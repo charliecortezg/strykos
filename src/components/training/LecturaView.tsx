@@ -57,7 +57,7 @@ export function LecturaView({ componentId, moduleId, title, content, alreadyComp
     }
   };
 
-  const isFullyScrolled = scrollProgress >= 100 || alreadyCompleted;
+  const isUnlocked = scrollProgress >= 80 || alreadyCompleted;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-6">
