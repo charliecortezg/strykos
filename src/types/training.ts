@@ -6,9 +6,11 @@ export type TrainingComponentType = 'lectura' | 'video' | 'examen' | 'tarea_camp
 
 export type ModuleProgressStatus = 'not_started' | 'in_progress' | 'completed';
 
+export type ModuleType = 'certificacion' | 'categoria';
+
 export interface TrainingModule {
   id: string;
-  certification_level: CertificationLevel;
+  certification_level: CertificationLevel | 'categoria';
   module_order: number;
   title: string;
   description: string | null;
@@ -16,6 +18,9 @@ export interface TrainingModule {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Sprint 4 — guías operativas por categoría
+  module_type: ModuleType;
+  target_category: string | null;
 }
 
 export interface TrainingComponent {
