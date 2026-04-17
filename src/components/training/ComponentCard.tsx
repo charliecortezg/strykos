@@ -1,8 +1,15 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { CheckCircle2, Circle, Lock, BookOpen, Video, FileQuestion, Target } from 'lucide-react';
+import { CheckCircle2, Circle, Lock, BookOpen, Play, HelpCircle, Clipboard } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { COMPONENT_TYPE_LABELS, type TrainingComponent, type TrainingComponentType } from '@/types/training';
+
+const TYPE_ICONS: Record<TrainingComponentType, typeof BookOpen> = {
+  lectura: BookOpen,
+  video: Play,
+  examen: HelpCircle,
+  tarea_campo: Clipboard,
+};
 
 interface ComponentCardProps {
   component: TrainingComponent;
