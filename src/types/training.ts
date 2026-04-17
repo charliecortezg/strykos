@@ -31,6 +31,10 @@ export interface TrainingComponent {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Documento institucional (PDF)
+  document_url: string | null;
+  document_sections: string | null;
+  reading_guide: string | null;
 }
 
 export interface ExamQuestionOption {

@@ -44,7 +44,10 @@ export function ComponentRouter() {
           componentId={component.id}
           moduleId={moduleId}
           title={component.title}
-          content={component.content ?? ''}
+          content={component.content ?? null}
+          documentUrl={component.document_url ?? null}
+          documentSections={component.document_sections ?? null}
+          readingGuide={component.reading_guide ?? null}
           alreadyCompleted={alreadyCompleted}
         />
       );
