@@ -92,7 +92,7 @@ export function LecturaView({ componentId, moduleId, title, content, alreadyComp
 
       <Button
         onClick={handleCompleted}
-        disabled={!isFullyScrolled || completeComponent.isPending || alreadyCompleted}
+        disabled={!isUnlocked || completeComponent.isPending || alreadyCompleted}
         className="w-full"
         size="lg"
       >
