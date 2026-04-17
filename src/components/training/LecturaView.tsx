@@ -23,19 +23,28 @@ export function LecturaView({ componentId, moduleId, title, content, alreadyComp
 
   useEffect(() => {
     const el = contentRef.current;
-    if (el && el.scrollHeight <= el.clientHeight) {
+    if (el && el.scrollHeight - el.clientHeight <= 10) {
       setScrollProgress(100);
     }
   }, [content]);
 
+  useEffect(() => {
+    const el = document.getElementById('lectura-content');
+    if (!el) return;
+    if (el.scrollHeight - el.clientHeight <= 10) {
+      setScrollProgress(100);
+    }
+  }, []);
+
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     const max = el.scrollHeight - el.clientHeight;
-    if (max <= 0) {
+    if (max <= 10) {
       setScrollProgress(100);
       return;
     }
-    setScrollProgress(Math.min(100, (el.scrollTop / max) * 100));
+    const pct = (el.scrollTop / max) * 100;
+    setScrollProgress(Math.min(100, pct));
   };
 
   const handleCompleted = async () => {
