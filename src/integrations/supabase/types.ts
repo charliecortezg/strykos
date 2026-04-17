@@ -3624,6 +3624,8 @@ export type Database = {
           id: string
           is_active: boolean
           module_order: number
+          module_type: string
+          target_category: string | null
           title: string
           updated_at: string
         }
@@ -3635,6 +3637,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           module_order: number
+          module_type?: string
+          target_category?: string | null
           title: string
           updated_at?: string
         }
@@ -3646,6 +3650,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           module_order?: number
+          module_type?: string
+          target_category?: string | null
           title?: string
           updated_at?: string
         }
