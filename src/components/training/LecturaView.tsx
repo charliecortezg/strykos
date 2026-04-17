@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useCompleteComponent } from '@/hooks/useTraining';
@@ -19,6 +19,14 @@ export function LecturaView({ componentId, moduleId, title, content, alreadyComp
   const navigate = useNavigate();
   const [scrollProgress, setScrollProgress] = useState(alreadyCompleted ? 100 : 0);
   const completeComponent = useCompleteComponent();
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (el && el.scrollHeight <= el.clientHeight) {
+      setScrollProgress(100);
+    }
+  }, [content]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
@@ -40,7 +48,7 @@ export function LecturaView({ componentId, moduleId, title, content, alreadyComp
     }
   };
 
-  const isFullyScrolled = scrollProgress > 95 || alreadyCompleted;
+  const isFullyScrolled = scrollProgress >= 100 || alreadyCompleted;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-6">
@@ -51,7 +59,12 @@ export function LecturaView({ componentId, moduleId, title, content, alreadyComp
 
       <Card className="border-l-4 border-l-primary">
         <CardContent className="p-0">
-          <div className="max-h-[60vh] overflow-y-auto p-6 leading-relaxed text-foreground" onScroll={handleScroll}>
+          <div
+            id="lectura-content"
+            ref={contentRef}
+            className="max-h-[60vh] overflow-y-auto p-6 leading-relaxed text-foreground"
+            onScroll={handleScroll}
+          >
             <div className="whitespace-pre-wrap">{content}</div>
           </div>
         </CardContent>
@@ -60,7 +73,11 @@ export function LecturaView({ componentId, moduleId, title, content, alreadyComp
       <div>
         <Progress value={scrollProgress} className="h-1" />
         <p className="mt-2 text-sm text-muted-foreground">
-          {isFullyScrolled ? '✓ Has leído el material completo' : 'Desplázate hasta el final para continuar'}
+          {scrollProgress >= 100
+            ? '✓ Has leído el material completo'
+            : content.length < 500
+            ? 'Lee el material para continuar'
+            : 'Desplázate hasta el final para continuar'}
         </p>
       </div>
 
