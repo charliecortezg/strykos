@@ -12,6 +12,7 @@ const MAX_NUMBER = 99;
 const PRICES: Record<string, number> = {
   manga_corta: 500,
   manga_larga: 600,
+  solo_camisa: 350,
 };
 
 const VALID_SIZES = [
