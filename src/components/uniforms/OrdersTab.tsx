@@ -36,10 +36,12 @@ export function OrdersTab({ campaignId }: Props) {
       toast.info('No hay órdenes confirmadas para exportar');
       return;
     }
-    const header = 'Jugador,Categoría,Tipo,Talla,Nombre Camiseta,Número\n';
+    const typeLabel = (t: string) =>
+      t === 'manga_corta' ? 'Manga Corta' : t === 'manga_larga' ? 'Manga Larga' : t === 'solo_camisa' ? 'Solo Camisa' : t;
+    const header = 'Jugador,Categoría,Tipo,Talla,Nombre Camiseta,Número,Notas\n';
     const rows = confirmed
       .map((o) =>
-        [o.player_name, o.category_name, o.uniform_type === 'manga_corta' ? 'Manga Corta' : 'Manga Larga', o.jersey_size, o.name_on_jersey, o.assigned_number].join(',')
+        [o.player_name, o.category_name, typeLabel(o.uniform_type), o.jersey_size, o.name_on_jersey, o.assigned_number, (o.notes || '').replace(/[\n,]/g, ' ')].join(',')
       )
       .join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv' });
