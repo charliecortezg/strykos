@@ -186,7 +186,7 @@ export default function UniformOrderPage() {
           <div className="rounded-xl p-4 space-y-2 text-sm" style={{ borderColor: BORDER, background: CARD, border: `1px solid ${BORDER}` }}>
             <Row label="Jugador" value={successData.player_name} />
             <Row label="Categoría" value={successData.category_name} />
-            <Row label="Tipo" value={successData.uniform_type === 'manga_corta' ? 'Manga Corta' : 'Manga Larga'} />
+            <Row label="Tipo" value={TYPE_LABELS[successData.uniform_type] || successData.uniform_type} />
             <Row label="Talla" value={successData.jersey_size} />
             <Row label="Nombre camiseta" value={successData.name_on_jersey} />
             <Row label="Número" value={`#${successData.assigned_number}`} />
