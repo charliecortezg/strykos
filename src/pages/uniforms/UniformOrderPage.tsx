@@ -235,25 +235,27 @@ export default function UniformOrderPage() {
 
         {/* Step 2: Type */}
         <Section title="2. Tipo de uniforme">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             {([
-              { key: 'manga_corta', label: 'MANGA CORTA', price: 500 },
-              { key: 'manga_larga', label: 'MANGA LARGA', price: 600 },
+              { key: 'manga_corta', label: 'MANGA CORTA', price: 500, desc: 'Completo', sub: 'Camisa + Shorts + Calcetas' },
+              { key: 'manga_larga', label: 'MANGA LARGA', price: 600, desc: 'Completo', sub: 'Camisa + Shorts + Calcetas' },
+              { key: 'solo_camisa', label: 'SOLO CAMISA', price: 350, desc: 'Solo prenda', sub: 'Únicamente la camisa' },
             ] as const).map((t) => (
               <button
                 key={t.key}
                 onClick={() => setUniformType(t.key)}
-                className="rounded-xl p-4 text-center transition-all"
+                className="rounded-xl p-3 text-center transition-all"
                 style={{
                   background: CARD,
                   border: `2px solid ${uniformType === t.key ? GOLD : BORDER}`,
                   boxShadow: uniformType === t.key ? `0 0 12px ${GOLD}40` : undefined,
                 }}
               >
-                <p className="text-xs font-bold" style={{ color: GOLD }}>🟡 {t.label}</p>
-                <p className="text-xs text-white/50 mt-1">Completo</p>
-                <p className="text-xs text-white/50">Camisa + Shorts + Calcetas</p>
-                <p className="text-lg font-black mt-2" style={{ color: GOLD }}>${t.price} MXN</p>
+                <p className="text-[11px] font-bold leading-tight" style={{ color: GOLD }}>🟡 {t.label}</p>
+                <p className="text-[10px] text-white/50 mt-1">{t.desc}</p>
+                <p className="text-[10px] text-white/50 leading-tight">{t.sub}</p>
+                <p className="text-base font-black mt-2" style={{ color: GOLD }}>${t.price}</p>
+                <p className="text-[10px] text-white/40">MXN</p>
               </button>
             ))}
           </div>
