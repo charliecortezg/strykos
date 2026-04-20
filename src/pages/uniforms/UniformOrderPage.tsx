@@ -59,6 +59,7 @@ export default function UniformOrderPage() {
   const [jerseySize, setJerseySize] = useState('');
   const [nameOnJersey, setNameOnJersey] = useState('');
   const [requestedNumber, setRequestedNumber] = useState<number | null>(null);
+  const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successData, setSuccessData] = useState<any>(null);
