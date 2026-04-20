@@ -166,6 +166,7 @@ Deno.serve(async (req) => {
         assigned_number: num,
         number_status: "submitted",
         price,
+        notes: notes?.trim() ? notes.trim().slice(0, 500) : null,
       })
       .select()
       .single();
