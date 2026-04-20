@@ -102,6 +102,7 @@ Deno.serve(async (req) => {
       jersey_size,
       name_on_jersey,
       requested_number,
+      notes,
     } = body;
 
     // Validations
