@@ -36,10 +36,12 @@ export function OrdersTab({ campaignId }: Props) {
       toast.info('No hay órdenes confirmadas para exportar');
       return;
     }
-    const header = 'Jugador,Categoría,Tipo,Talla,Nombre Camiseta,Número\n';
+    const typeLabel = (t: string) =>
+      t === 'manga_corta' ? 'Manga Corta' : t === 'manga_larga' ? 'Manga Larga' : t === 'solo_camisa' ? 'Solo Camisa' : t;
+    const header = 'Jugador,Categoría,Tipo,Talla,Nombre Camiseta,Número,Notas\n';
     const rows = confirmed
       .map((o) =>
-        [o.player_name, o.category_name, o.uniform_type === 'manga_corta' ? 'Manga Corta' : 'Manga Larga', o.jersey_size, o.name_on_jersey, o.assigned_number].join(',')
+        [o.player_name, o.category_name, typeLabel(o.uniform_type), o.jersey_size, o.name_on_jersey, o.assigned_number, (o.notes || '').replace(/[\n,]/g, ' ')].join(',')
       )
       .join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv' });
@@ -113,12 +115,19 @@ export function OrdersTab({ campaignId }: Props) {
                 <TableCell className="font-medium">{o.player_name}</TableCell>
                 <TableCell>{o.category_name}</TableCell>
                 <TableCell>
-                  <Badge variant={o.uniform_type === 'manga_corta' ? 'secondary' : 'default'}>
-                    {o.uniform_type === 'manga_corta' ? 'Corta · $500' : 'Larga · $600'}
+                  <Badge variant={o.uniform_type === 'manga_corta' ? 'secondary' : o.uniform_type === 'solo_camisa' ? 'outline' : 'default'}>
+                    {o.uniform_type === 'manga_corta' ? 'Corta · $500' : o.uniform_type === 'manga_larga' ? 'Larga · $600' : 'Camisa · $350'}
                   </Badge>
                 </TableCell>
                 <TableCell>{o.jersey_size}</TableCell>
-                <TableCell>{o.name_on_jersey}</TableCell>
+                <TableCell>
+                  <div>{o.name_on_jersey}</div>
+                  {o.notes && (
+                    <div className="text-xs text-muted-foreground italic mt-1 max-w-[200px] truncate" title={o.notes}>
+                      📝 {o.notes}
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell className="text-center font-bold">{o.assigned_number}</TableCell>
                 <TableCell>
                   <Badge

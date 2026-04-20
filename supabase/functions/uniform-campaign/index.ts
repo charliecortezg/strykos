@@ -12,6 +12,7 @@ const MAX_NUMBER = 99;
 const PRICES: Record<string, number> = {
   manga_corta: 500,
   manga_larga: 600,
+  solo_camisa: 350,
 };
 
 const VALID_SIZES = [
@@ -101,6 +102,7 @@ Deno.serve(async (req) => {
       jersey_size,
       name_on_jersey,
       requested_number,
+      notes,
     } = body;
 
     // Validations
@@ -164,6 +166,7 @@ Deno.serve(async (req) => {
         assigned_number: num,
         number_status: "submitted",
         price,
+        notes: notes?.trim() ? notes.trim().slice(0, 500) : null,
       })
       .select()
       .single();

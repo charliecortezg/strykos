@@ -7,6 +7,13 @@ const PERMANENT_BLOCKS = [67, 69];
 const PRICES: Record<string, number> = {
   manga_corta: 500,
   manga_larga: 600,
+  solo_camisa: 350,
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  manga_corta: 'Manga Corta',
+  manga_larga: 'Manga Larga',
+  solo_camisa: 'Solo Camisa',
 };
 
 const SIZE_OPTIONS = [
@@ -52,6 +59,7 @@ export default function UniformOrderPage() {
   const [jerseySize, setJerseySize] = useState('');
   const [nameOnJersey, setNameOnJersey] = useState('');
   const [requestedNumber, setRequestedNumber] = useState<number | null>(null);
+  const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successData, setSuccessData] = useState<any>(null);
@@ -109,6 +117,7 @@ export default function UniformOrderPage() {
           jersey_size: jerseySize,
           name_on_jersey: nameOnJersey.trim().toUpperCase(),
           requested_number: requestedNumber,
+          notes: notes.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -177,7 +186,7 @@ export default function UniformOrderPage() {
           <div className="rounded-xl p-4 space-y-2 text-sm" style={{ borderColor: BORDER, background: CARD, border: `1px solid ${BORDER}` }}>
             <Row label="Jugador" value={successData.player_name} />
             <Row label="Categoría" value={successData.category_name} />
-            <Row label="Tipo" value={successData.uniform_type === 'manga_corta' ? 'Manga Corta' : 'Manga Larga'} />
+            <Row label="Tipo" value={TYPE_LABELS[successData.uniform_type] || successData.uniform_type} />
             <Row label="Talla" value={successData.jersey_size} />
             <Row label="Nombre camiseta" value={successData.name_on_jersey} />
             <Row label="Número" value={`#${successData.assigned_number}`} />
@@ -226,25 +235,27 @@ export default function UniformOrderPage() {
 
         {/* Step 2: Type */}
         <Section title="2. Tipo de uniforme">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             {([
-              { key: 'manga_corta', label: 'MANGA CORTA', price: 500 },
-              { key: 'manga_larga', label: 'MANGA LARGA', price: 600 },
+              { key: 'manga_corta', label: 'MANGA CORTA', price: 500, desc: 'Completo', sub: 'Camisa + Shorts + Calcetas' },
+              { key: 'manga_larga', label: 'MANGA LARGA', price: 600, desc: 'Completo', sub: 'Camisa + Shorts + Calcetas' },
+              { key: 'solo_camisa', label: 'SOLO CAMISA', price: 350, desc: 'Solo prenda', sub: 'Únicamente la camisa' },
             ] as const).map((t) => (
               <button
                 key={t.key}
                 onClick={() => setUniformType(t.key)}
-                className="rounded-xl p-4 text-center transition-all"
+                className="rounded-xl p-3 text-center transition-all"
                 style={{
                   background: CARD,
                   border: `2px solid ${uniformType === t.key ? GOLD : BORDER}`,
                   boxShadow: uniformType === t.key ? `0 0 12px ${GOLD}40` : undefined,
                 }}
               >
-                <p className="text-xs font-bold" style={{ color: GOLD }}>🟡 {t.label}</p>
-                <p className="text-xs text-white/50 mt-1">Completo</p>
-                <p className="text-xs text-white/50">Camisa + Shorts + Calcetas</p>
-                <p className="text-lg font-black mt-2" style={{ color: GOLD }}>${t.price} MXN</p>
+                <p className="text-[11px] font-bold leading-tight" style={{ color: GOLD }}>🟡 {t.label}</p>
+                <p className="text-[10px] text-white/50 mt-1">{t.desc}</p>
+                <p className="text-[10px] text-white/50 leading-tight">{t.sub}</p>
+                <p className="text-base font-black mt-2" style={{ color: GOLD }}>${t.price}</p>
+                <p className="text-[10px] text-white/40">MXN</p>
               </button>
             ))}
           </div>
@@ -357,13 +368,27 @@ export default function UniformOrderPage() {
           )}
         </Section>
 
+        {/* Step 6: Notas */}
+        <Section title="6. Notas adicionales (opcional)">
+          <textarea
+            className="w-full rounded-lg px-4 py-3 text-white text-sm outline-none placeholder:text-white/30 resize-none"
+            style={{ background: CARD, border: `1px solid ${BORDER}` }}
+            placeholder="Comentarios o aclaraciones sobre tu pedido..."
+            rows={3}
+            maxLength={500}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+          <p className="text-[10px] text-white/40 text-right">{notes.length} / 500</p>
+        </Section>
+
         {/* Summary */}
         {(playerName || categoryId || uniformType) && (
           <div className="rounded-xl p-4 space-y-1 text-sm" style={{ background: CARD, border: `1px solid ${GOLD}40` }}>
             <p className="font-bold text-white mb-2">Resumen</p>
             {playerName && <Row label="Jugador" value={playerName} />}
             {categoryName && <Row label="Categoría" value={categoryName} />}
-            {uniformType && <Row label="Tipo" value={uniformType === 'manga_corta' ? 'Manga Corta' : 'Manga Larga'} />}
+            {uniformType && <Row label="Tipo" value={TYPE_LABELS[uniformType] || uniformType} />}
             {jerseySize && <Row label="Talla" value={selectedSizeInfo ? `${selectedSizeInfo.group} ${selectedSizeInfo.label}` : jerseySize} />}
             {nameOnJersey && <Row label="Nombre" value={nameOnJersey} />}
             {requestedNumber && <Row label="Número" value={`#${requestedNumber}`} />}
