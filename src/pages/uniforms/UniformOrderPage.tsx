@@ -117,6 +117,7 @@ export default function UniformOrderPage() {
           jersey_size: jerseySize,
           name_on_jersey: nameOnJersey.trim().toUpperCase(),
           requested_number: requestedNumber,
+          notes: notes.trim() || undefined,
         }),
       });
       const data = await res.json();
