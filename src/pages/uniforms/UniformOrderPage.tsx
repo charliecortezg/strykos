@@ -7,6 +7,13 @@ const PERMANENT_BLOCKS = [67, 69];
 const PRICES: Record<string, number> = {
   manga_corta: 500,
   manga_larga: 600,
+  solo_camisa: 350,
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  manga_corta: 'Manga Corta',
+  manga_larga: 'Manga Larga',
+  solo_camisa: 'Solo Camisa',
 };
 
 const SIZE_OPTIONS = [
