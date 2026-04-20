@@ -368,13 +368,27 @@ export default function UniformOrderPage() {
           )}
         </Section>
 
+        {/* Step 6: Notas */}
+        <Section title="6. Notas adicionales (opcional)">
+          <textarea
+            className="w-full rounded-lg px-4 py-3 text-white text-sm outline-none placeholder:text-white/30 resize-none"
+            style={{ background: CARD, border: `1px solid ${BORDER}` }}
+            placeholder="Comentarios o aclaraciones sobre tu pedido..."
+            rows={3}
+            maxLength={500}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+          <p className="text-[10px] text-white/40 text-right">{notes.length} / 500</p>
+        </Section>
+
         {/* Summary */}
         {(playerName || categoryId || uniformType) && (
           <div className="rounded-xl p-4 space-y-1 text-sm" style={{ background: CARD, border: `1px solid ${GOLD}40` }}>
             <p className="font-bold text-white mb-2">Resumen</p>
             {playerName && <Row label="Jugador" value={playerName} />}
             {categoryName && <Row label="Categoría" value={categoryName} />}
-            {uniformType && <Row label="Tipo" value={uniformType === 'manga_corta' ? 'Manga Corta' : 'Manga Larga'} />}
+            {uniformType && <Row label="Tipo" value={TYPE_LABELS[uniformType] || uniformType} />}
             {jerseySize && <Row label="Talla" value={selectedSizeInfo ? `${selectedSizeInfo.group} ${selectedSizeInfo.label}` : jerseySize} />}
             {nameOnJersey && <Row label="Nombre" value={nameOnJersey} />}
             {requestedNumber && <Row label="Número" value={`#${requestedNumber}`} />}
