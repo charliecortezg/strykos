@@ -20,8 +20,8 @@ interface Props {
 }
 
 export function CreateCheerCampaignModal({ open, onOpenChange }: Props) {
-  const { profile } = useAuth();
-  const orgId = profile?.active_organization_id ?? profile?.organization_id ?? undefined;
+  const { organization } = useAuth();
+  const orgId = organization?.id;
   const { create } = useCheerCampaigns(orgId);
 
   const [name, setName] = useState('');

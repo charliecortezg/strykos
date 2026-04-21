@@ -30,8 +30,8 @@ interface Props {
 }
 
 export function CheerCampaignDetail({ campaignId, onBack }: Props) {
-  const { profile } = useAuth();
-  const orgId = profile?.active_organization_id ?? profile?.organization_id ?? undefined;
+  const { organization } = useAuth();
+  const orgId = organization?.id;
   const { list: campaignsList } = useCheerCampaigns(orgId);
   const { list, togglePaid, toggleDelivered, remove } = useCheerOrders(campaignId);
 

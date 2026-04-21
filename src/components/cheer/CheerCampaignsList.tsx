@@ -14,8 +14,8 @@ interface Props {
 }
 
 export function CheerCampaignsList({ onSelectCampaign }: Props) {
-  const { profile } = useAuth();
-  const orgId = profile?.active_organization_id ?? profile?.organization_id ?? undefined;
+  const { organization } = useAuth();
+  const orgId = organization?.id;
   const { list, close, reopen } = useCheerCampaigns(orgId);
   const [createOpen, setCreateOpen] = useState(false);
 
