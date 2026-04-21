@@ -39,6 +39,8 @@ import PortalDashboard from "./pages/portal/PortalDashboard";
 import PortalPlayerView from "./pages/portal/PortalPlayerView";
 // Uniform public page
 import UniformOrderPage from "./pages/uniforms/UniformOrderPage";
+// Cheer (Porra) public page
+import CheerOrderPage from "./pages/cheer/CheerOrderPage";
 
 const queryClient = new QueryClient();
 
@@ -183,6 +185,9 @@ const App = () => (
 
           {/* Public uniform order form - No auth */}
           <Route path="/uniforme/:token" element={<UniformOrderPage />} />
+
+          {/* Public cheer-jersey order form - No auth */}
+          <Route path="/porra/:token" element={<CheerOrderPage />} />
           
           {/* Academy routes - Everything else */}
           <Route path="/*" element={<AcademyRoutes />} />
