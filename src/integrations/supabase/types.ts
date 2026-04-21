@@ -210,6 +210,162 @@ export type Database = {
           },
         ]
       }
+      cheer_campaigns: {
+        Row: {
+          created_at: string
+          deadline: string | null
+          id: string
+          name: string
+          notes: string | null
+          org_id: string
+          price_per_item: number
+          public_token: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          org_id: string
+          price_per_item?: number
+          public_token?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          org_id?: string
+          price_per_item?: number
+          public_token?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cheer_campaigns_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cheer_order_items: {
+        Row: {
+          campaign_id: string
+          id: string
+          item_price: number
+          name_on_jersey: string
+          number_on_jersey: number | null
+          order_id: string
+          org_id: string
+          size: string
+        }
+        Insert: {
+          campaign_id: string
+          id?: string
+          item_price?: number
+          name_on_jersey: string
+          number_on_jersey?: number | null
+          order_id: string
+          org_id: string
+          size: string
+        }
+        Update: {
+          campaign_id?: string
+          id?: string
+          item_price?: number
+          name_on_jersey?: string
+          number_on_jersey?: number | null
+          order_id?: string
+          org_id?: string
+          size?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cheer_order_items_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "cheer_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cheer_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "cheer_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cheer_order_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cheer_orders: {
+        Row: {
+          buyer_name: string
+          buyer_whatsapp: string
+          campaign_id: string
+          created_at: string
+          delivered: boolean
+          id: string
+          org_id: string
+          paid: boolean
+          total_items: number
+          total_price: number
+        }
+        Insert: {
+          buyer_name: string
+          buyer_whatsapp: string
+          campaign_id: string
+          created_at?: string
+          delivered?: boolean
+          id?: string
+          org_id: string
+          paid?: boolean
+          total_items: number
+          total_price: number
+        }
+        Update: {
+          buyer_name?: string
+          buyer_whatsapp?: string
+          campaign_id?: string
+          created_at?: string
+          delivered?: boolean
+          id?: string
+          org_id?: string
+          paid?: boolean
+          total_items?: number
+          total_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cheer_orders_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "cheer_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cheer_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_notifications: {
         Row: {
           created_at: string
