@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, MapPin, User, Trophy, Edit2, Save, XCircle, Shield, Target, Users, Trash2, ShieldCheck, Crown, MessageSquare } from 'lucide-react';
+import { Calendar, MapPin, User, Trophy, Edit2, Save, XCircle, Shield, Target, Users, Trash2, ShieldCheck, Crown, MessageSquare, Video } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
