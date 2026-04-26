@@ -127,7 +127,10 @@ export function MatchDetailDrawer({
   return (
     <>
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="max-h-[92vh]">
+      <DrawerContent
+        className="max-h-[92vh] w-full max-w-[100vw] left-0 right-0 [touch-action:manipulation]"
+        style={{ touchAction: 'manipulation' }}
+      >
         <DrawerHeader className="border-b border-border pb-4">
           <div className="flex items-center justify-between">
             <DrawerTitle className="flex items-center gap-3 text-lg">
