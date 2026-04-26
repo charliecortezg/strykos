@@ -684,14 +684,27 @@ export function MatchDetailDrawer({
 
           <Separator />
 
-          {/* Full coach comment */}
+          {/* Full coach comment - editable */}
           <div>
             <Label className="text-xs text-muted-foreground mb-1 block">Comentario del entrenador</Label>
-            {selectedPlayer?.note ? (
-              <p className="text-sm whitespace-pre-wrap">{selectedPlayer.note}</p>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">Sin comentarios</p>
-            )}
+            <Textarea
+              value={selectedPlayer?.note || ''}
+              onChange={(e) => {
+                const newNote = e.target.value;
+                if (selectedPlayer) {
+                  setSelectedPlayer({ ...selectedPlayer, note: newNote });
+                  updatePlayerStat(selectedPlayer.player_id, 'note' as keyof MatchPlayer, newNote as any);
+                }
+              }}
+              onBlur={() => {
+                if (selectedPlayer && editedPlayers.length > 0) {
+                  onUpdatePlayers(editedPlayers);
+                }
+              }}
+              placeholder="Escribe un comentario sobre el desempeño del jugador..."
+              rows={4}
+              className="text-sm"
+            />
           </div>
         </div>
       </SheetContent>
