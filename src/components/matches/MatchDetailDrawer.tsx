@@ -568,6 +568,13 @@ export function MatchDetailDrawer({
                 </div>
               )}
             </TabsContent>
+
+            <TabsContent value="video" className="pb-4">
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Video className="w-12 h-12 text-muted-foreground mb-3" />
+                <p className="text-sm text-muted-foreground">Análisis de video — próximamente</p>
+              </div>
+            </TabsContent>
           </Tabs>
         </ScrollArea>
 
