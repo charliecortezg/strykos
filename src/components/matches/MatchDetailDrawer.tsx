@@ -160,19 +160,23 @@ export function MatchDetailDrawer({
 
         <ScrollArea className="flex-1 px-4 overflow-x-hidden">
           <Tabs defaultValue="info" className="mt-4">
-            <TabsList className="mb-4 w-full grid grid-cols-3">
-              <TabsTrigger value="info" className="gap-2 text-xs sm:text-sm">
+            <TabsList className="mb-4 inline-flex w-full justify-start gap-1 overflow-x-auto whitespace-nowrap flex-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <TabsTrigger value="info" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm shrink-0">
                 <Trophy className="w-4 h-4" />
                 <span className="hidden sm:inline">Info</span>
               </TabsTrigger>
-              <TabsTrigger value="players" className="gap-2 text-xs sm:text-sm">
+              <TabsTrigger value="players" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm shrink-0">
                 <Users className="w-4 h-4" />
                 <span className="hidden sm:inline">Jugadores</span>
                 <span className="text-xs">({matchPlayers.length})</span>
               </TabsTrigger>
-              <TabsTrigger value="kpis" className="gap-2 text-xs sm:text-sm">
+              <TabsTrigger value="kpis" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm shrink-0">
                 <Target className="w-4 h-4" />
                 <span className="hidden sm:inline">KPIs</span>
+              </TabsTrigger>
+              <TabsTrigger value="video" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm shrink-0">
+                <Video className="w-4 h-4" />
+                <span className="hidden sm:inline">Video</span>
               </TabsTrigger>
             </TabsList>
 
