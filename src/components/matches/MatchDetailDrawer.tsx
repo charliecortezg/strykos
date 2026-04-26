@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, MapPin, User, Trophy, Edit2, Save, XCircle, Shield, Target, Users, Trash2, ShieldCheck, Crown, MessageSquare } from 'lucide-react';
+import { Calendar, MapPin, User, Trophy, Edit2, Save, XCircle, Shield, Target, Users, Trash2, ShieldCheck, Crown, MessageSquare, Video } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -160,19 +160,23 @@ export function MatchDetailDrawer({
 
         <ScrollArea className="flex-1 px-4 overflow-x-hidden">
           <Tabs defaultValue="info" className="mt-4">
-            <TabsList className="mb-4 w-full grid grid-cols-3">
-              <TabsTrigger value="info" className="gap-2 text-xs sm:text-sm">
+            <TabsList className="mb-4 inline-flex w-full justify-start gap-1 overflow-x-auto whitespace-nowrap flex-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <TabsTrigger value="info" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm shrink-0">
                 <Trophy className="w-4 h-4" />
                 <span className="hidden sm:inline">Info</span>
               </TabsTrigger>
-              <TabsTrigger value="players" className="gap-2 text-xs sm:text-sm">
+              <TabsTrigger value="players" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm shrink-0">
                 <Users className="w-4 h-4" />
                 <span className="hidden sm:inline">Jugadores</span>
                 <span className="text-xs">({matchPlayers.length})</span>
               </TabsTrigger>
-              <TabsTrigger value="kpis" className="gap-2 text-xs sm:text-sm">
+              <TabsTrigger value="kpis" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm shrink-0">
                 <Target className="w-4 h-4" />
                 <span className="hidden sm:inline">KPIs</span>
+              </TabsTrigger>
+              <TabsTrigger value="video" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm shrink-0">
+                <Video className="w-4 h-4" />
+                <span className="hidden sm:inline">Video</span>
               </TabsTrigger>
             </TabsList>
 
@@ -564,6 +568,13 @@ export function MatchDetailDrawer({
                 </div>
               )}
             </TabsContent>
+
+            <TabsContent value="video" className="pb-4">
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Video className="w-12 h-12 text-muted-foreground mb-3" />
+                <p className="text-sm text-muted-foreground">Análisis de video — próximamente</p>
+              </div>
+            </TabsContent>
           </Tabs>
         </ScrollArea>
 
@@ -673,14 +684,27 @@ export function MatchDetailDrawer({
 
           <Separator />
 
-          {/* Full coach comment */}
+          {/* Full coach comment - editable */}
           <div>
             <Label className="text-xs text-muted-foreground mb-1 block">Comentario del entrenador</Label>
-            {selectedPlayer?.note ? (
-              <p className="text-sm whitespace-pre-wrap">{selectedPlayer.note}</p>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">Sin comentarios</p>
-            )}
+            <Textarea
+              value={selectedPlayer?.note || ''}
+              onChange={(e) => {
+                const newNote = e.target.value;
+                if (selectedPlayer) {
+                  setSelectedPlayer({ ...selectedPlayer, note: newNote });
+                  updatePlayerStat(selectedPlayer.player_id, 'note' as keyof MatchPlayer, newNote as any);
+                }
+              }}
+              onBlur={() => {
+                if (selectedPlayer && editedPlayers.length > 0) {
+                  onUpdatePlayers(editedPlayers);
+                }
+              }}
+              placeholder="Escribe un comentario sobre el desempeño del jugador..."
+              rows={4}
+              className="text-sm"
+            />
           </div>
         </div>
       </SheetContent>
