@@ -424,6 +424,18 @@ export default function MatchDetailPage() {
                 </div>
               )}
             </TabsContent>
+
+            {/* VIDEO TAB */}
+            <TabsContent value="video">
+              <div style={{ height: '70vh' }}>
+                <MatchVideoAnalysis
+                  matchId={match.id}
+                  organizationId={match.organization_id}
+                  categoryName={match.category?.name ?? ''}
+                  attendedPlayers={matchPlayers.filter(mp => mp.attended) as any}
+                />
+              </div>
+            </TabsContent>
           </Tabs>
         )}
       </main>
