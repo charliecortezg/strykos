@@ -589,7 +589,7 @@ export function MatchDetailDrawer({
               </div>
             </TabsContent>
           </Tabs>
-        </ScrollArea>
+        </div>
 
         <DrawerFooter className="border-t border-border pt-4">
           {isEditing ? (
