@@ -390,18 +390,18 @@ export function MatchDetailDrawer({
                   <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground text-sm">No hay jugadores registrados</p>
                 </div>
-              ) : (
-                <div className="space-y-2">
+             ) : (
+                <div className="flex flex-col gap-3 p-4">
                   {(isEditing ? editedPlayers : matchPlayers).map((mp) => {
                     const isMvp = match.mvp_player_id === mp.player_id;
                     const attended = mp.attended;
-                    const perfLabels: Record<string, { label: string; cls: string }> = {
-                      outstanding: { label: 'Destacado', cls: 'bg-blue-500' },
-                      excellent: { label: 'Excelente', cls: 'bg-success' },
-                      focus: { label: 'En foco', cls: 'bg-warning' },
-                      challenge: { label: 'Reto', cls: 'bg-destructive' },
+                    const perfLabels: Record<string, string> = {
+                      outstanding: 'Destacado',
+                      excellent: 'Excelente',
+                      focus: 'En foco',
+                      challenge: 'Reto',
                     };
-                    const perf = mp.performance ? perfLabels[mp.performance] : null;
+                    const perfLabel = mp.performance ? perfLabels[mp.performance] : null;
                     const showGoals = isFutbol && (mp.goals ?? 0) > 0;
                     const showAssists = isFutbol && (mp.assists ?? 0) > 0;
                     const showPoints = !isFutbol && (mp.points ?? 0) > 0;
@@ -411,40 +411,39 @@ export function MatchDetailDrawer({
                       <div
                         key={mp.id}
                         className={cn(
-                          "w-full rounded-lg border border-border bg-card p-3",
-                          !attended && "opacity-50",
-                          isMvp && "border-l-4 border-l-warning"
+                          "rounded-xl border border-border bg-card p-4",
+                          !attended && "opacity-40",
+                          isMvp && "border-l-[3px] border-l-warning"
                         )}
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              {isMvp && <Crown className="w-4 h-4 text-warning fill-warning shrink-0" />}
-                              <p className="font-semibold text-sm truncate">{mp.player?.full_name}</p>
-                            </div>
-                          </div>
-                          <Badge
-                            variant={attended ? 'default' : 'outline'}
+                        {/* Row 1: Name + Attendance */}
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="font-bold text-sm text-foreground truncate">
+                            {mp.player?.full_name}
+                          </p>
+                          <span
                             className={cn(
-                              "text-[10px] shrink-0",
-                              attended ? "bg-success hover:bg-success text-success-foreground" : "text-muted-foreground"
+                              "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                              attended
+                                ? "bg-success/15 text-success"
+                                : "bg-muted text-muted-foreground"
                             )}
                           >
                             {attended ? 'Asistió' : 'No asistió'}
-                          </Badge>
+                          </span>
                         </div>
 
-                        {attended && (position || perf || showGoals || showAssists || showPoints) && (
+                        {/* Row 2: Pills */}
+                        {(position || perfLabel || showGoals || showAssists || showPoints || isMvp) && (
                           <div className="mt-2 flex flex-wrap items-center gap-1.5">
                             {position && (
                               <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                                 {position}
                               </span>
                             )}
-                            {perf && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-foreground">
-                                <span className={cn("w-2 h-2 rounded-full", perf.cls)} />
-                                {perf.label}
+                            {perfLabel && (
+                              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] text-foreground">
+                                {perfLabel}
                               </span>
                             )}
                             {showGoals && (
@@ -462,9 +461,15 @@ export function MatchDetailDrawer({
                                 {mp.points} pts
                               </span>
                             )}
+                            {isMvp && (
+                              <span className="inline-flex items-center rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning">
+                                👑 MVP
+                              </span>
+                            )}
                           </div>
                         )}
 
+                        {/* Row 3: Note */}
                         {mp.note && (
                           <p className="mt-2 text-xs italic text-muted-foreground">
                             {mp.note}
