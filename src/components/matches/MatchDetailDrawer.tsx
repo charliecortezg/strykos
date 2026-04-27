@@ -395,102 +395,125 @@ export function MatchDetailDrawer({
                 </div>
               ) : (
                 <div
-                  className="-mx-4 w-[calc(100%+2rem)] overflow-x-auto px-4 [scrollbar-width:thin]"
+                  className="-mx-4 w-[calc(100%+2rem)] overflow-x-scroll [scrollbar-width:thin]"
                   style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
                 >
-                <div className="min-w-[560px] space-y-2">
-                  {(isEditing ? editedPlayers : matchPlayers).map((mp) => (
-                    <div 
-                      key={mp.id} 
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-lg border border-border bg-card p-3",
-                        !isEditing && "cursor-pointer active:bg-muted/50 transition-colors"
-                      )}
-                      onClick={() => { if (!isEditing) setSelectedPlayer(mp); }}
-                    >
-                      <div className="sticky left-0 z-[1] flex w-[200px] flex-shrink-0 items-center gap-2 bg-card pr-2">
-                        {/* MVP crown indicator */}
-                        {match.mvp_player_id === mp.player_id && (
-                          <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
-                        )}
-                        {/* Performance indicator */}
-                        {mp.attended && mp.performance && (
-                          <PerformanceIndicator
-                            status={mp.performance as PerformanceStatus}
-                            onChange={() => {}}
-                            disabled
-                            size="sm"
-                          />
-                        )}
-                        {!mp.attended && (
-                          <div className="w-5 h-5 min-w-[20px] rounded-full bg-destructive ring-2 ring-destructive/30 flex-shrink-0" />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm truncate">{mp.player?.full_name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{mp.player?.position || 'Sin posición'}</p>
-                          {!isEditing && mp.note && (
-                            <p className="text-xs text-muted-foreground mt-0.5 italic line-clamp-1">
-                              💬 {mp.note}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0 flex items-center gap-2 ml-auto">
-                        {isEditing ? (
+                  <table className="border-collapse text-sm" style={{ minWidth: isFutbol ? 560 : 480 }}>
+                    <thead>
+                      <tr className="bg-muted/50 text-xs text-muted-foreground">
+                        <th className="sticky left-0 z-[2] bg-muted/80 backdrop-blur px-3 py-2 text-left font-medium" style={{ minWidth: 180 }}>
+                          Jugador
+                        </th>
+                        <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 70 }}>Asist.</th>
+                        <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 90 }}>Rendim.</th>
+                        {isFutbol ? (
                           <>
-                            <Checkbox
-                              checked={mp.attended}
-                              onCheckedChange={(checked) => updatePlayerStat(mp.player_id, 'attended', !!checked)}
-                            />
-                            {isFutbol ? (
-                              <div className="flex items-center gap-1">
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  value={mp.goals}
-                                  onChange={(e) => updatePlayerStat(mp.player_id, 'goals', parseInt(e.target.value) || 0)}
-                                  className="w-14 h-8 text-center text-sm"
-                                  placeholder="G"
-                                />
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  value={mp.assists}
-                                  onChange={(e) => updatePlayerStat(mp.player_id, 'assists', parseInt(e.target.value) || 0)}
-                                  className="w-14 h-8 text-center text-sm"
-                                  placeholder="A"
-                                />
-                              </div>
-                            ) : (
-                              <Input
-                                type="number"
-                                min="0"
-                                value={mp.points}
-                                onChange={(e) => updatePlayerStat(mp.player_id, 'points', parseInt(e.target.value) || 0)}
-                                className="w-14 h-8 text-center text-sm"
-                                placeholder="Pts"
-                              />
-                            )}
+                            <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 60 }}>G</th>
+                            <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 60 }}>A</th>
                           </>
                         ) : (
-                          <>
-                            <Badge variant={mp.attended ? 'default' : 'outline'} className="text-xs">
-                              {mp.attended ? '✓' : '✗'}
-                            </Badge>
-                            {isFutbol ? (
-                              <div className="flex items-center gap-2 text-sm whitespace-nowrap">
-                                <span className={cn("font-medium", mp.goals > 0 && "text-success")}>{mp.goals}G</span>
-                                <span className={cn("font-medium", mp.assists > 0 && "text-primary")}>{mp.assists}A</span>
-                              </div>
-                            ) : (
-                              <span className="font-medium text-sm whitespace-nowrap">{mp.points}Pts</span>
-                            )}
-                          </>
+                          <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 70 }}>Pts</th>
                         )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(isEditing ? editedPlayers : matchPlayers).map((mp, idx) => (
+                        <tr
+                          key={mp.id}
+                          className={cn(
+                            "border-t border-border",
+                            idx % 2 === 1 && "bg-muted/20",
+                            !isEditing && "cursor-pointer active:bg-muted/40"
+                          )}
+                          onClick={() => { if (!isEditing) setSelectedPlayer(mp); }}
+                        >
+                          <td
+                            className={cn(
+                              "sticky left-0 z-[1] px-3 py-2 text-left",
+                              idx % 2 === 1 ? "bg-[hsl(var(--muted)/0.6)] backdrop-blur" : "bg-card"
+                            )}
+                            style={{ minWidth: 180 }}
+                          >
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              {match.mvp_player_id === mp.player_id && (
+                                <Crown className="w-3.5 h-3.5 text-yellow-500 fill-yellow-400 shrink-0" />
+                              )}
+                              <div className="min-w-0">
+                                <p className="font-medium truncate">{mp.player?.full_name}</p>
+                                <p className="text-[11px] text-muted-foreground truncate">
+                                  {mp.player?.position || 'Sin posición'}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-2 py-2 text-center" onClick={(e) => isEditing && e.stopPropagation()}>
+                            {isEditing ? (
+                              <Checkbox
+                                checked={mp.attended}
+                                onCheckedChange={(checked) => updatePlayerStat(mp.player_id, 'attended', !!checked)}
+                              />
+                            ) : (
+                              <Badge variant={mp.attended ? 'default' : 'outline'} className="text-xs">
+                                {mp.attended ? '✓' : '✗'}
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="px-2 py-2">
+                            <div className="flex items-center justify-center">
+                              {mp.attended && mp.performance ? (
+                                <PerformanceIndicator
+                                  status={mp.performance as PerformanceStatus}
+                                  onChange={() => {}}
+                                  disabled
+                                  size="sm"
+                                />
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </div>
+                          </td>
+                          {isFutbol ? (
+                            <>
+                              <td className="px-2 py-2 text-center" onClick={(e) => isEditing && e.stopPropagation()}>
+                                {isEditing ? (
+                                  <Input
+                                    type="number" min="0" value={mp.goals}
+                                    onChange={(e) => updatePlayerStat(mp.player_id, 'goals', parseInt(e.target.value) || 0)}
+                                    className="w-12 h-7 text-center text-sm mx-auto"
+                                  />
+                                ) : (
+                                  <span className={cn("font-medium", mp.goals > 0 && "text-success")}>{mp.goals}</span>
+                                )}
+                              </td>
+                              <td className="px-2 py-2 text-center" onClick={(e) => isEditing && e.stopPropagation()}>
+                                {isEditing ? (
+                                  <Input
+                                    type="number" min="0" value={mp.assists}
+                                    onChange={(e) => updatePlayerStat(mp.player_id, 'assists', parseInt(e.target.value) || 0)}
+                                    className="w-12 h-7 text-center text-sm mx-auto"
+                                  />
+                                ) : (
+                                  <span className={cn("font-medium", mp.assists > 0 && "text-primary")}>{mp.assists}</span>
+                                )}
+                              </td>
+                            </>
+                          ) : (
+                            <td className="px-2 py-2 text-center" onClick={(e) => isEditing && e.stopPropagation()}>
+                              {isEditing ? (
+                                <Input
+                                  type="number" min="0" value={mp.points}
+                                  onChange={(e) => updatePlayerStat(mp.player_id, 'points', parseInt(e.target.value) || 0)}
+                                  className="w-14 h-7 text-center text-sm mx-auto"
+                                />
+                              ) : (
+                                <span className="font-medium">{mp.points}</span>
+                              )}
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </TabsContent>
