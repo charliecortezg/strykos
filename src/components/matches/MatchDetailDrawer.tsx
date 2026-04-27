@@ -128,10 +128,10 @@ export function MatchDetailDrawer({
     <>
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()} shouldScaleBackground={false}>
       <DrawerContent
-        className="left-0 right-0 h-[95dvh] max-h-[95dvh] w-screen max-w-[100vw] flex flex-col overflow-hidden p-0"
+        className="left-0 right-0 h-[95dvh] max-h-[95dvh] w-screen max-w-[100vw] overflow-hidden p-0"
         style={{ touchAction: 'manipulation' }}
       >
-        <DrawerHeader className="border-b border-border pb-3 pt-2 px-4 shrink-0">
+        <DrawerHeader className="sticky top-0 z-10 bg-background border-b border-border pb-3 pt-2 px-4 shrink-0">
           <div className="flex items-center justify-between gap-2">
             <DrawerTitle className="flex items-center gap-2 text-base flex-wrap min-w-0">
               <Trophy className="w-5 h-5 text-primary shrink-0" />
