@@ -94,7 +94,7 @@ export function TrainerMatchesModule({ categories }: TrainerMatchesModuleProps) 
                   <MatchCard
                     key={match.id}
                     match={match}
-                    onView={() => setSelectedMatch(match)}
+                    onView={() => navigate(`/partidos/${match.id}`)}
                     onLoadResults={() => setMatchForResults(match)}
                     onDelete={() => setMatchToDelete(match)}
                     canLoadResults={true}
@@ -116,7 +116,7 @@ export function TrainerMatchesModule({ categories }: TrainerMatchesModuleProps) 
                   <MatchCard
                     key={match.id}
                     match={match}
-                    onView={() => setSelectedMatch(match)}
+                    onView={() => navigate(`/partidos/${match.id}`)}
                   />
                 ))}
               </div>
@@ -141,15 +141,7 @@ export function TrainerMatchesModule({ categories }: TrainerMatchesModuleProps) 
         onUpdatePlayers={handleUpdatePlayers}
       />
 
-      {/* Detail Modal (read-only for trainer) */}
-      <MatchDetailModal
-        match={selectedMatch}
-        isOpen={!!selectedMatch}
-        onClose={() => setSelectedMatch(null)}
-        onUpdate={handleUpdateMatch}
-        onUpdatePlayers={handleUpdatePlayers}
-        canEdit={false}
-      />
+      {/* Match detail now opens as a full page at /partidos/:id */}
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!matchToDelete} onOpenChange={(open) => !open && setMatchToDelete(null)}>
         <AlertDialogContent>
