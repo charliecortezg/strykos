@@ -126,62 +126,53 @@ export function MatchDetailDrawer({
 
   return (
     <>
-    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()} shouldScaleBackground={false}>
       <DrawerContent
-        className="left-0 right-0 max-h-[92vh] w-full max-w-[100vw] overflow-x-hidden [touch-action:manipulation]"
-        style={{ touchAction: 'manipulation', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}
+        className="left-0 right-0 h-[95dvh] max-h-[95dvh] w-screen max-w-[100vw] overflow-hidden p-0"
+        style={{ touchAction: 'manipulation' }}
       >
-        <DrawerHeader className="border-b border-border pb-4">
-          <div className="flex items-center justify-between">
-            <DrawerTitle className="flex items-center gap-3 text-lg">
-              <Trophy className="w-5 h-5 text-primary" />
-              <span>Detalle del Partido</span>
+        <DrawerHeader className="sticky top-0 z-10 bg-background border-b border-border pb-3 pt-2 px-4 shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <DrawerTitle className="flex items-center gap-2 text-base flex-wrap min-w-0">
+              <Trophy className="w-5 h-5 text-primary shrink-0" />
+              <span className="truncate">Detalle del Partido</span>
               {isFinished && (
-                <>
-                  <Badge 
-                    variant="outline"
-                    className={cn(
-                      result === 'victoria' && "bg-success/10 text-success border-success/20",
-                      result === 'empate' && "bg-warning/10 text-warning border-warning/20",
-                      result === 'derrota' && "bg-destructive/10 text-destructive border-destructive/20"
-                    )}
-                  >
-                    {result === 'victoria' ? 'Victoria' : result === 'empate' ? 'Empate' : 'Derrota'}
-                  </Badge>
-                  <Badge 
-                    variant="outline" 
-                    className="bg-success/10 text-success border-success/20 gap-1"
-                  >
-                    <ShieldCheck className="w-3 h-3" />
-                    Registro oficial
-                  </Badge>
-                </>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "shrink-0",
+                    result === 'victoria' && "bg-success/10 text-success border-success/20",
+                    result === 'empate' && "bg-warning/10 text-warning border-warning/20",
+                    result === 'derrota' && "bg-destructive/10 text-destructive border-destructive/20"
+                  )}
+                >
+                  {result === 'victoria' ? 'Victoria' : result === 'empate' ? 'Empate' : 'Derrota'}
+                </Badge>
               )}
             </DrawerTitle>
           </div>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4">
-          <Tabs defaultValue="info" className="mt-4">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-3">
+          <Tabs defaultValue="info" className="w-full">
             <div
-              className="mb-4 -mx-4 flex flex-nowrap overflow-x-auto px-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-              style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', touchAction: 'pan-x' }}
+              className="mb-4 -mx-4 px-4 overflow-x-scroll [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
             >
               <TabsList className="inline-flex w-max flex-nowrap gap-1 h-auto bg-muted p-1">
-                <TabsTrigger value="info" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
+                <TabsTrigger value="info" className="gap-1.5 px-3 py-1.5 text-xs flex-shrink-0 whitespace-nowrap">
                   <Trophy className="w-4 h-4" />
                   <span>Info</span>
                 </TabsTrigger>
-                <TabsTrigger value="players" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
+                <TabsTrigger value="players" className="gap-1.5 px-3 py-1.5 text-xs flex-shrink-0 whitespace-nowrap">
                   <Users className="w-4 h-4" />
-                  <span>Jugadores</span>
-                  <span className="text-xs">({matchPlayers.length})</span>
+                  <span>Jugadores ({matchPlayers.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="kpis" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
+                <TabsTrigger value="kpis" className="gap-1.5 px-3 py-1.5 text-xs flex-shrink-0 whitespace-nowrap">
                   <Target className="w-4 h-4" />
                   <span>KPIs</span>
                 </TabsTrigger>
-                <TabsTrigger value="video" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
+                <TabsTrigger value="video" className="gap-1.5 px-3 py-1.5 text-xs flex-shrink-0 whitespace-nowrap">
                   <Video className="w-4 h-4" />
                   <span>Video</span>
                 </TabsTrigger>
@@ -404,102 +395,125 @@ export function MatchDetailDrawer({
                 </div>
               ) : (
                 <div
-                  className="-mx-4 w-[calc(100%+2rem)] overflow-x-auto px-4 [scrollbar-width:thin]"
+                  className="-mx-4 w-[calc(100%+2rem)] overflow-x-scroll [scrollbar-width:thin]"
                   style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
                 >
-                <div className="min-w-[560px] space-y-2">
-                  {(isEditing ? editedPlayers : matchPlayers).map((mp) => (
-                    <div 
-                      key={mp.id} 
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-lg border border-border bg-card p-3",
-                        !isEditing && "cursor-pointer active:bg-muted/50 transition-colors"
-                      )}
-                      onClick={() => { if (!isEditing) setSelectedPlayer(mp); }}
-                    >
-                      <div className="sticky left-0 z-[1] flex w-[200px] flex-shrink-0 items-center gap-2 bg-card pr-2">
-                        {/* MVP crown indicator */}
-                        {match.mvp_player_id === mp.player_id && (
-                          <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
-                        )}
-                        {/* Performance indicator */}
-                        {mp.attended && mp.performance && (
-                          <PerformanceIndicator
-                            status={mp.performance as PerformanceStatus}
-                            onChange={() => {}}
-                            disabled
-                            size="sm"
-                          />
-                        )}
-                        {!mp.attended && (
-                          <div className="w-5 h-5 min-w-[20px] rounded-full bg-destructive ring-2 ring-destructive/30 flex-shrink-0" />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm truncate">{mp.player?.full_name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{mp.player?.position || 'Sin posición'}</p>
-                          {!isEditing && mp.note && (
-                            <p className="text-xs text-muted-foreground mt-0.5 italic line-clamp-1">
-                              💬 {mp.note}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0 flex items-center gap-2 ml-auto">
-                        {isEditing ? (
+                  <table className="border-collapse text-sm" style={{ minWidth: isFutbol ? 560 : 480 }}>
+                    <thead>
+                      <tr className="bg-muted/50 text-xs text-muted-foreground">
+                        <th className="sticky left-0 z-[2] bg-muted/80 backdrop-blur px-3 py-2 text-left font-medium" style={{ minWidth: 180 }}>
+                          Jugador
+                        </th>
+                        <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 70 }}>Asist.</th>
+                        <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 90 }}>Rendim.</th>
+                        {isFutbol ? (
                           <>
-                            <Checkbox
-                              checked={mp.attended}
-                              onCheckedChange={(checked) => updatePlayerStat(mp.player_id, 'attended', !!checked)}
-                            />
-                            {isFutbol ? (
-                              <div className="flex items-center gap-1">
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  value={mp.goals}
-                                  onChange={(e) => updatePlayerStat(mp.player_id, 'goals', parseInt(e.target.value) || 0)}
-                                  className="w-14 h-8 text-center text-sm"
-                                  placeholder="G"
-                                />
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  value={mp.assists}
-                                  onChange={(e) => updatePlayerStat(mp.player_id, 'assists', parseInt(e.target.value) || 0)}
-                                  className="w-14 h-8 text-center text-sm"
-                                  placeholder="A"
-                                />
-                              </div>
-                            ) : (
-                              <Input
-                                type="number"
-                                min="0"
-                                value={mp.points}
-                                onChange={(e) => updatePlayerStat(mp.player_id, 'points', parseInt(e.target.value) || 0)}
-                                className="w-14 h-8 text-center text-sm"
-                                placeholder="Pts"
-                              />
-                            )}
+                            <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 60 }}>G</th>
+                            <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 60 }}>A</th>
                           </>
                         ) : (
-                          <>
-                            <Badge variant={mp.attended ? 'default' : 'outline'} className="text-xs">
-                              {mp.attended ? '✓' : '✗'}
-                            </Badge>
-                            {isFutbol ? (
-                              <div className="flex items-center gap-2 text-sm whitespace-nowrap">
-                                <span className={cn("font-medium", mp.goals > 0 && "text-success")}>{mp.goals}G</span>
-                                <span className={cn("font-medium", mp.assists > 0 && "text-primary")}>{mp.assists}A</span>
-                              </div>
-                            ) : (
-                              <span className="font-medium text-sm whitespace-nowrap">{mp.points}Pts</span>
-                            )}
-                          </>
+                          <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 70 }}>Pts</th>
                         )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(isEditing ? editedPlayers : matchPlayers).map((mp, idx) => (
+                        <tr
+                          key={mp.id}
+                          className={cn(
+                            "border-t border-border",
+                            idx % 2 === 1 && "bg-muted/20",
+                            !isEditing && "cursor-pointer active:bg-muted/40"
+                          )}
+                          onClick={() => { if (!isEditing) setSelectedPlayer(mp); }}
+                        >
+                          <td
+                            className={cn(
+                              "sticky left-0 z-[1] px-3 py-2 text-left",
+                              idx % 2 === 1 ? "bg-[hsl(var(--muted)/0.6)] backdrop-blur" : "bg-card"
+                            )}
+                            style={{ minWidth: 180 }}
+                          >
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              {match.mvp_player_id === mp.player_id && (
+                                <Crown className="w-3.5 h-3.5 text-yellow-500 fill-yellow-400 shrink-0" />
+                              )}
+                              <div className="min-w-0">
+                                <p className="font-medium truncate">{mp.player?.full_name}</p>
+                                <p className="text-[11px] text-muted-foreground truncate">
+                                  {mp.player?.position || 'Sin posición'}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-2 py-2 text-center" onClick={(e) => isEditing && e.stopPropagation()}>
+                            {isEditing ? (
+                              <Checkbox
+                                checked={mp.attended}
+                                onCheckedChange={(checked) => updatePlayerStat(mp.player_id, 'attended', !!checked)}
+                              />
+                            ) : (
+                              <Badge variant={mp.attended ? 'default' : 'outline'} className="text-xs">
+                                {mp.attended ? '✓' : '✗'}
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="px-2 py-2">
+                            <div className="flex items-center justify-center">
+                              {mp.attended && mp.performance ? (
+                                <PerformanceIndicator
+                                  status={mp.performance as PerformanceStatus}
+                                  onChange={() => {}}
+                                  disabled
+                                  size="sm"
+                                />
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </div>
+                          </td>
+                          {isFutbol ? (
+                            <>
+                              <td className="px-2 py-2 text-center" onClick={(e) => isEditing && e.stopPropagation()}>
+                                {isEditing ? (
+                                  <Input
+                                    type="number" min="0" value={mp.goals}
+                                    onChange={(e) => updatePlayerStat(mp.player_id, 'goals', parseInt(e.target.value) || 0)}
+                                    className="w-12 h-7 text-center text-sm mx-auto"
+                                  />
+                                ) : (
+                                  <span className={cn("font-medium", mp.goals > 0 && "text-success")}>{mp.goals}</span>
+                                )}
+                              </td>
+                              <td className="px-2 py-2 text-center" onClick={(e) => isEditing && e.stopPropagation()}>
+                                {isEditing ? (
+                                  <Input
+                                    type="number" min="0" value={mp.assists}
+                                    onChange={(e) => updatePlayerStat(mp.player_id, 'assists', parseInt(e.target.value) || 0)}
+                                    className="w-12 h-7 text-center text-sm mx-auto"
+                                  />
+                                ) : (
+                                  <span className={cn("font-medium", mp.assists > 0 && "text-primary")}>{mp.assists}</span>
+                                )}
+                              </td>
+                            </>
+                          ) : (
+                            <td className="px-2 py-2 text-center" onClick={(e) => isEditing && e.stopPropagation()}>
+                              {isEditing ? (
+                                <Input
+                                  type="number" min="0" value={mp.points}
+                                  onChange={(e) => updatePlayerStat(mp.player_id, 'points', parseInt(e.target.value) || 0)}
+                                  className="w-14 h-7 text-center text-sm mx-auto"
+                                />
+                              ) : (
+                                <span className="font-medium">{mp.points}</span>
+                              )}
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </TabsContent>
@@ -588,7 +602,7 @@ export function MatchDetailDrawer({
           </Tabs>
         </div>
 
-        <DrawerFooter className="border-t border-border pt-4">
+        <DrawerFooter className="sticky bottom-0 border-t border-border pt-3 pb-3 px-4 bg-background shrink-0 z-10">
           {isEditing ? (
             <div className="flex gap-2 w-full">
               <Button variant="outline" onClick={handleCancel} className="flex-1 gap-2">
