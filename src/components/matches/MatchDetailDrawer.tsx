@@ -161,29 +161,29 @@ export function MatchDetailDrawer({
           </div>
         </DrawerHeader>
 
-        <ScrollArea className="flex-1 px-4 [&_[data-radix-scroll-area-viewport]]:overflow-x-visible">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4">
           <Tabs defaultValue="info" className="mt-4">
             <div
-              className="mb-4 -mx-4 flex flex-nowrap overflow-x-scroll px-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:hidden"
-              style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
+              className="mb-4 -mx-4 flex flex-nowrap overflow-x-auto px-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', touchAction: 'pan-x' }}
             >
-              <TabsList className="flex w-max flex-nowrap gap-1 overflow-visible">
-                <TabsTrigger value="info" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm flex-shrink-0">
+              <TabsList className="inline-flex w-max flex-nowrap gap-1 h-auto bg-muted p-1">
+                <TabsTrigger value="info" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
                   <Trophy className="w-4 h-4" />
-                  <span className="hidden sm:inline">Info</span>
+                  <span>Info</span>
                 </TabsTrigger>
-                <TabsTrigger value="players" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm flex-shrink-0">
+                <TabsTrigger value="players" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
                   <Users className="w-4 h-4" />
-                  <span className="hidden sm:inline">Jugadores</span>
+                  <span>Jugadores</span>
                   <span className="text-xs">({matchPlayers.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="kpis" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm flex-shrink-0">
+                <TabsTrigger value="kpis" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
                   <Target className="w-4 h-4" />
-                  <span className="hidden sm:inline">KPIs</span>
+                  <span>KPIs</span>
                 </TabsTrigger>
-                <TabsTrigger value="video" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm flex-shrink-0">
+                <TabsTrigger value="video" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
                   <Video className="w-4 h-4" />
-                  <span className="hidden sm:inline">Video</span>
+                  <span>Video</span>
                 </TabsTrigger>
               </TabsList>
             </div>
