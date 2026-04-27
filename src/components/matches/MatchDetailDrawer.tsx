@@ -404,20 +404,20 @@ export function MatchDetailDrawer({
                 </div>
               ) : (
                 <div
-                  className="w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-                  style={{ WebkitOverflowScrolling: 'touch' }}
+                  className="-mx-4 w-[calc(100%+2rem)] overflow-x-auto px-4 [scrollbar-width:thin]"
+                  style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
                 >
-                <div className="min-w-[640px] space-y-2">
+                <div className="min-w-[560px] space-y-2">
                   {(isEditing ? editedPlayers : matchPlayers).map((mp) => (
                     <div 
                       key={mp.id} 
                       className={cn(
-                        "flex w-full min-w-max items-center justify-between gap-2 rounded-lg border border-border bg-card p-3",
+                        "flex w-full items-center gap-3 rounded-lg border border-border bg-card p-3",
                         !isEditing && "cursor-pointer active:bg-muted/50 transition-colors"
                       )}
                       onClick={() => { if (!isEditing) setSelectedPlayer(mp); }}
                     >
-                      <div className="sticky left-0 z-[1] flex min-w-[220px] flex-1 items-center gap-2 bg-card pr-3">
+                      <div className="sticky left-0 z-[1] flex w-[200px] flex-shrink-0 items-center gap-2 bg-card pr-2">
                         {/* MVP crown indicator */}
                         {match.mvp_player_id === mp.player_id && (
                           <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
@@ -436,18 +436,15 @@ export function MatchDetailDrawer({
                         )}
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{mp.player?.full_name}</p>
-                          <p className="text-xs text-muted-foreground">{mp.player?.position || 'Sin posición'}</p>
+                          <p className="text-xs text-muted-foreground truncate">{mp.player?.position || 'Sin posición'}</p>
                           {!isEditing && mp.note && (
                             <p className="text-xs text-muted-foreground mt-0.5 italic line-clamp-1">
                               💬 {mp.note}
-                              {mp.note.length > 60 && (
-                                <span className="text-primary ml-1 not-italic">ver más</span>
-                              )}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex-shrink-0 flex items-center gap-2">
+                      <div className="flex-shrink-0 flex items-center gap-2 ml-auto">
                         {isEditing ? (
                           <>
                             <Checkbox
@@ -490,12 +487,12 @@ export function MatchDetailDrawer({
                               {mp.attended ? '✓' : '✗'}
                             </Badge>
                             {isFutbol ? (
-                              <div className="flex items-center gap-2 text-sm">
+                              <div className="flex items-center gap-2 text-sm whitespace-nowrap">
                                 <span className={cn("font-medium", mp.goals > 0 && "text-success")}>{mp.goals}G</span>
                                 <span className={cn("font-medium", mp.assists > 0 && "text-primary")}>{mp.assists}A</span>
                               </div>
                             ) : (
-                              <span className="font-medium text-sm">{mp.points}Pts</span>
+                              <span className="font-medium text-sm whitespace-nowrap">{mp.points}Pts</span>
                             )}
                           </>
                         )}
