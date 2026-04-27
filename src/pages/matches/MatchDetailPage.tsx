@@ -433,6 +433,8 @@ export default function MatchDetailPage() {
                   organizationId={match.organization_id}
                   categoryName={match.category?.name ?? ''}
                   attendedPlayers={matchPlayers.filter(mp => mp.attended) as any}
+                  matchRival={match.rival_name}
+                  matchDate={match.match_date ? new Date(match.match_date).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : undefined}
                 />
               </div>
             </TabsContent>
