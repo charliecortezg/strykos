@@ -155,24 +155,21 @@ export function MatchDetailDrawer({
 
         <div className="min-h-0 w-full overflow-x-hidden px-3 py-3">
           <Tabs defaultValue="info" className="w-full">
-            <div
-              className="mb-4 -mx-4 px-4 overflow-x-scroll [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-              style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
-            >
-              <TabsList className="inline-flex w-max flex-nowrap gap-1 h-auto bg-muted p-1">
-                <TabsTrigger value="info" className="gap-1.5 px-3 py-1.5 text-xs flex-shrink-0 whitespace-nowrap">
+            <div className="mb-4 w-full overflow-visible">
+              <TabsList className="grid h-auto w-full grid-cols-4 gap-1 bg-muted p-1">
+                <TabsTrigger value="info" className="gap-1 px-1 py-1.5 text-[11px] whitespace-nowrap">
                   <Trophy className="w-4 h-4" />
                   <span>Info</span>
                 </TabsTrigger>
-                <TabsTrigger value="players" className="gap-1.5 px-3 py-1.5 text-xs flex-shrink-0 whitespace-nowrap">
+                <TabsTrigger value="players" className="gap-1 px-1 py-1.5 text-[11px] whitespace-nowrap">
                   <Users className="w-4 h-4" />
-                  <span>Jugadores ({matchPlayers.length})</span>
+                  <span>Jug. ({matchPlayers.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="kpis" className="gap-1.5 px-3 py-1.5 text-xs flex-shrink-0 whitespace-nowrap">
+                <TabsTrigger value="kpis" className="gap-1 px-1 py-1.5 text-[11px] whitespace-nowrap">
                   <Target className="w-4 h-4" />
                   <span>KPIs</span>
                 </TabsTrigger>
-                <TabsTrigger value="video" className="gap-1.5 px-3 py-1.5 text-xs flex-shrink-0 whitespace-nowrap">
+                <TabsTrigger value="video" className="gap-1 px-1 py-1.5 text-[11px] whitespace-nowrap">
                   <Video className="w-4 h-4" />
                   <span>Video</span>
                 </TabsTrigger>
