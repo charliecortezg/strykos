@@ -427,118 +427,89 @@ export function MatchDetailModal({
                 <p className="text-muted-foreground">No hay jugadores registrados para este partido</p>
               </div>
             ) : (
-              <div className="rounded-lg border border-border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead>Jugador</TableHead>
-                      <TableHead>Posición</TableHead>
-                      <TableHead className="text-center">Rendimiento</TableHead>
-                      <TableHead className="text-center">Asistió</TableHead>
-                      {isFutbol ? (
-                        <>
-                          <TableHead className="text-center">Goles</TableHead>
-                          <TableHead className="text-center">Asistencias</TableHead>
-                        </>
-                      ) : (
-                        <TableHead className="text-center">Puntos</TableHead>
+              <div className="flex flex-col gap-3">
+                {matchPlayers.map((mp) => {
+                  const attended = !!mp.attended;
+                  const isMvp = match.mvp_player_id === mp.player_id;
+                  const perfLabel =
+                    mp.performance === 'outstanding' ? 'Destacado' :
+                    mp.performance === 'excellent' ? 'Excelente' :
+                    mp.performance === 'focus' ? 'En foco' : null;
+                  const perfDot =
+                    mp.performance === 'outstanding' ? 'bg-blue-500' :
+                    mp.performance === 'excellent' ? 'bg-success' :
+                    mp.performance === 'focus' ? 'bg-warning' : '';
+                  const note = (mp as any).note as string | null | undefined;
+
+                  return (
+                    <div
+                      key={mp.id}
+                      className={cn(
+                        "rounded-xl border border-border bg-card p-4",
+                        !attended && "opacity-40",
+                        isMvp && "border-l-[3px] border-l-warning"
                       )}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(isEditing ? editedPlayers : matchPlayers).map((mp) => (
-                      <TableRow key={mp.id}>
-                        <TableCell className="font-medium">
-                          <div className="flex flex-col gap-0.5">
-                            <div className="flex items-center gap-1.5">
-                              {match.mvp_player_id === mp.player_id && (
-                                <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
-                              )}
-                              {mp.player?.full_name}
-                              {mp.is_guest && (
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-border ml-1">
-                                  INVITADO
-                                </Badge>
-                              )}
-                            </div>
-                            {(mp as any).note && (
-                              <p className="text-xs text-muted-foreground italic">📝 {(mp as any).note}</p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">{mp.player?.position || '—'}</TableCell>
-                        <TableCell className="text-center">
-                          {mp.attended && mp.performance ? (
-                            <PerformanceIndicator
-                              status={mp.performance as PerformanceStatus}
-                              onChange={() => {}}
-                              disabled
-                              size="sm"
-                            />
-                          ) : !mp.attended ? (
-                            <div className="w-5 h-5 min-w-[20px] rounded-full bg-destructive ring-2 ring-destructive/30 mx-auto" />
-                          ) : null}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {isEditing ? (
-                            <Checkbox
-                              checked={mp.attended}
-                              onCheckedChange={(checked) => updatePlayerStat(mp.player_id, 'attended', !!checked)}
-                            />
-                          ) : (
-                            <Badge variant={mp.attended ? 'default' : 'outline'}>
-                              {mp.attended ? 'Sí' : 'No'}
-                            </Badge>
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-bold text-sm text-foreground truncate">
+                          {mp.player?.full_name}
+                          {mp.is_guest && (
+                            <span className="ml-2 text-[10px] font-medium text-muted-foreground">INVITADO</span>
                           )}
-                        </TableCell>
+                        </p>
+                        <span className={cn(
+                          "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                          attended ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"
+                        )}>
+                          {attended ? 'Asistió' : 'No asistió'}
+                        </span>
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        {mp.player?.position && (
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                            {mp.player.position}
+                          </span>
+                        )}
+                        {attended && perfLabel && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-foreground">
+                            <span className={cn("w-2 h-2 rounded-full", perfDot)} />
+                            {perfLabel}
+                          </span>
+                        )}
                         {isFutbol ? (
                           <>
-                            <TableCell className="text-center">
-                              {isEditing ? (
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  value={mp.goals}
-                                  onChange={(e) => updatePlayerStat(mp.player_id, 'goals', parseInt(e.target.value) || 0)}
-                                  className="w-16 text-center"
-                                />
-                              ) : (
-                                <span className={cn("font-medium", mp.goals > 0 && "text-success")}>{mp.goals}</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {isEditing ? (
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  value={mp.assists}
-                                  onChange={(e) => updatePlayerStat(mp.player_id, 'assists', parseInt(e.target.value) || 0)}
-                                  className="w-16 text-center"
-                                />
-                              ) : (
-                                <span className={cn("font-medium", mp.assists > 0 && "text-primary")}>{mp.assists}</span>
-                              )}
-                            </TableCell>
+                            {mp.goals > 0 && (
+                              <span className="rounded-full bg-success/10 text-success px-2 py-0.5 text-[11px] font-medium">
+                                ⚽ {mp.goals}
+                              </span>
+                            )}
+                            {mp.assists > 0 && (
+                              <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-medium">
+                                🅰️ {mp.assists}
+                              </span>
+                            )}
                           </>
                         ) : (
-                          <TableCell className="text-center">
-                            {isEditing ? (
-                              <Input
-                                type="number"
-                                min="0"
-                                value={mp.points}
-                                onChange={(e) => updatePlayerStat(mp.player_id, 'points', parseInt(e.target.value) || 0)}
-                                className="w-16 text-center"
-                              />
-                            ) : (
-                              <span className="font-medium">{mp.points}</span>
-                            )}
-                          </TableCell>
+                          mp.points > 0 && (
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium">
+                              {mp.points} pts
+                            </span>
+                          )
                         )}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        {isMvp && (
+                          <span className="rounded-full bg-warning/15 text-warning px-2 py-0.5 text-[11px] font-medium">
+                            👑 MVP
+                          </span>
+                        )}
+                      </div>
+
+                      {note && (
+                        <p className="mt-2 text-xs italic text-muted-foreground">{note}</p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </TabsContent>
