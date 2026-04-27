@@ -602,7 +602,7 @@ export function MatchDetailDrawer({
           </Tabs>
         </div>
 
-        <DrawerFooter className="border-t border-border pt-3 pb-3 px-4 shrink-0">
+        <DrawerFooter className="sticky bottom-0 border-t border-border pt-3 pb-3 px-4 bg-background shrink-0 z-10">
           {isEditing ? (
             <div className="flex gap-2 w-full">
               <Button variant="outline" onClick={handleCancel} className="flex-1 gap-2">
