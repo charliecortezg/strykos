@@ -126,62 +126,53 @@ export function MatchDetailDrawer({
 
   return (
     <>
-    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()} shouldScaleBackground={false}>
       <DrawerContent
-        className="left-0 right-0 max-h-[92vh] w-full max-w-[100vw] overflow-x-hidden [touch-action:manipulation]"
-        style={{ touchAction: 'manipulation', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}
+        className="left-0 right-0 h-[95dvh] max-h-[95dvh] w-screen max-w-[100vw] flex flex-col overflow-hidden p-0"
+        style={{ touchAction: 'manipulation' }}
       >
-        <DrawerHeader className="border-b border-border pb-4">
-          <div className="flex items-center justify-between">
-            <DrawerTitle className="flex items-center gap-3 text-lg">
-              <Trophy className="w-5 h-5 text-primary" />
-              <span>Detalle del Partido</span>
+        <DrawerHeader className="border-b border-border pb-3 pt-2 px-4 shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <DrawerTitle className="flex items-center gap-2 text-base flex-wrap min-w-0">
+              <Trophy className="w-5 h-5 text-primary shrink-0" />
+              <span className="truncate">Detalle del Partido</span>
               {isFinished && (
-                <>
-                  <Badge 
-                    variant="outline"
-                    className={cn(
-                      result === 'victoria' && "bg-success/10 text-success border-success/20",
-                      result === 'empate' && "bg-warning/10 text-warning border-warning/20",
-                      result === 'derrota' && "bg-destructive/10 text-destructive border-destructive/20"
-                    )}
-                  >
-                    {result === 'victoria' ? 'Victoria' : result === 'empate' ? 'Empate' : 'Derrota'}
-                  </Badge>
-                  <Badge 
-                    variant="outline" 
-                    className="bg-success/10 text-success border-success/20 gap-1"
-                  >
-                    <ShieldCheck className="w-3 h-3" />
-                    Registro oficial
-                  </Badge>
-                </>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "shrink-0",
+                    result === 'victoria' && "bg-success/10 text-success border-success/20",
+                    result === 'empate' && "bg-warning/10 text-warning border-warning/20",
+                    result === 'derrota' && "bg-destructive/10 text-destructive border-destructive/20"
+                  )}
+                >
+                  {result === 'victoria' ? 'Victoria' : result === 'empate' ? 'Empate' : 'Derrota'}
+                </Badge>
               )}
             </DrawerTitle>
           </div>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4">
-          <Tabs defaultValue="info" className="mt-4">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-3">
+          <Tabs defaultValue="info" className="w-full">
             <div
-              className="mb-4 -mx-4 flex flex-nowrap overflow-x-auto px-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-              style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', touchAction: 'pan-x' }}
+              className="mb-4 -mx-4 px-4 overflow-x-scroll [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
             >
               <TabsList className="inline-flex w-max flex-nowrap gap-1 h-auto bg-muted p-1">
-                <TabsTrigger value="info" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
+                <TabsTrigger value="info" className="gap-1.5 px-3 py-1.5 text-xs flex-shrink-0 whitespace-nowrap">
                   <Trophy className="w-4 h-4" />
                   <span>Info</span>
                 </TabsTrigger>
-                <TabsTrigger value="players" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
+                <TabsTrigger value="players" className="gap-1.5 px-3 py-1.5 text-xs flex-shrink-0 whitespace-nowrap">
                   <Users className="w-4 h-4" />
-                  <span>Jugadores</span>
-                  <span className="text-xs">({matchPlayers.length})</span>
+                  <span>Jugadores ({matchPlayers.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="kpis" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
+                <TabsTrigger value="kpis" className="gap-1.5 px-3 py-1.5 text-xs flex-shrink-0 whitespace-nowrap">
                   <Target className="w-4 h-4" />
                   <span>KPIs</span>
                 </TabsTrigger>
-                <TabsTrigger value="video" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
+                <TabsTrigger value="video" className="gap-1.5 px-3 py-1.5 text-xs flex-shrink-0 whitespace-nowrap">
                   <Video className="w-4 h-4" />
                   <span>Video</span>
                 </TabsTrigger>
