@@ -1722,6 +1722,95 @@ export type Database = {
           },
         ]
       }
+      match_video_stats: {
+        Row: {
+          analyzed_by: string | null
+          centros: number | null
+          created_at: string | null
+          duelos_no: number | null
+          duelos_ok: number | null
+          id: string
+          match_id: string
+          organization_id: string
+          pases_no: number | null
+          pases_ok: number | null
+          pases_profundidad: number | null
+          player_id: string
+          recuperaciones: number | null
+          tiros: number | null
+          tiros_primera: number | null
+          toques: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          analyzed_by?: string | null
+          centros?: number | null
+          created_at?: string | null
+          duelos_no?: number | null
+          duelos_ok?: number | null
+          id?: string
+          match_id: string
+          organization_id: string
+          pases_no?: number | null
+          pases_ok?: number | null
+          pases_profundidad?: number | null
+          player_id: string
+          recuperaciones?: number | null
+          tiros?: number | null
+          tiros_primera?: number | null
+          toques?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          analyzed_by?: string | null
+          centros?: number | null
+          created_at?: string | null
+          duelos_no?: number | null
+          duelos_ok?: number | null
+          id?: string
+          match_id?: string
+          organization_id?: string
+          pases_no?: number | null
+          pases_ok?: number | null
+          pases_profundidad?: number | null
+          player_id?: string
+          recuperaciones?: number | null
+          tiros?: number | null
+          tiros_primera?: number | null
+          toques?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_video_stats_analyzed_by_fkey"
+            columns: ["analyzed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_video_stats_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_video_stats_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_video_stats_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           category_id: string

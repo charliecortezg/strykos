@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MatchVideoAnalysis } from '@/components/matches/MatchVideoAnalysis';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -558,9 +559,13 @@ export function MatchDetailDrawer({
             </TabsContent>
 
             <TabsContent value="video" className="pb-4">
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Video className="w-12 h-12 text-muted-foreground mb-3" />
-                <p className="text-sm text-muted-foreground">Análisis de video — próximamente</p>
+              <div style={{ height: '60vh' }}>
+                <MatchVideoAnalysis
+                  matchId={match.id}
+                  organizationId={match.organization_id}
+                  categoryName={match.category?.name ?? ''}
+                  attendedPlayers={matchPlayers.filter(mp => mp.attended) as any}
+                />
               </div>
             </TabsContent>
           </Tabs>
