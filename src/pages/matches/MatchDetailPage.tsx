@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ArrowLeft, Calendar, MapPin, User, Trophy, Clock, Shield, Target, Users, Crown } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, User, Trophy, Clock, Shield, Target, Users, Crown, Video } from 'lucide-react';
+import { MatchVideoAnalysis } from '@/components/matches/MatchVideoAnalysis';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -100,6 +101,10 @@ export default function MatchDetailPage() {
               <TabsTrigger value="kpis" className="flex-1 gap-1.5">
                 <Target className="w-4 h-4" />
                 KPIs
+              </TabsTrigger>
+              <TabsTrigger value="video" className="flex-1 gap-1.5">
+                <Video className="w-4 h-4" />
+                Video
               </TabsTrigger>
             </TabsList>
 
