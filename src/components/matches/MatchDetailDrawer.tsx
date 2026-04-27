@@ -391,102 +391,88 @@ export function MatchDetailDrawer({
                   <p className="text-muted-foreground text-sm">No hay jugadores registrados</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {(isEditing ? editedPlayers : matchPlayers).map((mp) => (
-                    <div
-                      key={mp.id}
-                      className={cn(
-                        "w-full rounded-lg border border-border bg-card p-3 text-left",
-                        !isEditing && "cursor-pointer active:bg-muted/40"
-                      )}
-                      onClick={() => { if (!isEditing) setSelectedPlayer(mp); }}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            {match.mvp_player_id === mp.player_id && (
-                              <Crown className="w-3.5 h-3.5 text-warning fill-warning shrink-0" />
-                            )}
-                            <p className="font-medium truncate">{mp.player?.full_name}</p>
-                          </div>
-                          <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                            Posición: {mp.player?.position || 'Sin posición'}
-                          </p>
-                        </div>
-                        <div onClick={(e) => e.stopPropagation()}>
-                          {isEditing ? (
-                            <Checkbox
-                              checked={mp.attended}
-                              onCheckedChange={(checked) => updatePlayerStat(mp.player_id, 'attended', !!checked)}
-                            />
-                          ) : (
-                            <Badge variant={mp.attended ? 'default' : 'outline'} className="text-xs shrink-0">
-                              {mp.attended ? 'Presente' : 'Ausente'}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
+                <div className="space-y-2">
+                  {(isEditing ? editedPlayers : matchPlayers).map((mp) => {
+                    const isMvp = match.mvp_player_id === mp.player_id;
+                    const attended = mp.attended;
+                    const perfLabels: Record<string, { label: string; cls: string }> = {
+                      outstanding: { label: 'Destacado', cls: 'bg-blue-500' },
+                      excellent: { label: 'Excelente', cls: 'bg-success' },
+                      focus: { label: 'En foco', cls: 'bg-warning' },
+                      challenge: { label: 'Reto', cls: 'bg-destructive' },
+                    };
+                    const perf = mp.performance ? perfLabels[mp.performance] : null;
+                    const showGoals = isFutbol && (mp.goals ?? 0) > 0;
+                    const showAssists = isFutbol && (mp.assists ?? 0) > 0;
+                    const showPoints = !isFutbol && (mp.points ?? 0) > 0;
+                    const position = mp.player?.position;
 
-                      <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                        <div className="rounded-md bg-muted/40 px-2 py-2">
-                          <p className="text-[11px] text-muted-foreground">Rendim.</p>
-                          <div className="mt-1 flex h-6 items-center justify-center">
-                            {mp.attended && mp.performance ? (
-                              <PerformanceIndicator
-                                status={mp.performance as PerformanceStatus}
-                                onChange={() => {}}
-                                disabled
-                                size="sm"
-                              />
-                            ) : (
-                              <span className="text-sm text-muted-foreground">—</span>
-                            )}
+                    return (
+                      <div
+                        key={mp.id}
+                        className={cn(
+                          "w-full rounded-lg border border-border bg-card p-3",
+                          !attended && "opacity-50",
+                          isMvp && "border-l-4 border-l-warning"
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              {isMvp && <Crown className="w-4 h-4 text-warning fill-warning shrink-0" />}
+                              <p className="font-semibold text-sm truncate">{mp.player?.full_name}</p>
+                            </div>
                           </div>
+                          <Badge
+                            variant={attended ? 'default' : 'outline'}
+                            className={cn(
+                              "text-[10px] shrink-0",
+                              attended ? "bg-success hover:bg-success text-success-foreground" : "text-muted-foreground"
+                            )}
+                          >
+                            {attended ? 'Asistió' : 'No asistió'}
+                          </Badge>
                         </div>
-                        {isFutbol ? (
-                          <>
-                            <div className="rounded-md bg-muted/40 px-2 py-2" onClick={(e) => e.stopPropagation()}>
-                              <p className="text-[11px] text-muted-foreground">Goles</p>
-                              {isEditing ? (
-                                <Input
-                                  type="number" min="0" value={mp.goals}
-                                  onChange={(e) => updatePlayerStat(mp.player_id, 'goals', parseInt(e.target.value) || 0)}
-                                  className="mx-auto mt-1 h-7 w-full max-w-16 text-center text-sm"
-                                />
-                              ) : (
-                                <p className={cn("mt-1 font-semibold", mp.goals > 0 && "text-success")}>{mp.goals}</p>
-                              )}
-                            </div>
-                            <div className="rounded-md bg-muted/40 px-2 py-2" onClick={(e) => e.stopPropagation()}>
-                              <p className="text-[11px] text-muted-foreground">Asist.</p>
-                              {isEditing ? (
-                                <Input
-                                  type="number" min="0" value={mp.assists}
-                                  onChange={(e) => updatePlayerStat(mp.player_id, 'assists', parseInt(e.target.value) || 0)}
-                                  className="mx-auto mt-1 h-7 w-full max-w-16 text-center text-sm"
-                                />
-                              ) : (
-                                <p className={cn("mt-1 font-semibold", mp.assists > 0 && "text-primary")}>{mp.assists}</p>
-                              )}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="col-span-2 rounded-md bg-muted/40 px-2 py-2" onClick={(e) => e.stopPropagation()}>
-                            <p className="text-[11px] text-muted-foreground">Puntos</p>
-                            {isEditing ? (
-                              <Input
-                                type="number" min="0" value={mp.points}
-                                onChange={(e) => updatePlayerStat(mp.player_id, 'points', parseInt(e.target.value) || 0)}
-                                className="mx-auto mt-1 h-7 w-full max-w-20 text-center text-sm"
-                              />
-                            ) : (
-                              <p className="mt-1 font-semibold">{mp.points}</p>
+
+                        {attended && (position || perf || showGoals || showAssists || showPoints) && (
+                          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                            {position && (
+                              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                                {position}
+                              </span>
+                            )}
+                            {perf && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-foreground">
+                                <span className={cn("w-2 h-2 rounded-full", perf.cls)} />
+                                {perf.label}
+                              </span>
+                            )}
+                            {showGoals && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
+                                ⚽ {mp.goals}
+                              </span>
+                            )}
+                            {showAssists && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
+                                🅰️ {mp.assists}
+                              </span>
+                            )}
+                            {showPoints && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
+                                {mp.points} pts
+                              </span>
                             )}
                           </div>
                         )}
+
+                        {mp.note && (
+                          <p className="mt-2 text-xs italic text-muted-foreground">
+                            {mp.note}
+                          </p>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </TabsContent>
