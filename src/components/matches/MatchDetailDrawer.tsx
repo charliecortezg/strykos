@@ -403,17 +403,21 @@ export function MatchDetailDrawer({
                   <p className="text-muted-foreground text-sm">No hay jugadores registrados</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div
+                  className="w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                  style={{ WebkitOverflowScrolling: 'touch' }}
+                >
+                <div className="min-w-[640px] space-y-2">
                   {(isEditing ? editedPlayers : matchPlayers).map((mp) => (
                     <div 
                       key={mp.id} 
                       className={cn(
-                        "flex items-center justify-between gap-2 min-w-0 w-full p-3 rounded-lg border border-border bg-card",
+                        "flex w-full min-w-max items-center justify-between gap-2 rounded-lg border border-border bg-card p-3",
                         !isEditing && "cursor-pointer active:bg-muted/50 transition-colors"
                       )}
                       onClick={() => { if (!isEditing) setSelectedPlayer(mp); }}
                     >
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="sticky left-0 z-[1] flex min-w-[220px] flex-1 items-center gap-2 bg-card pr-3">
                         {/* MVP crown indicator */}
                         {match.mvp_player_id === mp.player_id && (
                           <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
@@ -498,6 +502,7 @@ export function MatchDetailDrawer({
                       </div>
                     </div>
                   ))}
+                </div>
                 </div>
               )}
             </TabsContent>
