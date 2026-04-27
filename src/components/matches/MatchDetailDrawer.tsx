@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Match, MatchPlayer, getMatchResult } from '@/types/matches';
@@ -161,29 +161,29 @@ export function MatchDetailDrawer({
           </div>
         </DrawerHeader>
 
-        <ScrollArea className="flex-1 px-4 [&_[data-radix-scroll-area-viewport]]:overflow-x-visible">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4">
           <Tabs defaultValue="info" className="mt-4">
             <div
-              className="mb-4 -mx-4 flex flex-nowrap overflow-x-scroll px-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:hidden"
-              style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
+              className="mb-4 -mx-4 flex flex-nowrap overflow-x-auto px-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', touchAction: 'pan-x' }}
             >
-              <TabsList className="flex w-max flex-nowrap gap-1 overflow-visible">
-                <TabsTrigger value="info" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm flex-shrink-0">
+              <TabsList className="inline-flex w-max flex-nowrap gap-1 h-auto bg-muted p-1">
+                <TabsTrigger value="info" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
                   <Trophy className="w-4 h-4" />
-                  <span className="hidden sm:inline">Info</span>
+                  <span>Info</span>
                 </TabsTrigger>
-                <TabsTrigger value="players" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm flex-shrink-0">
+                <TabsTrigger value="players" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
                   <Users className="w-4 h-4" />
-                  <span className="hidden sm:inline">Jugadores</span>
+                  <span>Jugadores</span>
                   <span className="text-xs">({matchPlayers.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="kpis" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm flex-shrink-0">
+                <TabsTrigger value="kpis" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
                   <Target className="w-4 h-4" />
-                  <span className="hidden sm:inline">KPIs</span>
+                  <span>KPIs</span>
                 </TabsTrigger>
-                <TabsTrigger value="video" className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm flex-shrink-0">
+                <TabsTrigger value="video" className="gap-1.5 px-3 py-1.5 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap">
                   <Video className="w-4 h-4" />
-                  <span className="hidden sm:inline">Video</span>
+                  <span>Video</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -404,20 +404,20 @@ export function MatchDetailDrawer({
                 </div>
               ) : (
                 <div
-                  className="w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-                  style={{ WebkitOverflowScrolling: 'touch' }}
+                  className="-mx-4 w-[calc(100%+2rem)] overflow-x-auto px-4 [scrollbar-width:thin]"
+                  style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
                 >
-                <div className="min-w-[640px] space-y-2">
+                <div className="min-w-[560px] space-y-2">
                   {(isEditing ? editedPlayers : matchPlayers).map((mp) => (
                     <div 
                       key={mp.id} 
                       className={cn(
-                        "flex w-full min-w-max items-center justify-between gap-2 rounded-lg border border-border bg-card p-3",
+                        "flex w-full items-center gap-3 rounded-lg border border-border bg-card p-3",
                         !isEditing && "cursor-pointer active:bg-muted/50 transition-colors"
                       )}
                       onClick={() => { if (!isEditing) setSelectedPlayer(mp); }}
                     >
-                      <div className="sticky left-0 z-[1] flex min-w-[220px] flex-1 items-center gap-2 bg-card pr-3">
+                      <div className="sticky left-0 z-[1] flex w-[200px] flex-shrink-0 items-center gap-2 bg-card pr-2">
                         {/* MVP crown indicator */}
                         {match.mvp_player_id === mp.player_id && (
                           <Crown className="w-4 h-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
@@ -436,18 +436,15 @@ export function MatchDetailDrawer({
                         )}
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{mp.player?.full_name}</p>
-                          <p className="text-xs text-muted-foreground">{mp.player?.position || 'Sin posición'}</p>
+                          <p className="text-xs text-muted-foreground truncate">{mp.player?.position || 'Sin posición'}</p>
                           {!isEditing && mp.note && (
                             <p className="text-xs text-muted-foreground mt-0.5 italic line-clamp-1">
                               💬 {mp.note}
-                              {mp.note.length > 60 && (
-                                <span className="text-primary ml-1 not-italic">ver más</span>
-                              )}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex-shrink-0 flex items-center gap-2">
+                      <div className="flex-shrink-0 flex items-center gap-2 ml-auto">
                         {isEditing ? (
                           <>
                             <Checkbox
@@ -490,12 +487,12 @@ export function MatchDetailDrawer({
                               {mp.attended ? '✓' : '✗'}
                             </Badge>
                             {isFutbol ? (
-                              <div className="flex items-center gap-2 text-sm">
+                              <div className="flex items-center gap-2 text-sm whitespace-nowrap">
                                 <span className={cn("font-medium", mp.goals > 0 && "text-success")}>{mp.goals}G</span>
                                 <span className={cn("font-medium", mp.assists > 0 && "text-primary")}>{mp.assists}A</span>
                               </div>
                             ) : (
-                              <span className="font-medium text-sm">{mp.points}Pts</span>
+                              <span className="font-medium text-sm whitespace-nowrap">{mp.points}Pts</span>
                             )}
                           </>
                         )}
@@ -589,7 +586,7 @@ export function MatchDetailDrawer({
               </div>
             </TabsContent>
           </Tabs>
-        </ScrollArea>
+        </div>
 
         <DrawerFooter className="border-t border-border pt-4">
           {isEditing ? (
