@@ -33,6 +33,8 @@ import AuditLogPage from "./pages/platform/AuditLogPage";
 // STRYK Way Pages
 import StudioPage from "./pages/stryk-way/StudioPage";
 import TrainingPage from "./pages/TrainingPage";
+// Match detail page
+import MatchDetailPage from "./pages/matches/MatchDetailPage";
 // Portal Familiar Pages
 import PortalLogin from "./pages/portal/PortalLogin";
 import PortalDashboard from "./pages/portal/PortalDashboard";
@@ -156,6 +158,12 @@ function AcademyRoutes() {
         <Route path="/stryk-way" element={
           <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo']}>
             <StudioPage />
+          </ProtectedRoute>
+        } />
+        {/* Match detail page */}
+        <Route path="/partidos/:id" element={
+          <ProtectedRoute allowedRoles={['entrenador', 'director_deportivo', 'org_owner', 'administrativo']}>
+            <MatchDetailPage />
           </ProtectedRoute>
         } />
         {/* Training / Capacitación WL */}

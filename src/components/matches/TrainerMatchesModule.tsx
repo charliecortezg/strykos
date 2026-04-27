@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Trophy, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +8,6 @@ import { TrainerCategory } from '@/hooks/useTrainerCategories';
 import { useMatches, useMatchPlayers } from '@/hooks/useMatches';
 import { CreateMatchFlow } from './CreateMatchFlow';
 import { LoadResultsModal } from './LoadResultsModal';
-import { MatchDetailModal } from './MatchDetailModal';
 import { MatchCard } from './MatchCard';
 import { Match } from '@/types/matches';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -17,15 +17,15 @@ interface TrainerMatchesModuleProps {
 }
 
 export function TrainerMatchesModule({ categories }: TrainerMatchesModuleProps) {
+  const navigate = useNavigate();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [matchForResults, setMatchForResults] = useState<Match | null>(null);
   const [matchToDelete, setMatchToDelete] = useState<Match | null>(null);
   
   // Get matches for this trainer's categories
   const categoryIds = categories.map(c => c.id);
   const { matches, isLoading, updateMatch, deleteMatch } = useMatches();
-  const { updateMatchPlayers } = useMatchPlayers(matchForResults?.id || selectedMatch?.id || null);
+  const { updateMatchPlayers } = useMatchPlayers(matchForResults?.id || null);
   
   // Filter to only show matches from trainer's categories
   const trainerMatches = matches.filter(m => categoryIds.includes(m.category_id));
