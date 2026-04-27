@@ -128,7 +128,7 @@ export function MatchDetailDrawer({
     <>
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()} shouldScaleBackground={false}>
       <DrawerContent
-        className="left-0 right-0 h-[95dvh] max-h-[95dvh] w-screen max-w-[100vw] overflow-hidden p-0"
+        className="inset-0 h-[100dvh] max-h-[100dvh] w-screen max-w-[100vw] rounded-none overflow-hidden p-0"
         style={{ touchAction: 'manipulation' }}
       >
         <DrawerHeader className="sticky top-0 z-10 bg-background border-b border-border pb-3 pt-2 px-4 shrink-0">
@@ -153,7 +153,7 @@ export function MatchDetailDrawer({
           </div>
         </DrawerHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-3">
+        <div className="min-h-0 w-full overflow-x-hidden px-3 py-3">
           <Tabs defaultValue="info" className="w-full">
             <div
               className="mb-4 -mx-4 px-4 overflow-x-scroll [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
@@ -394,46 +394,20 @@ export function MatchDetailDrawer({
                   <p className="text-muted-foreground text-sm">No hay jugadores registrados</p>
                 </div>
               ) : (
-                <div
-                  className="-mx-4 w-[calc(100%+2rem)] overflow-x-scroll [scrollbar-width:thin]"
-                  style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
-                >
-                  <table className="border-collapse text-sm" style={{ minWidth: isFutbol ? 560 : 480 }}>
-                    <thead>
-                      <tr className="bg-muted/50 text-xs text-muted-foreground">
-                        <th className="sticky left-0 z-[2] bg-muted/80 backdrop-blur px-3 py-2 text-left font-medium" style={{ minWidth: 180 }}>
-                          Jugador
-                        </th>
-                        <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 70 }}>Asist.</th>
-                        <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 90 }}>Rendim.</th>
-                        {isFutbol ? (
-                          <>
-                            <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 60 }}>G</th>
-                            <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 60 }}>A</th>
-                          </>
-                        ) : (
-                          <th className="px-2 py-2 text-center font-medium" style={{ minWidth: 70 }}>Pts</th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(isEditing ? editedPlayers : matchPlayers).map((mp, idx) => (
-                        <tr
-                          key={mp.id}
-                          className={cn(
-                            "border-t border-border",
-                            idx % 2 === 1 && "bg-muted/20",
-                            !isEditing && "cursor-pointer active:bg-muted/40"
-                          )}
-                          onClick={() => { if (!isEditing) setSelectedPlayer(mp); }}
-                        >
-                          <td
-                            className={cn(
-                              "sticky left-0 z-[1] px-3 py-2 text-left",
-                              idx % 2 === 1 ? "bg-[hsl(var(--muted)/0.6)] backdrop-blur" : "bg-card"
-                            )}
-                            style={{ minWidth: 180 }}
-                          >
+                <div className="space-y-3">
+                  {(isEditing ? editedPlayers : matchPlayers).map((mp) => (
+                    <button
+                      type="button"
+                      key={mp.id}
+                      className={cn(
+                        "w-full rounded-lg border border-border bg-card p-3 text-left",
+                        !isEditing && "cursor-pointer active:bg-muted/40"
+                      )}
+                      onClick={() => { if (!isEditing) setSelectedPlayer(mp); }}
+                      disabled={isEditing}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 min-w-0">
                               {match.mvp_player_id === mp.player_id && (
                                 <Crown className="w-3.5 h-3.5 text-yellow-500 fill-yellow-400 shrink-0" />
