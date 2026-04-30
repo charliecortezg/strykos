@@ -154,17 +154,16 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
                   <Star className="w-4 h-4 text-warning" />
                   Importancia
                 </Label>
-                <Select value={importance} onValueChange={(v) => setImportance(v as MatchImportance)}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="regular" className="py-3">Regular (×{getXpMultiplier(matchType, 'regular')})</SelectItem>
-                    <SelectItem value="importante" className="py-3">⭐ Importante (×{getXpMultiplier(matchType, 'importante')})</SelectItem>
-                    <SelectItem value="eliminacion" className="py-3">🔥 Eliminación (×{getXpMultiplier(matchType, 'eliminacion')})</SelectItem>
-                    <SelectItem value="final" className="py-3">👑 Final (×{getXpMultiplier(matchType, 'final')})</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={importance}
+                  onChange={(e) => setImportance(e.target.value as MatchImportance)}
+                  className="flex h-12 w-full items-center rounded-md border border-input bg-background px-3 text-base ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="regular">Regular (×{getXpMultiplier(matchType, 'regular')})</option>
+                  <option value="importante">⭐ Importante (×{getXpMultiplier(matchType, 'importante')})</option>
+                  <option value="eliminacion">🔥 Eliminación (×{getXpMultiplier(matchType, 'eliminacion')})</option>
+                  <option value="final">👑 Final (×{getXpMultiplier(matchType, 'final')})</option>
+                </select>
                 <p className="text-xs text-muted-foreground">
                   Multiplicador XP: ×{xpMultiplier}
                 </p>
