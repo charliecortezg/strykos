@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { TrainerCategory } from '@/hooks/useTrainerCategories';
 import { useCreateMatch } from '@/hooks/useCreateMatch';
@@ -97,25 +96,18 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
             {/* Category Selection */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Categoría *</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger className="h-12 text-base">
-                  <SelectValue placeholder="Selecciona categoría" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[50vh]">
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id} className="py-3">
-                      <div className="flex items-center gap-2">
-                        <span>{cat.name}</span>
-                        {cat.sport?.name && (
-                          <Badge variant="outline" className="text-xs">
-                            {cat.sport.name}
-                          </Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="flex h-12 w-full items-center rounded-md border border-input bg-background px-3 text-base ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="" disabled>Selecciona categoría</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}{cat.sport?.name ? ` · ${cat.sport.name}` : ''}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Rival */}
@@ -134,16 +126,15 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Tipo</Label>
-                <Select value={matchType} onValueChange={(v) => setMatchType(v as any)}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="amistoso" className="py-3">Amistoso</SelectItem>
-                    <SelectItem value="liga" className="py-3">Liga</SelectItem>
-                    <SelectItem value="torneo" className="py-3">Torneo</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={matchType}
+                  onChange={(e) => setMatchType(e.target.value as any)}
+                  className="flex h-12 w-full items-center rounded-md border border-input bg-background px-3 text-base ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="amistoso">Amistoso</option>
+                  <option value="liga">Liga</option>
+                  <option value="torneo">Torneo</option>
+                </select>
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Fecha/Hora</Label>
@@ -163,17 +154,16 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
                   <Star className="w-4 h-4 text-warning" />
                   Importancia
                 </Label>
-                <Select value={importance} onValueChange={(v) => setImportance(v as MatchImportance)}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="regular" className="py-3">Regular (×{getXpMultiplier(matchType, 'regular')})</SelectItem>
-                    <SelectItem value="importante" className="py-3">⭐ Importante (×{getXpMultiplier(matchType, 'importante')})</SelectItem>
-                    <SelectItem value="eliminacion" className="py-3">🔥 Eliminación (×{getXpMultiplier(matchType, 'eliminacion')})</SelectItem>
-                    <SelectItem value="final" className="py-3">👑 Final (×{getXpMultiplier(matchType, 'final')})</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={importance}
+                  onChange={(e) => setImportance(e.target.value as MatchImportance)}
+                  className="flex h-12 w-full items-center rounded-md border border-input bg-background px-3 text-base ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="regular">Regular (×{getXpMultiplier(matchType, 'regular')})</option>
+                  <option value="importante">⭐ Importante (×{getXpMultiplier(matchType, 'importante')})</option>
+                  <option value="eliminacion">🔥 Eliminación (×{getXpMultiplier(matchType, 'eliminacion')})</option>
+                  <option value="final">👑 Final (×{getXpMultiplier(matchType, 'final')})</option>
+                </select>
                 <p className="text-xs text-muted-foreground">
                   Multiplicador XP: ×{xpMultiplier}
                 </p>
