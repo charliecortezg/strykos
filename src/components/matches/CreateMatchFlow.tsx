@@ -96,25 +96,18 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
             {/* Category Selection */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Categoría *</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger className="h-12 text-base">
-                  <SelectValue placeholder="Selecciona categoría" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[50vh]">
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id} className="py-3">
-                      <div className="flex items-center gap-2">
-                        <span>{cat.name}</span>
-                        {cat.sport?.name && (
-                          <Badge variant="outline" className="text-xs">
-                            {cat.sport.name}
-                          </Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="flex h-12 w-full items-center rounded-md border border-input bg-background px-3 text-base ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="" disabled>Selecciona categoría</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}{cat.sport?.name ? ` · ${cat.sport.name}` : ''}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Rival */}
