@@ -126,16 +126,15 @@ export function CreateMatchFlow({ isOpen, onClose, categories }: CreateMatchFlow
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Tipo</Label>
-                <Select value={matchType} onValueChange={(v) => setMatchType(v as any)}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="amistoso" className="py-3">Amistoso</SelectItem>
-                    <SelectItem value="liga" className="py-3">Liga</SelectItem>
-                    <SelectItem value="torneo" className="py-3">Torneo</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={matchType}
+                  onChange={(e) => setMatchType(e.target.value as any)}
+                  className="flex h-12 w-full items-center rounded-md border border-input bg-background px-3 text-base ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="amistoso">Amistoso</option>
+                  <option value="liga">Liga</option>
+                  <option value="torneo">Torneo</option>
+                </select>
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Fecha/Hora</Label>
