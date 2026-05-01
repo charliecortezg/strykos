@@ -179,7 +179,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: RESEND_FROM,
+          from: 'White Lions Academy <notificacion@roarid.com>',
           to: [parentEmail],
           subject,
           html,
