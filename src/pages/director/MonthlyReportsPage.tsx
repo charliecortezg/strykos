@@ -188,6 +188,26 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
   const progressPct = progress && progress.total > 0
     ? Math.round((progress.current / progress.total) * 100) : 0;
 
+  const body = (
+    <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+      {/* moved below */}
+    </Tabs>
+  );
+
+  if (embedded) {
+    return (
+      <div className="space-y-4">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+          <TabsList className="grid grid-cols-2 w-full sm:w-[400px] mb-6">
+            <TabsTrigger value="generar">Generar</TabsTrigger>
+            <TabsTrigger value="historial">Historial</TabsTrigger>
+          </TabsList>
+          {renderTabsBody()}
+        </Tabs>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card">
@@ -210,6 +230,7 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
             <TabsTrigger value="generar">Generar</TabsTrigger>
             <TabsTrigger value="historial">Historial</TabsTrigger>
           </TabsList>
+          {renderTabsBody()}
 
           {/* GENERAR */}
           <TabsContent value="generar" className="space-y-4">
