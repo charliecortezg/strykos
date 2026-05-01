@@ -1292,25 +1292,24 @@ export function LoadResultsModal({
                             )}
                           </div>
 
-                          {/* Per-player note button */}
+                          {/* Per-player inline note input */}
                           <div className="mt-2 pt-2 border-t border-border/50">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setCommentPlayerId(playerId);
-                                setCommentPlayerName(playerName || '');
-                                setCommentText(playerNote);
-                                setTimeout(() => commentTextareaRef.current?.focus(), 100);
+                            <InlinePlayerNote
+                              initialNote={playerNote}
+                              isOpen={openNotePlayerId === playerId}
+                              onOpen={() => setOpenNotePlayerId(playerId)}
+                              onClose={() => setOpenNotePlayerId(null)}
+                              onCommit={(note) => {
+                                if (hasExistingPlayers) {
+                                  setPlayerStats(prev =>
+                                    prev.map(p => p.player_id === playerId ? { ...p, note } : p)
+                                  );
+                                } else {
+                                  updatePlayerNote(playerId, note);
+                                }
+                                setIsDirty(true);
                               }}
-                              className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                            >
-                              <MessageSquare className={cn("w-3.5 h-3.5 flex-shrink-0", playerNote ? "text-primary" : "text-muted-foreground/50")} />
-                              {playerNote ? (
-                                <span className="text-xs truncate flex-1">{playerNote}</span>
-                              ) : (
-                                <span className="text-xs text-muted-foreground/50 flex-1">Agregar nota...</span>
-                              )}
-                            </button>
+                            />
                           </div>
                         </Card>
                       );
