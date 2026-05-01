@@ -59,6 +59,101 @@ const ABSENCE_REASONS = [
   { value: 'enfermedad', label: 'Enfermedad / Lesión' },
 ];
 
+// Inline per-player note input. Holds its own local state to avoid
+// re-rendering the whole player list on every keystroke. Commits to
+// the parent on blur or when the user taps the check button.
+function InlinePlayerNote({
+  initialNote,
+  isOpen,
+  onOpen,
+  onCommit,
+  onClose,
+}: {
+  initialNote: string;
+  isOpen: boolean;
+  onOpen: () => void;
+  onCommit: (note: string) => void;
+  onClose: () => void;
+}) {
+  const [draft, setDraft] = useState(initialNote);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) setDraft(initialNote);
+  }, [initialNote, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        textareaRef.current?.focus();
+        const ta = textareaRef.current;
+        if (ta) {
+          ta.style.height = 'auto';
+          ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+        }
+      }, 50);
+    }
+  }, [isOpen]);
+
+  const commit = () => {
+    onCommit(draft.trim());
+    onClose();
+  };
+
+  if (!isOpen) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+      >
+        <MessageSquare className={cn("w-3.5 h-3.5 flex-shrink-0", initialNote ? "text-primary" : "text-muted-foreground/50")} />
+        {initialNote ? (
+          <span className="text-xs truncate flex-1">{initialNote}</span>
+        ) : (
+          <span className="text-xs text-muted-foreground/50 flex-1">Agregar nota...</span>
+        )}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-end gap-2 px-2 py-1.5 rounded-lg bg-muted/40">
+      <textarea
+        ref={textareaRef}
+        value={draft}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          const ta = e.target;
+          ta.style.height = 'auto';
+          ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+        }}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            onClose();
+          }
+        }}
+        placeholder="Escribe una nota..."
+        rows={1}
+        className="flex-1 resize-none rounded-md bg-background px-2 py-1.5 text-xs border border-input focus:ring-2 focus:ring-primary/30 focus:outline-none min-h-[32px] max-h-[120px]"
+      />
+      <button
+        type="button"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          commit();
+        }}
+        className="flex-shrink-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center"
+        aria-label="Guardar nota"
+      >
+        <Check className="w-3.5 h-3.5 text-primary-foreground" />
+      </button>
+    </div>
+  );
+}
+
 export function LoadResultsModal({ 
   match, 
   isOpen, 
@@ -93,11 +188,8 @@ export function LoadResultsModal({
   // MVP + Performance state
   const [mvpPlayerId, setMvpPlayerId] = useState<string | null>(null);
 
-  // TikTok-style comment bar state
-  const [commentPlayerId, setCommentPlayerId] = useState<string | null>(null);
-  const [commentPlayerName, setCommentPlayerName] = useState('');
-  const [commentText, setCommentText] = useState('');
-  const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
+  // Inline note expansion: track which player's note input is open
+  const [openNotePlayerId, setOpenNotePlayerId] = useState<string | null>(null);
 
   // Evidence state
   const [uploadedImages, setUploadedImages] = useState<{ url: string; name: string }[]>([]);
@@ -1200,25 +1292,24 @@ export function LoadResultsModal({
                             )}
                           </div>
 
-                          {/* Per-player note button */}
+                          {/* Per-player inline note input */}
                           <div className="mt-2 pt-2 border-t border-border/50">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setCommentPlayerId(playerId);
-                                setCommentPlayerName(playerName || '');
-                                setCommentText(playerNote);
-                                setTimeout(() => commentTextareaRef.current?.focus(), 100);
+                            <InlinePlayerNote
+                              initialNote={playerNote}
+                              isOpen={openNotePlayerId === playerId}
+                              onOpen={() => setOpenNotePlayerId(playerId)}
+                              onClose={() => setOpenNotePlayerId(null)}
+                              onCommit={(note) => {
+                                if (hasExistingPlayers) {
+                                  setPlayerStats(prev =>
+                                    prev.map(p => p.player_id === playerId ? { ...p, note } : p)
+                                  );
+                                } else {
+                                  updatePlayerNote(playerId, note);
+                                }
+                                setIsDirty(true);
                               }}
-                              className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                            >
-                              <MessageSquare className={cn("w-3.5 h-3.5 flex-shrink-0", playerNote ? "text-primary" : "text-muted-foreground/50")} />
-                              {playerNote ? (
-                                <span className="text-xs truncate flex-1">{playerNote}</span>
-                              ) : (
-                                <span className="text-xs text-muted-foreground/50 flex-1">Agregar nota...</span>
-                              )}
-                            </button>
+                            />
                           </div>
                         </Card>
                       );
@@ -1362,9 +1453,9 @@ export function LoadResultsModal({
         </DrawerFooter>
       </DrawerContent>
 
-      {/* Unsaved changes confirmation */}
-      {showExitConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+      {/* Unsaved changes confirmation - portaled to body to escape Drawer stacking */}
+      {showExitConfirm && createPortal(
+        <div className="fixed inset-0 z-[10010] flex items-center justify-center bg-black/50">
           <div className="bg-card border border-border rounded-lg p-6 mx-4 max-w-sm w-full shadow-xl">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
@@ -1383,54 +1474,6 @@ export function LoadResultsModal({
                 Salir sin guardar
               </Button>
             </div>
-          </div>
-        </div>
-      )}
-      {/* TikTok-style sticky comment bar */}
-      {commentPlayerId && createPortal(
-        <div className="fixed bottom-0 left-0 right-0 z-[80] bg-background border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-          <p className="text-xs text-muted-foreground mb-1.5">
-            Comentario para: <span className="font-medium text-foreground">{commentPlayerName}</span>
-          </p>
-          <div className="flex items-end gap-2">
-            <textarea
-              ref={commentTextareaRef}
-              className="flex-1 resize-none rounded-2xl bg-muted px-4 py-2 text-sm border-0 focus:ring-2 focus:ring-primary/30 focus:outline-none max-h-24 min-h-[36px]"
-              placeholder="Escribe un comentario..."
-              rows={1}
-              value={commentText}
-              onChange={(e) => {
-                setCommentText(e.target.value);
-                const ta = e.target;
-                ta.style.height = 'auto';
-                ta.style.height = Math.min(ta.scrollHeight, 96) + 'px';
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setCommentPlayerId(null);
-                }
-              }}
-            />
-            <button
-              type="button"
-              disabled={!commentText.trim()}
-              onClick={() => {
-                if (!commentPlayerId) return;
-                if (hasExistingPlayers) {
-                  setPlayerStats(prev =>
-                    prev.map(p => p.player_id === commentPlayerId ? { ...p, note: commentText.trim() } : p)
-                  );
-                } else {
-                  updatePlayerNote(commentPlayerId, commentText.trim());
-                }
-                setIsDirty(true);
-                setCommentPlayerId(null);
-                setCommentText('');
-              }}
-              className="flex-shrink-0 w-9 h-9 rounded-full bg-primary flex items-center justify-center disabled:opacity-40 transition-opacity"
-            >
-              <ArrowUp className="w-4 h-4 text-primary-foreground" />
-            </button>
           </div>
         </div>,
         document.body
