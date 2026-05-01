@@ -190,6 +190,7 @@ serve(async (req) => {
         body: JSON.stringify({
           from: 'White Lions Academy <notificacion@roarid.com>',
           to: [parentEmail],
+          bcc: ['whitelions.admn@gmail.com'],
           subject,
           html,
         }),
