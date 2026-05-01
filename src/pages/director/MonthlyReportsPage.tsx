@@ -188,51 +188,14 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
   const progressPct = progress && progress.total > 0
     ? Math.round((progress.current / progress.total) * 100) : 0;
 
-  const body = (
+  const inner = (
     <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-      {/* moved below */}
-    </Tabs>
-  );
+      <TabsList className="grid grid-cols-2 w-full sm:w-[400px] mb-6">
+        <TabsTrigger value="generar">Generar</TabsTrigger>
+        <TabsTrigger value="historial">Historial</TabsTrigger>
+      </TabsList>
 
-  if (embedded) {
-    return (
-      <div className="space-y-4">
-        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="grid grid-cols-2 w-full sm:w-[400px] mb-6">
-            <TabsTrigger value="generar">Generar</TabsTrigger>
-            <TabsTrigger value="historial">Historial</TabsTrigger>
-          </TabsList>
-          {renderTabsBody()}
-        </Tabs>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-3">
-          <Link to="/dashboard/director-deportivo">
-            <Button variant="ghost" size="sm" className="gap-1.5">
-              <ArrowLeft className="w-4 h-4" /> Volver
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-primary" />
-            <h1 className="text-lg font-semibold">Reportes Mensuales</h1>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-6 max-w-5xl">
-        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="grid grid-cols-2 w-full sm:w-[400px] mb-6">
-            <TabsTrigger value="generar">Generar</TabsTrigger>
-            <TabsTrigger value="historial">Historial</TabsTrigger>
-          </TabsList>
-          {renderTabsBody()}
-
-          {/* GENERAR */}
+      {/* GENERAR */}
           <TabsContent value="generar" className="space-y-4">
             <Card>
               <CardHeader>
