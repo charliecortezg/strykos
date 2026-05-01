@@ -37,6 +37,8 @@ import TrainingPage from "./pages/TrainingPage";
 import MatchDetailPage from "./pages/matches/MatchDetailPage";
 // Internal admin tools
 import NotesMigrationPage from "./pages/admin/NotesMigrationPage";
+// Director monthly reports
+import MonthlyReportsPage from "./pages/director/MonthlyReportsPage";
 // Portal Familiar Pages
 import PortalLogin from "./pages/portal/PortalLogin";
 import PortalDashboard from "./pages/portal/PortalDashboard";
@@ -166,6 +168,12 @@ function AcademyRoutes() {
         <Route path="/admin/migracion-notas" element={
           <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo', 'administrativo']}>
             <NotesMigrationPage />
+          </ProtectedRoute>
+        } />
+        {/* Director: monthly reports */}
+        <Route path="/director/reportes-mensuales" element={
+          <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo', 'administrativo']}>
+            <MonthlyReportsPage />
           </ProtectedRoute>
         } />
         {/* Match detail page */}

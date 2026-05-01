@@ -2714,6 +2714,82 @@ export type Database = {
           },
         ]
       }
+      player_monthly_reports: {
+        Row: {
+          ai_summary: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          month: number
+          organization_id: string
+          pdf_url: string | null
+          player_id: string
+          report_data: Json | null
+          sent_at: string | null
+          sent_to_email: string | null
+          status: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          ai_summary?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month: number
+          organization_id: string
+          pdf_url?: string | null
+          player_id: string
+          report_data?: Json | null
+          sent_at?: string | null
+          sent_to_email?: string | null
+          status?: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          ai_summary?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month?: number
+          organization_id?: string
+          pdf_url?: string | null
+          player_id?: string
+          report_data?: Json | null
+          sent_at?: string | null
+          sent_to_email?: string | null
+          status?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_monthly_reports_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_monthly_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_monthly_reports_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_offboarding: {
         Row: {
           churn_detail: string | null
