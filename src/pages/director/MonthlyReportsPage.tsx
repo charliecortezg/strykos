@@ -343,8 +343,12 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
                             </td>
                             <td className="px-3 py-2 text-right">
                               <div className="flex justify-end gap-1.5">
-                                {row.pdf_url && (
+                                {row.pdf_url ? (
                                   <Button size="sm" variant="ghost" onClick={() => window.open(row.pdf_url!, '_blank')} className="gap-1">
+                                    <ExternalLink className="w-3.5 h-3.5" /> PDF
+                                  </Button>
+                                ) : (
+                                  <Button size="sm" variant="ghost" disabled className="gap-1 text-muted-foreground opacity-60 cursor-not-allowed">
                                     <ExternalLink className="w-3.5 h-3.5" /> PDF
                                   </Button>
                                 )}
