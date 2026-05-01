@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Trophy, Target, Save, Camera, FileText, Plus, Minus, Check, X, ImageIcon, Crown, ChevronDown, CheckCheck, Users, Search, UserPlus, AlertTriangle, ArrowUp, MessageSquare } from 'lucide-react';
