@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { fetchPlayerMonthData } from './report-data';
 import { generateNarrative } from './narrative-generator';
 import { generateReportPDF, loadLogoAsDataUrl } from './pdf-generator';
+import { transformAllNotes } from './note-transformer';
 import type { MonthlyReportData, GenerationProgress } from './report-types';
 
 // ── Config ────────────────────────────────────────────────────
@@ -135,7 +136,7 @@ export async function generateAndSendPlayerReport(
   logoDataUrl?: string,
 ): Promise<{ success: boolean; reason?: string; pdfUrl?: string }> {
   // Step 1: Fetch data
-  const reportData = await fetchPlayerMonthData(playerId, month, year, organizationId);
+  let reportData = await fetchPlayerMonthData(playerId, month, year, organizationId);
   if (!reportData) {
     return { success: false, reason: 'No se encontraron datos del jugador' };
   }
@@ -146,6 +147,9 @@ export async function generateAndSendPlayerReport(
 
   // Step 2: Generate narrative
   reportData.narrative = generateNarrative(reportData);
+
+  // Step 2.5: Transform raw coach notes into family-friendly messages
+  reportData = transformAllNotes(reportData);
 
   // Step 3: Generate PDF
   let pdfBlob: Blob;
