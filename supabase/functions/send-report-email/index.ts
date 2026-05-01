@@ -164,7 +164,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            personalizations: [{ to: [{ email: parentEmail }] }],
+            personalizations: [{ to: [{ email: parentEmail }], bcc: [{ email: 'whitelions.admn@gmail.com' }] }],
             from: { email: 'reportes@whitelionsacademy.com', name: 'White Lions Academy' },
             subject,
             content: [{ type: 'text/html', value: html }],
