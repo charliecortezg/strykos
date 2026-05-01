@@ -203,7 +203,18 @@ export default function DirectorDeportivoDashboard() {
           </TabsContent>
 
           <TabsContent value="reportes">
-            <OperationalReports />
+            <Tabs defaultValue="operativos" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="operativos">Operativos</TabsTrigger>
+                <TabsTrigger value="mensuales">Reportes Mensuales</TabsTrigger>
+              </TabsList>
+              <TabsContent value="operativos">
+                <OperationalReports />
+              </TabsContent>
+              <TabsContent value="mensuales">
+                <MonthlyReportsPage embedded />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value="asistencia">
