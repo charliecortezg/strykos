@@ -36,7 +36,7 @@ interface ReportRow {
 const now = new Date();
 const YEARS = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
 
-export default function MonthlyReportsPage() {
+export default function MonthlyReportsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { user, organization } = useAuth();
   const [tab, setTab] = useState<'generar' | 'historial'>('generar');
 
