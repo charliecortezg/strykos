@@ -1453,9 +1453,9 @@ export function LoadResultsModal({
         </DrawerFooter>
       </DrawerContent>
 
-      {/* Unsaved changes confirmation */}
-      {showExitConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+      {/* Unsaved changes confirmation - portaled to body to escape Drawer stacking */}
+      {showExitConfirm && createPortal(
+        <div className="fixed inset-0 z-[10010] flex items-center justify-center bg-black/50">
           <div className="bg-card border border-border rounded-lg p-6 mx-4 max-w-sm w-full shadow-xl">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
@@ -1474,54 +1474,6 @@ export function LoadResultsModal({
                 Salir sin guardar
               </Button>
             </div>
-          </div>
-        </div>
-      )}
-      {/* TikTok-style sticky comment bar */}
-      {commentPlayerId && createPortal(
-        <div className="fixed bottom-0 left-0 right-0 z-[80] bg-background border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-          <p className="text-xs text-muted-foreground mb-1.5">
-            Comentario para: <span className="font-medium text-foreground">{commentPlayerName}</span>
-          </p>
-          <div className="flex items-end gap-2">
-            <textarea
-              ref={commentTextareaRef}
-              className="flex-1 resize-none rounded-2xl bg-muted px-4 py-2 text-sm border-0 focus:ring-2 focus:ring-primary/30 focus:outline-none max-h-24 min-h-[36px]"
-              placeholder="Escribe un comentario..."
-              rows={1}
-              value={commentText}
-              onChange={(e) => {
-                setCommentText(e.target.value);
-                const ta = e.target;
-                ta.style.height = 'auto';
-                ta.style.height = Math.min(ta.scrollHeight, 96) + 'px';
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setCommentPlayerId(null);
-                }
-              }}
-            />
-            <button
-              type="button"
-              disabled={!commentText.trim()}
-              onClick={() => {
-                if (!commentPlayerId) return;
-                if (hasExistingPlayers) {
-                  setPlayerStats(prev =>
-                    prev.map(p => p.player_id === commentPlayerId ? { ...p, note: commentText.trim() } : p)
-                  );
-                } else {
-                  updatePlayerNote(commentPlayerId, commentText.trim());
-                }
-                setIsDirty(true);
-                setCommentPlayerId(null);
-                setCommentText('');
-              }}
-              className="flex-shrink-0 w-9 h-9 rounded-full bg-primary flex items-center justify-center disabled:opacity-40 transition-opacity"
-            >
-              <ArrowUp className="w-4 h-4 text-primary-foreground" />
-            </button>
           </div>
         </div>,
         document.body
