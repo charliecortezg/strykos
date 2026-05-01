@@ -365,25 +365,59 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
             </Card>
           </TabsContent>
         </Tabs>
+  );
+
+  const confirmDialog = (
+    <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirmar envío</AlertDialogTitle>
+          <AlertDialogDescription>
+            ¿Enviar el reporte de <strong>{MONTH_NAMES[selectedMonth]} {selectedYear}</strong>{' '}
+            a <strong>{playerCount}</strong> familia{playerCount === 1 ? '' : 's'} de{' '}
+            <strong>{selectedCategoryName}</strong>?<br />
+            Esta acción enviará un correo electrónico a cada familia con el PDF del reporte.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={handleGenerate}>Confirmar envío</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  if (embedded) {
+    return (
+      <div className="space-y-4">
+        {inner}
+        {confirmDialog}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4 flex items-center gap-3">
+          <Link to="/dashboard/director-deportivo">
+            <Button variant="ghost" size="sm" className="gap-1.5">
+              <ArrowLeft className="w-4 h-4" /> Volver
+            </Button>
+          </Link>
+          <div className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" />
+            <h1 className="text-lg font-semibold">Reportes Mensuales</h1>
+          </div>
+        </div>
       </div>
 
-      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar envío</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Enviar el reporte de <strong>{MONTH_NAMES[selectedMonth]} {selectedYear}</strong>{' '}
-              a <strong>{playerCount}</strong> familia{playerCount === 1 ? '' : 's'} de{' '}
-              <strong>{selectedCategoryName}</strong>?<br />
-              Esta acción enviará un correo electrónico a cada familia con el PDF del reporte.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleGenerate}>Confirmar envío</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <div className="container mx-auto px-4 py-6 max-w-5xl">
+        {inner}
+      </div>
+
+      {confirmDialog}
     </div>
   );
 }
+
