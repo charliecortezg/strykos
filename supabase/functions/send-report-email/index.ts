@@ -39,6 +39,15 @@ serve(async (req) => {
       pdfUrl,
     } = payload;
 
+    // Guard: never send an email without a valid PDF URL
+    if (!pdfUrl || typeof pdfUrl !== 'string' || pdfUrl.trim() === '') {
+      console.error('[send-report-email] Missing pdfUrl — refusing to send email.', { parentEmail, playerName });
+      return new Response(
+        JSON.stringify({ error: 'pdfUrl is required and cannot be empty' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     const familiaLabel = lastName ? `familia ${lastName}` : 'familia';
     const subject = `Reporte de ${firstName} — ${monthName} ${year} | White Lions Academy`;
 
@@ -155,7 +164,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            personalizations: [{ to: [{ email: parentEmail }] }],
+            personalizations: [{ to: [{ email: parentEmail }], bcc: [{ email: 'whitelions.admn@gmail.com' }] }],
             from: { email: 'reportes@whitelionsacademy.com', name: 'White Lions Academy' },
             subject,
             content: [{ type: 'text/html', value: html }],
@@ -181,6 +190,7 @@ serve(async (req) => {
         body: JSON.stringify({
           from: 'White Lions Academy <notificacion@roarid.com>',
           to: [parentEmail],
+          bcc: ['whitelions.admn@gmail.com'],
           subject,
           html,
         }),
