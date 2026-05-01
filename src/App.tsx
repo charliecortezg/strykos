@@ -164,7 +164,7 @@ function AcademyRoutes() {
         } />
         {/* Internal admin tool: Notes migration (one-off) */}
         <Route path="/admin/migracion-notas" element={
-          <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo']}>
+          <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo', 'administrativo']}>
             <NotesMigrationPage />
           </ProtectedRoute>
         } />
