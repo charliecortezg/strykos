@@ -170,7 +170,8 @@ serve(async (req) => {
         throw new Error('No email provider configured. Set RESEND_API_KEY or SENDGRID_API_KEY in Supabase secrets.');
       }
     } else {
-      // Resend (primary)
+      // Resend (primary) — use project-configured FROM address
+      const RESEND_FROM = Deno.env.get('RESEND_FROM_EMAIL') || 'White Lions Academy <onboarding@resend.dev>';
       const resendResponse = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -178,7 +179,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'White Lions Academy <reportes@whitelionsacademy.com>',
+          from: RESEND_FROM,
           to: [parentEmail],
           subject,
           html,
