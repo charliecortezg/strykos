@@ -159,6 +159,25 @@ export async function generateAndSendPlayerReport(
   // Step 4: Upload PDF
   const pdfUrl = await uploadPDF(pdfBlob, playerId, month, year, organizationId);
   if (!pdfUrl) {
+    console.error('[Report] uploadPDF returned null — aborting send. Player:', playerId, 'Period:', `${year}-${month}`);
+    // Persist a 'failed' record so the UI reflects the failure instead of silently
+    // marking the report as sent without a PDF.
+    await supabase
+      .from('player_monthly_reports')
+      .upsert(
+        {
+          organization_id: organizationId,
+          player_id: playerId,
+          month,
+          year,
+          category_id: reportData.player.category_id || null,
+          status: 'failed',
+          pdf_url: null,
+          sent_to_email: reportData.player.parent_email || null,
+          created_by: userId,
+        },
+        { onConflict: 'player_id,month,year' },
+      );
     return { success: false, reason: 'Error subiendo el PDF' };
   }
 
