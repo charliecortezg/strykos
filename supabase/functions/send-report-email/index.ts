@@ -39,6 +39,15 @@ serve(async (req) => {
       pdfUrl,
     } = payload;
 
+    // Guard: never send an email without a valid PDF URL
+    if (!pdfUrl || typeof pdfUrl !== 'string' || pdfUrl.trim() === '') {
+      console.error('[send-report-email] Missing pdfUrl — refusing to send email.', { parentEmail, playerName });
+      return new Response(
+        JSON.stringify({ error: 'pdfUrl is required and cannot be empty' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     const familiaLabel = lastName ? `familia ${lastName}` : 'familia';
     const subject = `Reporte de ${firstName} — ${monthName} ${year} | White Lions Academy`;
 
