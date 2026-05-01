@@ -35,6 +35,8 @@ import StudioPage from "./pages/stryk-way/StudioPage";
 import TrainingPage from "./pages/TrainingPage";
 // Match detail page
 import MatchDetailPage from "./pages/matches/MatchDetailPage";
+// Internal admin tools
+import NotesMigrationPage from "./pages/admin/NotesMigrationPage";
 // Portal Familiar Pages
 import PortalLogin from "./pages/portal/PortalLogin";
 import PortalDashboard from "./pages/portal/PortalDashboard";
@@ -158,6 +160,12 @@ function AcademyRoutes() {
         <Route path="/stryk-way" element={
           <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo']}>
             <StudioPage />
+          </ProtectedRoute>
+        } />
+        {/* Internal admin tool: Notes migration (one-off) */}
+        <Route path="/admin/migracion-notas" element={
+          <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo']}>
+            <NotesMigrationPage />
           </ProtectedRoute>
         } />
         {/* Match detail page */}
