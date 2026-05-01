@@ -11,9 +11,9 @@ import type { MonthlyReportData, GenerationProgress } from './report-types';
 
 // ── Config ────────────────────────────────────────────────────
 
-// Point this to wherever White Lions logo is stored in Supabase Storage
-// or use a public URL. Adjust as needed.
-const LOGO_STORAGE_PATH = 'public/white-lions-logo.jpg';
+// Logo path inside bucket 'email-assets'
+const LOGO_BUCKET = 'email-assets';
+const LOGO_STORAGE_PATH = 'white-lions-logo.jpg';
 const REPORTS_BUCKET = 'monthly-reports';
 
 // ── Upload PDF to Supabase Storage ────────────────────────────
@@ -55,18 +55,19 @@ async function saveReportRecord(
   organizationId: string,
 ): Promise<string | null> {
   const { data: record, error } = await supabase
-    .from('monthly_reports')
+    .from('player_monthly_reports')
     .upsert(
       {
         organization_id: organizationId,
         player_id: data.player.id,
         month: data.period.month,
         year: data.period.year,
-        category_id: data.player.category_id,
+        category_id: data.player.category_id || null,
         status: 'generated',
         pdf_url: pdfUrl,
         ai_summary: data.narrative ?? null,
         report_data: data as any,
+        sent_to_email: data.player.parent_email || null,
         created_by: userId,
       },
       {
@@ -112,7 +113,7 @@ async function sendReportEmail(
 
     // Mark as sent in DB
     await supabase
-      .from('monthly_reports')
+      .from('player_monthly_reports')
       .update({ status: 'sent', sent_at: new Date().toISOString() })
       .eq('id', reportId);
 
@@ -189,7 +190,7 @@ export async function generateCategoryReports(
 ): Promise<void> {
   // Load logo once for all reports
   const logoUrl = supabase.storage
-    .from('public') // adjust bucket name if needed
+    .from(LOGO_BUCKET)
     .getPublicUrl(LOGO_STORAGE_PATH).data.publicUrl;
   const logoDataUrl = await loadLogoAsDataUrl(logoUrl);
 
