@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Trophy, Target, Save, Camera, FileText, Plus, Minus, Check, X, ImageIcon, Crown, ChevronDown, CheckCheck, Users, Search, UserPlus, AlertTriangle, ArrowUp, MessageSquare } from 'lucide-react';
@@ -1386,7 +1387,7 @@ export function LoadResultsModal({
         </div>
       )}
       {/* TikTok-style sticky comment bar */}
-      {commentPlayerId && (
+      {commentPlayerId && createPortal(
         <div className="fixed bottom-0 left-0 right-0 z-[80] bg-background border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
           <p className="text-xs text-muted-foreground mb-1.5">
             Comentario para: <span className="font-medium text-foreground">{commentPlayerName}</span>
@@ -1400,7 +1401,6 @@ export function LoadResultsModal({
               value={commentText}
               onChange={(e) => {
                 setCommentText(e.target.value);
-                // Auto-resize
                 const ta = e.target;
                 ta.style.height = 'auto';
                 ta.style.height = Math.min(ta.scrollHeight, 96) + 'px';
@@ -1432,7 +1432,8 @@ export function LoadResultsModal({
               <ArrowUp className="w-4 h-4 text-primary-foreground" />
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </Drawer>
   );
