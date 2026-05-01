@@ -59,6 +59,101 @@ const ABSENCE_REASONS = [
   { value: 'enfermedad', label: 'Enfermedad / Lesión' },
 ];
 
+// Inline per-player note input. Holds its own local state to avoid
+// re-rendering the whole player list on every keystroke. Commits to
+// the parent on blur or when the user taps the check button.
+function InlinePlayerNote({
+  initialNote,
+  isOpen,
+  onOpen,
+  onCommit,
+  onClose,
+}: {
+  initialNote: string;
+  isOpen: boolean;
+  onOpen: () => void;
+  onCommit: (note: string) => void;
+  onClose: () => void;
+}) {
+  const [draft, setDraft] = useState(initialNote);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) setDraft(initialNote);
+  }, [initialNote, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        textareaRef.current?.focus();
+        const ta = textareaRef.current;
+        if (ta) {
+          ta.style.height = 'auto';
+          ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+        }
+      }, 50);
+    }
+  }, [isOpen]);
+
+  const commit = () => {
+    onCommit(draft.trim());
+    onClose();
+  };
+
+  if (!isOpen) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+      >
+        <MessageSquare className={cn("w-3.5 h-3.5 flex-shrink-0", initialNote ? "text-primary" : "text-muted-foreground/50")} />
+        {initialNote ? (
+          <span className="text-xs truncate flex-1">{initialNote}</span>
+        ) : (
+          <span className="text-xs text-muted-foreground/50 flex-1">Agregar nota...</span>
+        )}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-end gap-2 px-2 py-1.5 rounded-lg bg-muted/40">
+      <textarea
+        ref={textareaRef}
+        value={draft}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          const ta = e.target;
+          ta.style.height = 'auto';
+          ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+        }}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            onClose();
+          }
+        }}
+        placeholder="Escribe una nota..."
+        rows={1}
+        className="flex-1 resize-none rounded-md bg-background px-2 py-1.5 text-xs border border-input focus:ring-2 focus:ring-primary/30 focus:outline-none min-h-[32px] max-h-[120px]"
+      />
+      <button
+        type="button"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          commit();
+        }}
+        className="flex-shrink-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center"
+        aria-label="Guardar nota"
+      >
+        <Check className="w-3.5 h-3.5 text-primary-foreground" />
+      </button>
+    </div>
+  );
+}
+
 export function LoadResultsModal({ 
   match, 
   isOpen, 
