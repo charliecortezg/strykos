@@ -43,7 +43,7 @@ function capitalize(str: string): string {
 
 function buildAttendanceSentence(data: MonthlyReportData): string {
   const { attendance, player, period } = data;
-  const { first } = player;
+  const first = player.first_name;
 
   if (attendance.is_perfect && attendance.sessions_total > 0) {
     return `${first} asistió a los ${attendance.sessions_total} entrenamientos del mes, lo que refleja una disciplina ejemplar.`;
@@ -62,7 +62,7 @@ function buildAttendanceSentence(data: MonthlyReportData): string {
 
 function buildMatchesSentence(data: MonthlyReportData): string {
   const { matches, stats, player } = data;
-  const { first } = player;
+  const first = player.first_name;
   const played = matches.filter((m) => m.attended);
 
   if (played.length === 0) return '';
@@ -129,7 +129,8 @@ function buildCoachObservationSentence(data: MonthlyReportData): string {
 }
 
 function buildClosingSentence(data: MonthlyReportData): string {
-  const { first, last } = data.player;
+  const first = data.player.first_name;
+  const last = data.player.last_name;
   const apellido = last ? `familia ${last}` : 'familia';
 
   const closings = [

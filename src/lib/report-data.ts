@@ -1,20 +1,16 @@
 // ─────────────────────────────────────────────────────────────
 // WHITE LIONS ACADEMY — Report Data Fetcher
-// Reads from Supabase. Adjust table/column names if schema differs.
+// Adaptado al schema real de STRYK.
 // ─────────────────────────────────────────────────────────────
 
 import { supabase } from '@/integrations/supabase/client';
 import type { MonthlyReportData, ReportMatch, ReportPlayer } from './report-types';
-
-// ── Constants ────────────────────────────────────────────────
 
 export const MONTH_NAMES: Record<number, string> = {
   1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
   5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
   9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre',
 };
-
-// ── Helpers ──────────────────────────────────────────────────
 
 function monthDateRange(month: number, year: number): { start: string; end: string } {
   const start = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -23,7 +19,7 @@ function monthDateRange(month: number, year: number): { start: string; end: stri
   return { start, end };
 }
 
-function calculateAge(birthDate: string): number | undefined {
+function calculateAge(birthDate: string | null): number | undefined {
   if (!birthDate) return undefined;
   const today = new Date();
   const dob = new Date(birthDate);
@@ -43,11 +39,24 @@ function parseFullName(fullName: string): { first: string; last: string } {
 function stripMigrationPrefix(note: string): string {
   return note
     .replace(/^\[Migrado de notas del partido\]\s*/i, '')
-    .replace(/^\[.*?\]\s*/, '') // strip any other bracket prefix
+    .replace(/^\[.*?\]\s*/, '')
     .trim();
 }
 
-// ── Main fetcher ─────────────────────────────────────────────
+function deriveResult(goalsFor: number, goalsAgainst: number): 'victoria' | 'derrota' | 'empate' {
+  if (goalsFor > goalsAgainst) return 'victoria';
+  if (goalsFor < goalsAgainst) return 'derrota';
+  return 'empate';
+}
+
+function ratingFromPerformance(perf?: string | null): string | undefined {
+  switch (perf) {
+    case 'outstanding': return 'Excelente';
+    case 'excellent':   return 'Destacado';
+    case 'focus':       return 'En desarrollo';
+    default: return undefined;
+  }
+}
 
 export async function fetchPlayerMonthData(
   playerId: string,
@@ -57,127 +66,112 @@ export async function fetchPlayerMonthData(
 ): Promise<MonthlyReportData | null> {
   const { start, end } = monthDateRange(month, year);
 
-  // ── 1. Player info ───────────────────────────────────────
+  // 1. Player info
   const { data: player, error: playerErr } = await supabase
     .from('players')
-    .select(`
-      id,
-      full_name,
-      birth_date,
-      category_id,
-      categories ( id, name )
-    `)
+    .select('id, full_name, date_of_birth, category_id, parent_email, email, categories(id, name)')
     .eq('id', playerId)
-    .single();
+    .maybeSingle();
 
   if (playerErr || !player) {
     console.error('[Report] Player fetch failed:', playerErr);
     return null;
   }
 
-  // ── 2. Parent email ──────────────────────────────────────
-  // Adjust: email may be on player, parent, or user profile table
-  // Try player.parent_email first, then family_members, then users
-  let parentEmail = (player as any).parent_email ?? '';
+  // 2. Parent email — try players.parent_email, then players.email, then guardian
+  let parentEmail: string = (player.parent_email ?? '') as string;
+  if (!parentEmail) parentEmail = (player.email ?? '') as string;
 
   if (!parentEmail) {
-    const { data: family } = await supabase
-      .from('family_members')          // adjust table name if different
-      .select('email')
+    const { data: pg } = await supabase
+      .from('player_guardians')
+      .select('guardian_id, is_primary, guardians(email)')
       .eq('player_id', playerId)
-      .limit(1)
-      .maybeSingle();
-    parentEmail = family?.email ?? '';
+      .order('is_primary', { ascending: false });
+
+    const firstWithEmail = (pg ?? []).find((row: any) => row?.guardians?.email);
+    parentEmail = (firstWithEmail as any)?.guardians?.email ?? '';
   }
 
-  // ── 3. Matches of the month ──────────────────────────────
+  // 3. Matches of the month (only finished, for this player's category)
   const { data: matches } = await supabase
     .from('matches')
-    .select('id, rival_name, match_date, result, score_home, score_away, mvp_player_id, category_id')
+    .select('id, rival_name, match_date, goals_for, goals_against, mvp_player_id, category_id, status')
     .eq('organization_id', organizationId)
-    .gte('match_date', start)
-    .lte('match_date', end)
+    .eq('category_id', player.category_id as string)
+    .eq('status', 'terminado')
+    .gte('match_date', `${start}T00:00:00`)
+    .lte('match_date', `${end}T23:59:59`)
     .order('match_date', { ascending: true });
 
-  // ── 4. match_players for this player ────────────────────
-  const matchIds = (matches ?? []).map((m) => m.id);
+  // 4. match_players for this player
+  const matchIds = (matches ?? []).map((m: any) => m.id);
   let matchPlayerRecords: any[] = [];
-
   if (matchIds.length > 0) {
     const { data: mp } = await supabase
       .from('match_players')
-      .select('match_id, attended, goals, assists, rating, note')
+      .select('match_id, attended, goals, assists, performance, note')
       .eq('player_id', playerId)
       .in('match_id', matchIds);
     matchPlayerRecords = mp ?? [];
   }
 
-  // ── 5. Training sessions & attendance ───────────────────
-  // IMPORTANT: adjust table name to your actual sessions table
-  // Common names: training_sessions, sessions, trainings
-  const { data: sessions } = await supabase
-    .from('training_sessions')
-    .select('id')
+  // 5. Attendance (training): total sesiones distintas del mes para la categoría y % presente del jugador
+  const { data: catAttendance } = await supabase
+    .from('attendance')
+    .select('date, status, player_id')
     .eq('organization_id', organizationId)
-    .gte('session_date', start)
-    .lte('session_date', end);
+    .eq('category_id', player.category_id as string)
+    .gte('date', start)
+    .lte('date', end);
 
-  const sessionIds = (sessions ?? []).map((s) => s.id);
-  let attendanceRecords: any[] = [];
+  const allRows = catAttendance ?? [];
+  const sessionDates = new Set<string>(allRows.map((a: any) => a.date));
+  const sessionsTotal = sessionDates.size;
+  const sessionsAttended = allRows.filter(
+    (a: any) => a.player_id === playerId && a.status === 'presente'
+  ).length;
 
-  if (sessionIds.length > 0) {
-    // Common names: attendance, session_attendance, training_attendance
-    const { data: att } = await supabase
-      .from('attendance')
-      .select('session_id, attended')
-      .eq('player_id', playerId)
-      .in('session_id', sessionIds);
-    attendanceRecords = att ?? [];
-  }
-
-  // ── 6. Build match objects ───────────────────────────────
-  const builtMatches: ReportMatch[] = (matches ?? []).map((m) => {
+  // 6. Build match objects
+  const builtMatches: ReportMatch[] = (matches ?? []).map((m: any) => {
     const mp = matchPlayerRecords.find((r) => r.match_id === m.id);
-    const rawNote = mp?.note ?? '';
-    const cleanNote = rawNote ? stripMigrationPrefix(rawNote) : undefined;
+    const rawNote = (mp?.note ?? '') as string;
+    const cleanNote = rawNote ? stripMigrationPrefix(rawNote) : '';
 
     return {
       match_id: m.id,
       rival_name: m.rival_name ?? 'Rival',
       match_date: m.match_date,
-      result: m.result ?? null,
-      score_us: m.score_home,
-      score_rival: m.score_away,
+      result: deriveResult(m.goals_for ?? 0, m.goals_against ?? 0),
+      score_us: m.goals_for ?? 0,
+      score_rival: m.goals_against ?? 0,
       attended: mp?.attended ?? false,
       goals: mp?.goals ?? 0,
       assists: mp?.assists ?? 0,
-      rating: mp?.rating ?? undefined,
+      rating: ratingFromPerformance(mp?.performance),
       note: cleanNote && cleanNote.length > 2 ? cleanNote : undefined,
       is_mvp: m.mvp_player_id === playerId,
     };
   });
 
-  // ── 7. Calculate stats ───────────────────────────────────
+  // 7. Stats
   const attended = builtMatches.filter((m) => m.attended);
-  const sessionsTotal = (sessions ?? []).length;
-  const sessionsAttended = attendanceRecords.filter((a) => a.attended).length;
-
-  const totalGoals = attended.reduce((s, m) => s + m.goals, 0);
-  const totalAssists = attended.reduce((s, m) => s + m.assists, 0);
+  const totalGoals = attended.reduce((s, m) => s + (m.goals ?? 0), 0);
+  const totalAssists = attended.reduce((s, m) => s + (m.assists ?? 0), 0);
   const mvpMatches = builtMatches.filter((m) => m.is_mvp);
 
-  // ── 8. Assemble ──────────────────────────────────────────
+  // 8. Assemble
   const { first, last } = parseFullName(player.full_name);
   const categoryData = (player as any).categories as { id: string; name: string } | null;
 
   const reportPlayer: ReportPlayer = {
-    id: player.id,
-    full_name: player.full_name,
+    id: player.id as string,
+    full_name: player.full_name as string,
     first_name: first,
     last_name: last,
-    age: calculateAge((player as any).birth_date),
+    age: calculateAge((player as any).date_of_birth),
     category_name: categoryData?.name ?? '',
-    category_id: (player as any).category_id ?? '',
+    category_id: (player.category_id ?? '') as string,
     parent_email: parentEmail,
   };
 
@@ -217,8 +211,6 @@ export async function fetchPlayerMonthData(
   };
 }
 
-// ── Batch fetcher for a category ─────────────────────────────
-
 export async function fetchCategoryPlayers(
   categoryId: string,
   organizationId: string,
@@ -235,6 +227,5 @@ export async function fetchCategoryPlayers(
     console.error('[Report] Category players fetch failed:', error);
     return [];
   }
-
-  return data ?? [];
+  return (data as any) ?? [];
 }
