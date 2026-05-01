@@ -11,6 +11,7 @@ import { CategoriesTable } from '@/components/categories/CategoriesTable';
 import { PlayersTable } from '@/components/players/PlayersTable';
 import { VenuesTable } from '@/components/venues/VenuesTable';
 import { OperationalReports } from '@/components/reports/OperationalReports';
+import MonthlyReportsPage from '@/pages/director/MonthlyReportsPage';
 import { DirectorAttendanceView } from '@/components/attendance/DirectorAttendanceView';
 import { FinanceModule } from '@/components/payments/FinanceModule';
 import { TrainersModule } from '@/components/trainers/TrainersModule';
