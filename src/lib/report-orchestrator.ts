@@ -54,6 +54,7 @@ async function saveReportRecord(
   pdfUrl: string,
   userId: string,
   organizationId: string,
+  status: 'generated' | 'sent' | 'failed' = 'generated',
 ): Promise<string | null> {
   const { data: record, error } = await supabase
     .from('player_monthly_reports')
@@ -64,7 +65,7 @@ async function saveReportRecord(
         month: data.period.month,
         year: data.period.year,
         category_id: data.player.category_id || null,
-        status: 'generated',
+        status,
         pdf_url: pdfUrl,
         ai_summary: data.narrative ?? null,
         report_data: data as any,
