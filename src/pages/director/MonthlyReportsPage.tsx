@@ -152,10 +152,37 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
   };
 
   const handleResend = async (row: ReportRow) => {
-    if (!row.pdf_url || !row.sent_to_email) {
-      toast.error('Falta PDF o correo destinatario');
+    if (!row.pdf_url) {
+      toast.error('Falta PDF');
       return;
     }
+
+    // Re-fetch the latest email from the player (in case it was updated after generation)
+    let email = row.sent_to_email ?? '';
+    if (!email) {
+      const { data: p } = await supabase
+        .from('players')
+        .select('parent_email, email')
+        .eq('id', row.player_id)
+        .maybeSingle();
+      email = (p?.parent_email || p?.email || '') as string;
+
+      if (!email) {
+        const { data: pg } = await supabase
+          .from('player_guardians')
+          .select('is_primary, guardians(email)')
+          .eq('player_id', row.player_id)
+          .order('is_primary', { ascending: false });
+        const found = (pg ?? []).find((r: any) => r?.guardians?.email);
+        email = (found as any)?.guardians?.email ?? '';
+      }
+    }
+
+    if (!email) {
+      toast.error('El jugador aún no tiene correo registrado');
+      return;
+    }
+
     const playerFull = row.player?.full_name ?? '';
     const [first, ...rest] = playerFull.split(' ');
     const last = rest.join(' ');
@@ -165,7 +192,7 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
         playerName: playerFull,
         firstName: first,
         lastName: last,
-        parentEmail: row.sent_to_email,
+        parentEmail: email,
         monthName: MONTH_NAMES[row.month],
         year: row.year,
         pdfUrl: row.pdf_url,
@@ -176,9 +203,9 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
     } else {
       await supabase
         .from('player_monthly_reports')
-        .update({ status: 'sent', sent_at: new Date().toISOString() })
+        .update({ status: 'sent', sent_at: new Date().toISOString(), sent_to_email: email })
         .eq('id', row.id);
-      toast.success('Reenviado');
+      toast.success('Enviado');
       loadHistory();
     }
   };
