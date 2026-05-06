@@ -184,16 +184,20 @@ export async function generateAndSendPlayerReport(
     return { success: false, reason: 'Error subiendo el PDF' };
   }
 
-  // Step 5: Save DB record
-  const reportId = await saveReportRecord(reportData, pdfUrl, userId, organizationId);
+  // Step 5: Save DB record (status depends on whether we'll send email)
+  const initialStatus = hasEmail ? 'generated' : 'generated';
+  const reportId = await saveReportRecord(reportData, pdfUrl, userId, organizationId, initialStatus);
   if (!reportId) {
     return { success: false, reason: 'Error guardando el registro' };
   }
 
-  // Step 6: Send email
+  // Step 6: Send email — only if we have a parent email
+  if (!hasEmail) {
+    return { success: false, reason: 'Sin correo del padre — PDF generado, queda en historial para reenvío', pdfUrl };
+  }
+
   const emailSent = await sendReportEmail(reportId, reportData, pdfUrl);
   if (!emailSent) {
-    // PDF exists and DB record saved — just email failed
     return { success: false, reason: 'PDF generado pero error enviando email', pdfUrl };
   }
 
