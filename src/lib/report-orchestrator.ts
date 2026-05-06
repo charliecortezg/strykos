@@ -141,9 +141,7 @@ export async function generateAndSendPlayerReport(
     return { success: false, reason: 'No se encontraron datos del jugador' };
   }
 
-  if (!reportData.player.parent_email) {
-    return { success: false, reason: 'Sin correo del padre registrado' };
-  }
+  const hasEmail = !!reportData.player.parent_email;
 
   // Step 2: Generate narrative
   reportData.narrative = generateNarrative(reportData);
