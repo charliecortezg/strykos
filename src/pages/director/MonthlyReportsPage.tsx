@@ -365,7 +365,11 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
                             <td className="px-3 py-2">{MONTH_NAMES[row.month]} {row.year}</td>
                             <td className="px-3 py-2">
                               {row.status === 'sent' && <Badge variant="outline" className="bg-success/10 text-success border-success/20">Enviado</Badge>}
-                              {row.status === 'generated' && <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Generado</Badge>}
+                              {row.status === 'generated' && (
+                                row.sent_to_email
+                                  ? <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Generado</Badge>
+                                  : <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Sin correo</Badge>
+                              )}
                               {row.status === 'failed' && <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">Error</Badge>}
                             </td>
                             <td className="px-3 py-2 text-right">
@@ -379,9 +383,10 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
                                     <ExternalLink className="w-3.5 h-3.5" /> PDF
                                   </Button>
                                 )}
-                                {row.pdf_url && row.sent_to_email && (
+                                {row.pdf_url && (
                                   <Button size="sm" variant="ghost" onClick={() => handleResend(row)} className="gap-1">
-                                    <Send className="w-3.5 h-3.5" /> Reenviar
+                                    <Send className="w-3.5 h-3.5" />
+                                    {row.status === 'sent' ? 'Reenviar' : 'Enviar'}
                                   </Button>
                                 )}
                               </div>
