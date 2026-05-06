@@ -152,10 +152,37 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
   };
 
   const handleResend = async (row: ReportRow) => {
-    if (!row.pdf_url || !row.sent_to_email) {
-      toast.error('Falta PDF o correo destinatario');
+    if (!row.pdf_url) {
+      toast.error('Falta PDF');
       return;
     }
+
+    // Re-fetch the latest email from the player (in case it was updated after generation)
+    let email = row.sent_to_email ?? '';
+    if (!email) {
+      const { data: p } = await supabase
+        .from('players')
+        .select('parent_email, email')
+        .eq('id', row.player_id)
+        .maybeSingle();
+      email = (p?.parent_email || p?.email || '') as string;
+
+      if (!email) {
+        const { data: pg } = await supabase
+          .from('player_guardians')
+          .select('is_primary, guardians(email)')
+          .eq('player_id', row.player_id)
+          .order('is_primary', { ascending: false });
+        const found = (pg ?? []).find((r: any) => r?.guardians?.email);
+        email = (found as any)?.guardians?.email ?? '';
+      }
+    }
+
+    if (!email) {
+      toast.error('El jugador aún no tiene correo registrado');
+      return;
+    }
+
     const playerFull = row.player?.full_name ?? '';
     const [first, ...rest] = playerFull.split(' ');
     const last = rest.join(' ');
@@ -165,7 +192,7 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
         playerName: playerFull,
         firstName: first,
         lastName: last,
-        parentEmail: row.sent_to_email,
+        parentEmail: email,
         monthName: MONTH_NAMES[row.month],
         year: row.year,
         pdfUrl: row.pdf_url,
@@ -176,9 +203,9 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
     } else {
       await supabase
         .from('player_monthly_reports')
-        .update({ status: 'sent', sent_at: new Date().toISOString() })
+        .update({ status: 'sent', sent_at: new Date().toISOString(), sent_to_email: email })
         .eq('id', row.id);
-      toast.success('Reenviado');
+      toast.success('Enviado');
       loadHistory();
     }
   };
@@ -338,7 +365,11 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
                             <td className="px-3 py-2">{MONTH_NAMES[row.month]} {row.year}</td>
                             <td className="px-3 py-2">
                               {row.status === 'sent' && <Badge variant="outline" className="bg-success/10 text-success border-success/20">Enviado</Badge>}
-                              {row.status === 'generated' && <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Generado</Badge>}
+                              {row.status === 'generated' && (
+                                row.sent_to_email
+                                  ? <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Generado</Badge>
+                                  : <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Sin correo</Badge>
+                              )}
                               {row.status === 'failed' && <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">Error</Badge>}
                             </td>
                             <td className="px-3 py-2 text-right">
@@ -352,9 +383,10 @@ export default function MonthlyReportsPage({ embedded = false }: { embedded?: bo
                                     <ExternalLink className="w-3.5 h-3.5" /> PDF
                                   </Button>
                                 )}
-                                {row.pdf_url && row.sent_to_email && (
+                                {row.pdf_url && (
                                   <Button size="sm" variant="ghost" onClick={() => handleResend(row)} className="gap-1">
-                                    <Send className="w-3.5 h-3.5" /> Reenviar
+                                    <Send className="w-3.5 h-3.5" />
+                                    {row.status === 'sent' ? 'Reenviar' : 'Enviar'}
                                   </Button>
                                 )}
                               </div>

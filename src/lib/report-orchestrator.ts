@@ -54,6 +54,7 @@ async function saveReportRecord(
   pdfUrl: string,
   userId: string,
   organizationId: string,
+  status: 'generated' | 'sent' | 'failed' = 'generated',
 ): Promise<string | null> {
   const { data: record, error } = await supabase
     .from('player_monthly_reports')
@@ -64,7 +65,7 @@ async function saveReportRecord(
         month: data.period.month,
         year: data.period.year,
         category_id: data.player.category_id || null,
-        status: 'generated',
+        status,
         pdf_url: pdfUrl,
         ai_summary: data.narrative ?? null,
         report_data: data as any,
@@ -141,9 +142,7 @@ export async function generateAndSendPlayerReport(
     return { success: false, reason: 'No se encontraron datos del jugador' };
   }
 
-  if (!reportData.player.parent_email) {
-    return { success: false, reason: 'Sin correo del padre registrado' };
-  }
+  const hasEmail = !!reportData.player.parent_email;
 
   // Step 2: Generate narrative
   reportData.narrative = generateNarrative(reportData);
@@ -185,16 +184,20 @@ export async function generateAndSendPlayerReport(
     return { success: false, reason: 'Error subiendo el PDF' };
   }
 
-  // Step 5: Save DB record
-  const reportId = await saveReportRecord(reportData, pdfUrl, userId, organizationId);
+  // Step 5: Save DB record (status depends on whether we'll send email)
+  const initialStatus = hasEmail ? 'generated' : 'generated';
+  const reportId = await saveReportRecord(reportData, pdfUrl, userId, organizationId, initialStatus);
   if (!reportId) {
     return { success: false, reason: 'Error guardando el registro' };
   }
 
-  // Step 6: Send email
+  // Step 6: Send email — only if we have a parent email
+  if (!hasEmail) {
+    return { success: false, reason: 'Sin correo del padre — PDF generado, queda en historial para reenvío', pdfUrl };
+  }
+
   const emailSent = await sendReportEmail(reportId, reportData, pdfUrl);
   if (!emailSent) {
-    // PDF exists and DB record saved — just email failed
     return { success: false, reason: 'PDF generado pero error enviando email', pdfUrl };
   }
 
