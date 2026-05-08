@@ -241,6 +241,12 @@ export default function EntrenadorDashboard() {
         )}
 
         <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
+
+        <PlayerProfileModal
+          open={!!selectedPlayer}
+          onOpenChange={(open) => !open && setSelectedPlayer(null)}
+          player={selectedPlayer}
+        />
       </main>
     </div>
   );
