@@ -178,7 +178,8 @@ export default function EntrenadorDashboard() {
                       {trainerPlayers.map((player) => (
                         <div 
                           key={player.id} 
-                          className="flex items-center justify-between p-3 bg-card border border-border rounded-lg"
+                          onClick={() => setSelectedPlayer(player as Player)}
+                          className="flex items-center justify-between p-3 bg-card border border-border rounded-lg cursor-pointer hover:bg-accent/40 transition-colors"
                         >
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-sm truncate">{player.full_name}</p>
