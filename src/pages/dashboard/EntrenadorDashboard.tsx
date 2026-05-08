@@ -11,6 +11,8 @@ import { TrainerMatchesModule } from '@/components/matches/TrainerMatchesModule'
 import { TrainingAttendanceModule } from '@/components/attendance/TrainingAttendanceModule';
 import { usePlayers } from '@/hooks/usePlayers';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
+import { PlayerProfileModal } from '@/components/players/PlayerProfileModal';
+import type { Player } from '@/types/categories';
 import { EvaluationsModule } from '@/components/evaluations/EvaluationsModule';
 import { CoachExternalEvaluationsView } from '@/components/evaluations/CoachExternalEvaluationsView';
 import { EvaluationsTabsWrapper } from '@/components/evaluations/EvaluationsTabsWrapper';
