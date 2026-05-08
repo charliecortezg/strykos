@@ -11,6 +11,8 @@ import { TrainerMatchesModule } from '@/components/matches/TrainerMatchesModule'
 import { TrainingAttendanceModule } from '@/components/attendance/TrainingAttendanceModule';
 import { usePlayers } from '@/hooks/usePlayers';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
+import { PlayerProfileModal } from '@/components/players/PlayerProfileModal';
+import type { Player } from '@/types/categories';
 import { EvaluationsModule } from '@/components/evaluations/EvaluationsModule';
 import { CoachExternalEvaluationsView } from '@/components/evaluations/CoachExternalEvaluationsView';
 import { EvaluationsTabsWrapper } from '@/components/evaluations/EvaluationsTabsWrapper';
@@ -27,6 +29,7 @@ export default function EntrenadorDashboard() {
   const { players } = usePlayers();
   // Asistencia is the default - it's the most frequent action for trainers
   const [activeTab, setActiveTab] = useState('sesion');
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const { feature_evaluations_enabled } = useFeatureFlags();
 
   // Filter players to only show those in trainer's categories
@@ -175,7 +178,8 @@ export default function EntrenadorDashboard() {
                       {trainerPlayers.map((player) => (
                         <div 
                           key={player.id} 
-                          className="flex items-center justify-between p-3 bg-card border border-border rounded-lg"
+                          onClick={() => setSelectedPlayer(player as Player)}
+                          className="flex items-center justify-between p-3 bg-card border border-border rounded-lg cursor-pointer hover:bg-accent/40 transition-colors"
                         >
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-sm truncate">{player.full_name}</p>
@@ -237,6 +241,12 @@ export default function EntrenadorDashboard() {
         )}
 
         <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
+
+        <PlayerProfileModal
+          open={!!selectedPlayer}
+          onOpenChange={(open) => !open && setSelectedPlayer(null)}
+          player={selectedPlayer}
+        />
       </main>
     </div>
   );
