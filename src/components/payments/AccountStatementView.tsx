@@ -20,7 +20,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Search, User, Filter, ChevronRight, X } from 'lucide-react';
+import { Search, User, Filter, ChevronRight, X, MessageCircle } from 'lucide-react';
 import { PlayerAccountStatement } from './PlayerAccountStatement';
 import type { Player } from '@/types/categories';
 import { normalizeSearch } from '@/lib/utils';
