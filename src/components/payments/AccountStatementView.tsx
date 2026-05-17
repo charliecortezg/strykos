@@ -298,29 +298,50 @@ export function AccountStatementView({
             </div>
           ) : (
             <div className="divide-y">
-              {filteredPlayers.map((player) => (
-                <button
-                  key={player.id}
-                  onClick={() => onSelectPlayer(player)}
-                  className="w-full p-4 text-left hover:bg-muted/50 transition-colors flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="w-5 h-5 text-primary" />
+              {filteredPlayers.map((player) => {
+                const cleanPhone = player.phone ? player.phone.replace(/\D/g, '') : '';
+                const showWhatsApp = player.payment_status === 'pendiente' && cleanPhone.length > 0;
+                const monthName = new Date().toLocaleDateString('es-MX', { month: 'long' });
+                const monthCapitalized = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+                const message = `Hola, buen día 👋\n\nTe escribo con un aviso administrativo sobre la mensualidad de ${monthCapitalized} de ${player.full_name}.\n\nAl no haberse registrado el pago dentro del periodo establecido, se genera una cuota de impago de $50 MXN adicional a la mensualidad.\n\nAgradeceremos mucho tu apoyo para regularizar el pago y dar continuidad a las actividades deportivas de ${player.full_name}.\n\nLos datos para transferencia:\nCarlos Mario Cortez Gurrola\nCitibanamex\n5256784003067195\n\nCualquier duda, quedo atento 🦁\nWhite Lions FC — Aquí inicia tu mejor versión.`;
+                const waUrl = `https://wa.me/52${cleanPhone}?text=${encodeURIComponent(message)}`;
+
+                return (
+                  <div
+                    key={player.id}
+                    onClick={() => onSelectPlayer(player)}
+                    className="w-full p-4 text-left hover:bg-muted/50 transition-colors flex items-center justify-between group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <User className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{player.full_name}</p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {player.category?.name || 'Sin categoría'}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{player.full_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {player.category?.name || 'Sin categoría'}
-                      </p>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {getStatusBadge(player.payment_status)}
+                      {showWhatsApp && (
+                        <a
+                          href={waUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 h-8 px-2 rounded-md text-xs font-medium bg-success text-success-foreground hover:bg-success/90 transition-colors"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">WhatsApp</span>
+                        </a>
+                      )}
+                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    {getStatusBadge(player.payment_status)}
-                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
