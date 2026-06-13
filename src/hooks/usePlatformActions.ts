@@ -72,10 +72,21 @@ export function usePlatformActions() {
     });
   };
 
+  const updateOrgFeatures = async (
+    organizationId: string,
+    payload: { feature_profile?: 'basic' | 'full'; features?: Record<string, boolean> }
+  ) => {
+    return executeAction('update_features', {
+      organization_id: organizationId,
+      ...payload,
+    });
+  };
+
   return {
     isLoading,
     changePlan,
     toggleOrganization,
     resolveUpgradeRequest,
+    updateOrgFeatures,
   };
 }
