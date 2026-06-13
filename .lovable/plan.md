@@ -1,147 +1,233 @@
-# Fase 2 — Perfiles de features + ocultar UI de planes
+# Fase 3 — Panel del Dueño
 
-## A. Migración SQL (aditiva, una sola)
+Producto unificado para academias nuevas (perfil ≠ 'full'). White Lions (full) NO se toca: sigue con sus 4 paneles y selector de rol.
 
-```sql
-ALTER TABLE public.organizations
-  ADD COLUMN IF NOT EXISTS feature_profile text NOT NULL DEFAULT 'basic',
-  ADD COLUMN IF NOT EXISTS features jsonb NOT NULL DEFAULT '{}'::jsonb;
+## 1. Nuevo flag y diccionario de lenguaje
 
-ALTER TABLE public.organizations
-  ADD CONSTRAINT organizations_feature_profile_check
-  CHECK (feature_profile IN ('basic','full'));
+`src/lib/feature-profiles.ts`
 
--- Cero cambio para orgs existentes: todas quedan en 'full'
-UPDATE public.organizations SET feature_profile = 'full';
+- Agregar `'venues'` a `FEATURE_KEYS`. `basic.venues = false`, `full.venues = true`.
+- (Ya existe `unified_owner_panel`: basic=true, full=false → se usa como discriminador del Panel del Dueño.)
+
+**Nuevo** `src/lib/owner-language.ts` (constantes de copy para reutilizar):
+
+```
+ESTADO_ACADEMIA, NUEVOS_INGRESOS, BAJAS, DEBEN_1, DEBEN_2,
+JUGADORES_POR_RECUPERAR, INGRESOS_MES, GASTOS_MES, UTILIDAD,
+COBRANZA_PCT, ASISTENCIA_PCT, ACTIVOS, ENTRENAMIENTOS_SEMANA
 ```
 
-No se toca `feature_stryk_way_enabled` (se conserva como fallback legacy).
+Esto evita que cada componente reinvente el texto.
 
-## B. Definición de flags
+## 2. Ruteo y header
 
-**Nuevo:** `src/lib/feature-profiles.ts` con `FEATURE_KEYS`, `FeatureKey`, y `PROFILE_DEFAULTS` exactamente como especifica el brief (12 flags; en `basic` solo `unified_owner_panel:true`; en `full` todo `true` excepto `unified_owner_panel:false`).
+`src/App.tsx`
 
-**Resolución (precedencia):**
+- Nueva ruta `/dashboard/owner` → `OwnerDashboard` (protegida, `org_owner`, gateada con `unified_owner_panel`).
+- En `auth-routing.ts` (`getDashboardPath`): si org tiene `unified_owner_panel` activo y el rol activo es `org_owner` → devolver `/dashboard/owner` en vez de `/dashboard/org-owner`.
+- Las rutas existentes `/dashboard/org-owner`, `/dashboard/director-deportivo`, `/dashboard/administrativo` se conservan (White Lions las usa) pero quedan inalcanzables para academias no-full porque el routing las redirige.
 
-1. `organizations.features[key]` si está definido (boolean).
-2. Solo para `stryk_way`: si no hay override, usar `feature_stryk_way_enabled` cuando no es null.
-3. `PROFILE_DEFAULTS[feature_profile][key]`.
+`src/components/dashboard/DashboardHeader.tsx`
 
-## C. Hook `useOrgFeatures()`
+- Ocultar `<RoleSwitch />` cuando `unified_owner_panel` está activo.
+- Quitar el badge de plan ("Freemium") en perfil no-full — no se vende plan.
+- Mostrar `organization.name` (ya lo hace).
 
-**Nuevo:** `src/hooks/useOrgFeatures.ts`. Lee `organization` de `useAuth()` (sin queries adicionales) y deriva flags vía la función de resolución. API: `{ profile, isEnabled(key) }`.
+`src/components/dashboard/RoleSwitch.tsx`: añadir guarda interna `if (isEnabled('unified_owner_panel')) return null;` por defensa en profundidad.
 
-**Cambios en** `AuthContext`**/types:**
+## 3. `OwnerDashboard.tsx` (nuevo, 5 secciones)
 
-- `src/contexts/AuthContext.tsx`: el `select('*')` ya trae las nuevas columnas; no requiere cambios funcionales (verificar que `mapOrgRow` no las descarte).
-- `src/types/auth.ts`: añadir `feature_profile: 'basic'|'full'` y `features: Record<string, boolean>` a la interfaz `Organization` (opcionales para no romper).
+`src/pages/dashboard/OwnerDashboard.tsx` con bottom nav móvil + sidebar desktop. Tab activo en state local.
 
-Reactivo a `switchOrganization` porque depende de `organization` del contexto.
+```text
+[Inicio] [Jugadores] [Dinero] [Asistencia] [Equipo]
+```
 
-## D. Gating UI (por flag)
+### Sección 1 — Inicio
 
-Patrón uniforme: **(1) item de nav**, **(2) ruta**, **(3) entradas dispersas**. Rutas apagadas → componente wrapper `<FeatureRoute featureKey="..."/>` que redirige al dashboard del rol activo con `toast.error("Esta función no está disponible")`.
+Reutiliza tal cual:
 
-**Nuevos archivos:**
+- `FounderKPISection` (6 KPIs desde `useAcademyKpis`)
+- `LifecycleBillingSection` envuelto en un wrapper `EstadoAcademiaSection` que **pasa los labels traducidos** vía props o usa el diccionario `owner-language.ts`. Si el componente actual hardcodea los textos, hago un fork ligero `EstadoAcademiaSection.tsx` que llama a los mismos hooks (`useLifecycleKPIs`) pero renderiza con copy nuevo.
+- Lista "Jugadores por recuperar" (deriva de overdue 1/2): reutiliza el listado dentro de `LifecycleBillingSection`; agrego botón WhatsApp `https://wa.me/<phone>?text=<mensaje>` con mensaje pre-llenado.
+- Botón "Descargar Reporte Mensual" → llama al pipeline existente (`MonthlyReportSection` o `report-orchestrator`).
 
-- `src/components/auth/FeatureRoute.tsx` — guard de ruta que usa `useOrgFeatures`.
-- `src/components/auth/FeatureGate.tsx` — wrapper inline para botones/tabs/secciones.
+### Sección 2 — Jugadores
 
-**Aplicación por flag (archivos a editar):**
+Tabs internos: **Jugadores** | **Categorías**.
 
+- **Jugadores**: `PlayersTable` + búsqueda + filtro categoría + botones "+ Fichar" (link a `/fichajes/terminal`) e "Importar Excel" (`ExcelImportModal`). Ficha individual: `PlayerProfileModal` (ya existe).
+- **Categorías**: `CategoriesTable` + `CreateCategoryModal` / `EditCategoryModal`. **Importante**: dentro de los modales de categoría, ocultar el campo "Sede" cuando `!isEnabled('venues')`. Edito los dos modales para gatear ese campo (no removerlo del schema).
 
-| Flag                  | Puntos a gatear                                                                                                                                                                                                                                                 |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `evaluations`         | DD: tab Evaluaciones en `DirectorDeportivoDashboard.tsx`. Entrenador: tab "Eval" en `EntrenadorDashboard.tsx` + `BottomNavBar.tsx` (filtrar item). Perfil jugador: tab Evaluaciones en `PlayerProfileModal.tsx`. Ruta `/dashboard/assessment-lab` en `App.tsx`. |
-| `stryk_way`           | Ruta `/stryk-way`. `useFeatureFlags` ahora delega a `useOrgFeatures` para `feature_stryk_way_enabled` (mantiene compat). Indicadores XP/Rendimiento en vistas de asistencia/entrenador.                                                                         |
-| `idp`                 | Módulo IDP en perfil de jugador y portal.                                                                                                                                                                                                                       |
-| `membership_blocks`   | `MembershipOverview` (tab DD), `BlockProgressCard`, badges de bloque en jugador.                                                                                                                                                                                |
-| `matches`             | DD: tab Partidos (`MatchHistoryModule`). Entrenador: tab Partidos (`TrainerMatchesModule`). Ruta `/partidos/:id`.                                                                                                                                               |
-| `uniforms`            | `UniformsModule` y su tab.                                                                                                                                                                                                                                      |
-| `cheer`               | `CheerModule` y su tab.                                                                                                                                                                                                                                         |
-| `coach_training`      | Ruta `/training/*`. Entradas en dashboards.                                                                                                                                                                                                                     |
-| `founder_copilot`     | Botón flotante `<FounderCopilot/>` en `OrgOwnerDashboard.tsx`.                                                                                                                                                                                                  |
-| `family_portal`       | En `PortalAuthGuard` / `PortalDashboard`: si org del token tiene flag off, renderizar página "Portal no disponible" (componente nuevo `PortalUnavailable.tsx`), no error. Las rutas siguen montadas.                                                            |
-| `session_planner`     | Entrenador: tab "Sesión" (`SessionHome`) + item del `BottomNavBar` + botón "Planificar sesión de hoy". Asistencia y Jugadores quedan siempre visibles.                                                                                                          |
-| `unified_owner_panel` | Solo define el flag; sin efecto en Fase 2.                                                                                                                                                                                                                      |
+### Sección 3 — Dinero
 
+Tabs: **Pagos** | **Gastos** | **Configuración de cobranza**.
 
-## E. Ocultar UI de planes (one price)
+- Header con tres tarjetas: `ingresos_mes`, `gastos_mes`, `utilidad = ingresos - gastos`, más `% cobranza`.
+- Pagos: `PaymentsDashboard` (registrar + tabla del mes).
+- Gastos: `ExpensesModule`.
+- Configuración: `BillingConfigurationPanel`.
 
-Para usuarios que NO son platform admin:
+Las cifras vienen del mismo RPC `get_academy_kpis` (ingresos, cobranza) + suma de `expenses` del mes. Un pequeño hook `useMonthlyFinanceSummary` (o cálculo inline en el header) que retorna `{ingresos, gastos, utilidad}`.
 
-- Eliminar de la UI: `PlansModule` (página/tab), `UpgradePlanModal`, `PlanLimitBanner`, badges de plan en headers/sidebars.
-- Editar `OrgOwnerDashboard.tsx`, `AdministrativoDashboard.tsx`, `DashboardHeader` para quitar entradas a planes.
-- Rutas asociadas → redirect a dashboard del rol.
-- Auditar `usePlanLimits` y validaciones de límite en frontend (creación de jugadores/categorías/usuarios): comentar/eliminar los avisos y bloqueos en cliente. Sin nuevos warnings para orgs `basic` o `full`.
-- `plan_limits` y `upgrade_requests` siguen accesibles **solo** desde rutas `/platform-admin/*`.
+### Sección 4 — Asistencia
 
-## F. Platform Admin — control de perfiles
+- Reutiliza `DirectorAttendanceView` (resumen por categoría + ranking de faltas).
+- Botón "Pasar lista hoy" abre `AttendanceRegistration` (selector de categoría → lista).
+- En `AttendanceRegistration`: ya gateado el bloque de Performance/XP por `feature_evaluations_enabled` / STRYK Way — verifico que en perfil basic no se muestre.
 
-En `src/components/platform/OrganizationDetailModal.tsx`:
+### Sección 5 — Equipo
 
-- Selector `feature_profile` (basic/full) → `UPDATE organizations SET feature_profile=...`.
-- Lista de los 12 flags. Cada uno con tri-estado: **Heredado** (no key en `features`) / **Forzar ON** / **Forzar OFF**. Persiste vía `UPDATE organizations SET features = features || jsonb_build_object(...)` o `features - 'key'` para limpiar.
-- Mostrar el valor efectivo resuelto al lado del control (usando la misma función de resolución del cliente).
+Tabs: **Equipo** | **Configuración de la academia**.
 
-## G. Notas de compatibilidad
+- **Equipo**: `TrainersModule` (tabla + acciones). Botón "+ Crear Entrenador" abre `CreateUserModal` **forzando el rol a** `entrenador` vía prop nueva `lockedRole?: OrgRole` (oculta el selector y envía siempre `entrenador`).
+- **Configuración de la academia**: nuevo componente simple `AcademyConfigPanel` que muestra/edita `organization.name`, `primary_sport`, métodos de pago/bancarios (de `org_intake_settings` — `IntakeSettingsPanel`) y prefijo de folio (read-only). Logo: si no hay infra, dejo placeholder "Próximamente" — confirmo con el usuario antes de inventar storage.
 
-- White Lions ya está en `full` por el `UPDATE` de la migración → cero cambio visual ni funcional.
-- `useFeatureFlags` (legacy) se reescribe internamente para delegar a `useOrgFeatures`, manteniendo su API (`feature_stryk_way_enabled`, `feature_evaluations_enabled`, etc.) para no tocar todos los call-sites.
-- No se borran tablas, columnas, ni código de planes — solo se gatean.
+## 4. Backend: gate de roles en `create-org-user`
 
-## H. Verificación (al terminar, reportar PASA/FALLA)
+`supabase/functions/create-org-user/index.ts`:
 
-1. WL login (full): 4 paneles + selector de rol + todos los módulos visibles; entrenador con 5 tabs.
-2. Crear "Academia Demo" → nace `basic`; owner sin Evaluaciones/Partidos/Studio/IDP/Bloques/Uniformes/Porra/Capacitación/Copilot; sin rastro de planes/upgrade.
-3. Entrenador de Demo: solo Asistencia y Jugadores; sin XP/Rendimiento al pasar lista.
-4. URL directa `/partidos/...` en Demo → redirect + toast "Esta función no está disponible".
-5. Platform Admin: toggle de un flag override en Demo → tras recargar la UI reacciona.
-6. Usuario en dos orgs (full + basic): `switchOrganization` cambia los flags.
+- Obtener `feature_profile` de la org del caller.
+- Si `feature_profile != 'full'` y `role != 'entrenador'` → 403 `{"error":"En esta academia solo puedes crear entrenadores"}`.
+- Mismo gate en `manage-org-user` para edición de rol.
 
-## Fuera de alcance
+## 5. Limpieza de lenguaje (sweep)
 
-- Efecto de `unified_owner_panel` (Fase 3).
-- Cambios en RPC `get_academy_kpis` / `useAcademyKpis`.
-- Borrado de `feature_stryk_way_enabled` o de tablas de planes.
-- Migración de datos en `features` para orgs 
+Greppear y reemplazar dentro de los componentes que renderiza el Panel del Dueño (NO en White Lions):
 
-&nbsp;
+- "Lifecycle", "Onboarding", "Churn", "Mora", "Plan", "Premium", "Básico", "Upgrade" → labels del diccionario.
+- En `DashboardHeader`: quitar badge de plan cuando unified panel.
 
-Apruebo el plan con una corrección y una verificación adicional:
+White Lions usa los componentes originales sin el wrapper, así que su copy no cambia. Los wrappers `EstadoAcademiaSection`, etc., solo se usan en `OwnerDashboard`.
 
-&nbsp;
+## 6. Verificación (navegar de verdad, no "por construcción")
 
-1. founder_copilot: el botón flotante aparece en TODAS las vistas
+Login con `demo-owner@stryk-test.com / DemoStryk1234!` (Academia Demo, basic) y reportar PASA/FALLA en los 9 puntos del brief. Para White Lions (caso 7), pido al usuario que valide con su sesión (igual que en Fase 2).
 
-   (fundador, DD, entrenador, asistencia), no solo en
+## Archivos a tocar
 
-   OrgOwnerDashboard. Localiza dónde está realmente montado
+**Nuevos**
 
-   (probablemente un layout compartido) y aplica el gate en TODOS
+- `src/pages/dashboard/OwnerDashboard.tsx`
+- `src/components/dashboard/owner/EstadoAcademiaSection.tsx`
+- `src/components/dashboard/owner/JugadoresPorRecuperar.tsx`
+- `src/components/dashboard/owner/AcademyConfigPanel.tsx`
+- `src/components/dashboard/owner/OwnerBottomNav.tsx` (móvil) / sidebar inline
+- `src/lib/owner-language.ts`
 
-   sus puntos de montaje. Agrega a la verificación: en Academia
+**Editados**
 
-   Demo el botón flotante no aparece en NINGUNA pantalla de
+- `src/lib/feature-profiles.ts` (+ flag `venues`)
+- `src/App.tsx` (ruta `/dashboard/owner`)
+- `src/lib/auth-routing.ts` (redirect a `/dashboard/owner` cuando aplica)
+- `src/components/dashboard/DashboardHeader.tsx` (ocultar RoleSwitch + badge plan)
+- `src/components/dashboard/RoleSwitch.tsx` (guarda)
+- `src/components/dashboard/CreateUserModal.tsx` (prop `lockedRole`)
+- `src/components/categories/CreateCategoryModal.tsx` + `EditCategoryModal.tsx` (gate Sede)
+- `supabase/functions/create-org-user/index.ts` y `manage-org-user/index.ts` (gate de rol)
 
-   ningún rol.
+## Riesgo / preguntas abiertas
 
-&nbsp;
+1. **Logo de academia**: no veo infra de storage para logos en `organizations`. Propongo dejar el campo como "Próximamente" en esta fase para no inventar bucket/columna sin tu visto bueno.
+2. **Sección Dinero — utilidad**: si no existe RPC que sume gastos del mes, lo resuelvo con un `useQuery` simple sobre `expenses`. Sin nuevo backend.
+3. **WhatsApp pre-llenado**: uso `wa.me` con texto plantilla "Hola {tutor}, te recuerdo el pago pendiente de {jugador} por ${monto}…". Si quieres otro copy, dímelo.
 
-2. Orden de la migración: ADD COLUMN → UPDATE a 'full' → ADD
-
-   CONSTRAINT al final, para que el constraint nunca evalúe filas
-
-   en transición.
+¿Apruebo y avanzo, o ajustas algo (sobre todo logo y el copy del WhatsApp)?
 
 &nbsp;
 
-3. Confirma que register-academy no setea feature_profile
+&nbsp;
 
-   explícitamente (debe heredar el DEFAULT 'basic' de la columna).
+Apruebo el plan con estos ajustes:
 
 &nbsp;
 
-Todo lo demás aprobado tal cual, incluyendo la delegación de
+1. LOGO (sí implementar, no "Próximamente"):
 
-useFeatureFlags y el tri-estado del Platform Admin.
+   - Permitir que el dueño suba el logo de su academia en formato
+
+     PNG, JPG o SVG (NO PDF — no es renderizable como imagen).
+
+     Límite de tamaño razonable (ej. 2MB), validar tipo de archivo.
+
+   - Crea la infra mínima: bucket de storage para logos + columna
+
+     logo_url en organizations (migración aditiva).
+
+   - El logo se muestra en el header del Panel del Dueño junto al
+
+     nombre de la academia, y queda disponible para recibos/reportes.
+
+   - Si no hay logo subido, fallback al ícono/nombre actual.
+
+&nbsp;
+
+2. SECCIÓN DINERO — separar cifras, no inventar "utilidad neta":
+
+   - Mostrar DOS tarjetas separadas y claras: "Ingresos del mes" y
+
+     "Gastos del mes". Son datos distintos, se presentan distintos.
+
+   - Si se incluye un tercer número, NO se llama "Utilidad" a secas
+
+     (sería engañoso: el dueño no registra todos sus gastos, y bruta
+
+     ≠ neta). Etiquétalo literal: "Ingresos − Gastos registrados"
+
+     con una nota pequeña: "Solo considera los gastos que registraste
+
+     en STRYK".
+
+   - Fuente única: hook useMonthlyFinanceSummary(orgId) que devuelve
+
+     {ingresos, gastos}. ingresos del RPC get_academy_kpis (no
+
+     recalcular); gastos = suma de expenses del mes usando la MISMA
+
+     ventana de fecha que define el RPC para su mes, sin desfases de
+
+     corte. Documenta esto en comentario del hook. Cualquier otra
+
+     vista que muestre gastos usa este mismo hook.
+
+&nbsp;
+
+3. Copy WhatsApp (tono humano, no cobranza fría):
+
+   "Hola {tutor}, ¿cómo está? Le recuerdo que {jugador} tiene
+
+   pendiente la mensualidad de ${monto}. Cualquier cosa me dice
+
+   para apoyarle. ¡Gracias!"
+
+&nbsp;
+
+4. Confirma que reutilizar ExpensesModule en el Panel del Dueño NO
+
+   cambia su comportamiento para White Lions (que lo usa hoy en
+
+   Finanzas del DD).
+
+&nbsp;
+
+Todo lo demás aprobado tal cual: wrapper EstadoAcademiaSection para
+
+no contaminar el copy de WL, lockedRole=entrenador, gate doble de
+
+roles en create-org-user y manage-org-user, gate del campo Sede en
+
+modales de categoría, diccionario owner-language.ts, redirect de
+
+routing a /dashboard/owner.
+
+&nbsp;
+
+IMPORTANTE para la verificación: Academia Demo está vacía. Antes de
+
+reportar PASA/FALLA en la sección Dinero, carga datos de prueba en
+
+Demo (2-3 jugadores, 1-2 pagos, 1-2 gastos) para verificar que
+
+Ingresos y Gastos muestran cifras reales y cuadran con el resto.
+
+Una pantalla en ceros no prueba nada.
