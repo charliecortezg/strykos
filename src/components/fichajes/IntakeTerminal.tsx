@@ -193,7 +193,38 @@ export function IntakeTerminal() {
     ? formData.evidenceFile !== null 
     : true;
 
-  const isFormValid = isPlayerValid && isGuardianValid && isSportValid && isPaymentValid;
+  const isFormValid = isPlayerValid && isGuardianValid && isSportValid && isPaymentValid
+    && (!duplicateMatch || confirmedDuplicate);
+
+  // Detección de posible duplicado al completar nombre + fecha de nacimiento
+  useEffect(() => {
+    if (!organization?.id || !formData.playerName.trim() || !formData.playerBirthDate) {
+      setDuplicateMatch(null);
+      setConfirmedDuplicate(false);
+      return;
+    }
+    const handle = setTimeout(async () => {
+      const normalized = normalizeName(formData.playerName);
+      const { data } = await supabase
+        .from('players')
+        .select('id, full_name, category:categories(name)')
+        .eq('organization_id', organization.id)
+        .eq('date_of_birth', formData.playerBirthDate)
+        .eq('lifecycle_status', 'active');
+      const match = (data || []).find((p: any) => {
+        const dist = normalizeName(p.full_name) === normalized ? 0 : 99;
+        return dist <= 3;
+      });
+      if (match) {
+        setDuplicateMatch({ id: match.id, name: (match as any).full_name, categoryName: (match as any).category?.name });
+        setConfirmedDuplicate(false);
+      } else {
+        setDuplicateMatch(null);
+        setConfirmedDuplicate(false);
+      }
+    }, 500);
+    return () => clearTimeout(handle);
+  }, [formData.playerName, formData.playerBirthDate, organization?.id]);
 
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -395,6 +426,30 @@ export function IntakeTerminal() {
                   maxAge={25}
                   required
                 />
+                {duplicateMatch && (
+                  <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+                      <div className="text-xs text-foreground">
+                        Ya existe un jugador con nombre y fecha de nacimiento similares:
+                        <strong className="block mt-1">{duplicateMatch.name}</strong>
+                        {duplicateMatch.categoryName && (
+                          <span className="text-muted-foreground">{duplicateMatch.categoryName}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pl-6">
+                      <Checkbox
+                        id="confirm-dup"
+                        checked={confirmedDuplicate}
+                        onCheckedChange={(v) => setConfirmedDuplicate(v === true)}
+                      />
+                      <label htmlFor="confirm-dup" className="text-xs text-foreground cursor-pointer">
+                        Confirmo que es un jugador diferente y deseo continuar
+                      </label>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </CollapsibleContent>
           </Card>
