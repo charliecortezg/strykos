@@ -27,7 +27,7 @@ interface TrainersModuleProps {
 export function TrainersModule({ readOnly = false }: TrainersModuleProps) {
   const { trainers, isLoading, refetch } = useTrainersWithCategories();
   const { isEnabled } = useOrgFeatures();
-  const showPremiumKpis = isEnabled('trainer_evaluations');
+  const showPremiumKpis = isEnabled('evaluations');
   const [selectedTrainer, setSelectedTrainer] = useState<TrainerWithCategories | null>(null);
   const [kpisModalOpen, setKpisModalOpen] = useState(false);
   const [categoriesModalOpen, setCategoriesModalOpen] = useState(false);
@@ -77,10 +77,12 @@ export function TrainersModule({ readOnly = false }: TrainersModuleProps) {
           </h3>
           <Badge variant="secondary">{trainers.length}</Badge>
         </div>
-        <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
-          <Crown className="w-3 h-3 mr-1" />
-          Evaluación Premium
-        </Badge>
+        {showPremiumKpis && (
+          <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
+            <Crown className="w-3 h-3 mr-1" />
+            Evaluación Premium
+          </Badge>
+        )}
       </div>
 
       {/* Trainers table */}
@@ -158,7 +160,7 @@ export function TrainersModule({ readOnly = false }: TrainersModuleProps) {
                         <DropdownMenuItem onClick={() => handleViewKPIs(trainer)}>
                           <TrendingUp className="w-4 h-4 mr-2" />
                           Ver KPIs
-                          <Crown className="w-3 h-3 ml-auto text-warning" />
+                          {showPremiumKpis && <Crown className="w-3 h-3 ml-auto text-warning" />}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleViewCategories(trainer)}>
                           <ClipboardList className="w-4 h-4 mr-2" />
