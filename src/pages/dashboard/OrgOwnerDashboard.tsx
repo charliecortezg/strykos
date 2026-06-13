@@ -40,8 +40,16 @@ export default function OrgOwnerDashboard() {
   const { organization, user } = useAuth();
   const { toast } = useToast();
   const { feature_stryk_way_enabled, feature_evaluations_enabled } = useFeatureFlags();
-  const { isEnabled } = useOrgFeatures();
+  const { isEnabled, profile } = useOrgFeatures();
   const [isActivatingEvals, setIsActivatingEvals] = useState(false);
+
+  // Unified Owner Panel: redirect basic orgs to the new dueño dashboard
+  useEffect(() => {
+    if (organization && isEnabled('unified_owner_panel')) {
+      navigate('/dashboard/owner', { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organization?.id, profile]);
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [categoriesCount, setCategoriesCount] = useState<number>(0);
   const [playersCount, setPlayersCount] = useState<number>(0);

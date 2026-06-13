@@ -16,7 +16,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     roles, 
     activeRole, 
     user, 
-    onboardingCompleted 
+    onboardingCompleted,
+    organization,
   } = useAuth();
   const location = useLocation();
   const hasRedirectedRef = useRef(false);
@@ -41,6 +42,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     activeRole,
     onboardingCompleted,
     currentPath: location.pathname,
+    organization,
   });
 
   // Need to redirect - do it only once
