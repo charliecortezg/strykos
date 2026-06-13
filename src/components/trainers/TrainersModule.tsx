@@ -16,6 +16,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useTrainersWithCategories, TrainerWithCategories } from '@/hooks/useTrainersWithCategories';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 import { TrainerKPIsModal } from './TrainerKPIsModal';
 import { TrainerCategoriesModal } from './TrainerCategoriesModal';
 
@@ -25,6 +26,8 @@ interface TrainersModuleProps {
 
 export function TrainersModule({ readOnly = false }: TrainersModuleProps) {
   const { trainers, isLoading, refetch } = useTrainersWithCategories();
+  const { isEnabled } = useOrgFeatures();
+  const showPremiumKpis = isEnabled('trainer_evaluations');
   const [selectedTrainer, setSelectedTrainer] = useState<TrainerWithCategories | null>(null);
   const [kpisModalOpen, setKpisModalOpen] = useState(false);
   const [categoriesModalOpen, setCategoriesModalOpen] = useState(false);
