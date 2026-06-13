@@ -316,7 +316,7 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-base truncate">{player.full_name}</p>
                       {/* Performance Indicator - Only visible when present */}
-                      {isPresent && player.performance_status && (
+                      {strykWayEnabled && isPresent && player.performance_status && (
                         <PerformanceIndicator
                           status={player.performance_status}
                           onChange={(status) => updatePlayerPerformance(player.player_id, status)}
