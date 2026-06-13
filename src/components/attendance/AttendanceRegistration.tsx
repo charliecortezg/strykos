@@ -158,7 +158,8 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
           </Card>
         </div>
 
-        {/* Performance Stats Row */}
+        {/* Performance Stats Row - gated by stryk_way */}
+        {strykWayEnabled && (
         <div className="flex items-center justify-between mt-3 px-1">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground font-medium">Rendimiento:</span>
