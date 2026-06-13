@@ -9,15 +9,17 @@ import { ClipboardList, ChevronDown, ChevronUp, Trophy, CheckCircle, RefreshCw }
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { getDisplaySessionStatus, getDisplaySessionStatusLabel } from '@/lib/session-status';
 import type { SessionPlan, SessionPlanWithRelations } from '@/types/session-plans';
 import type { Json } from '@/integrations/supabase/types';
 
-type FilterStatus = 'todos' | 'activa' | 'completada' | 'borrador';
+type FilterStatus = 'todos' | 'activa' | 'completada' | 'borrador' | 'expirada';
 
 const STATUS_COLORS: Record<string, string> = {
   borrador: 'border-border text-muted-foreground',
   activa: 'border-blue-500/30 text-blue-500',
   completada: 'border-green-500/30 text-green-500',
+  expirada: 'border-muted-foreground/30 text-muted-foreground',
 };
 
 const NIVEL_COLORS: Record<string, string> = {
@@ -98,7 +100,7 @@ export function HistorialSesiones() {
   const filtered = useMemo(() => {
     return sessions.filter(s => {
       if (selectedCategoryId && s.category_id !== selectedCategoryId) return false;
-      if (filterStatus !== 'todos' && s.status !== filterStatus) return false;
+      if (filterStatus !== 'todos' && getDisplaySessionStatus(s) !== filterStatus) return false;
       if (filterMonth) {
         const d = parseISO(s.session_date);
         const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -201,7 +203,7 @@ export function HistorialSesiones() {
 
         {/* Status pills + month/trainer selectors */}
         <div className="flex gap-2 items-center flex-wrap">
-          {(['todos', 'activa', 'completada', 'borrador'] as FilterStatus[]).map(s => (
+          {(['todos', 'activa', 'completada', 'borrador', 'expirada'] as FilterStatus[]).map(s => (
             <button
               key={s}
               onClick={() => setFilterStatus(s)}
@@ -295,9 +297,14 @@ export function HistorialSesiones() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={cn('text-[10px] border', STATUS_COLORS[s.status])}>
-                        {s.status}
-                      </Badge>
+                      {(() => {
+                        const ds = getDisplaySessionStatus(s);
+                        return (
+                          <Badge variant="outline" className={cn('text-[10px] border', STATUS_COLORS[ds])}>
+                            {getDisplaySessionStatusLabel(ds)}
+                          </Badge>
+                        );
+                      })()}
                       {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                     </div>
                   </div>
