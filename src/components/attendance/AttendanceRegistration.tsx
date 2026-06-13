@@ -209,6 +209,7 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
                 </Badge>
               )}
             </Button>
+          </div>
         </div>
         )}
 
