@@ -9,10 +9,15 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ORG_ROLE_LABELS, type OrgRole } from '@/types/auth';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 
 export function RoleSwitch() {
   const { roles, activeRole, setActiveRole } = useAuth();
+  const { isEnabled } = useOrgFeatures();
   const navigate = useNavigate();
+
+  // Hide entirely in Panel del Dueño (one-role product)
+  if (isEnabled('unified_owner_panel')) return null;
 
   // Only show for org_owner OR users with multiple roles
   const isOrgOwner = roles.includes('org_owner');

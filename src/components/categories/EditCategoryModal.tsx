@@ -31,6 +31,7 @@ import { useSports } from '@/hooks/useSports';
 import { useVenues } from '@/hooks/useVenues';
 import { useTrainers } from '@/hooks/useTrainers';
 import { useToast } from '@/hooks/use-toast';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 import { DAYS_OF_WEEK, AGE_GROUPS, type Category } from '@/types/categories';
 import { SmartSportSelector } from '@/components/ui/smart-sport-selector';
 
@@ -59,6 +60,8 @@ export function EditCategoryModal({ open, onOpenChange, category, onCategoryUpda
   const { sports, isLoading: loadingSports, createSport } = useSports();
   const { venues, isLoading: loadingVenues } = useVenues();
   const { trainers, isLoading: loadingTrainers } = useTrainers();
+  const { isEnabled } = useOrgFeatures();
+  const venuesEnabled = isEnabled('venues');
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

@@ -1,5 +1,10 @@
 import type { OrgRole } from '@/types/auth';
 
+interface OrgLike {
+  feature_profile?: string | null;
+  features?: Record<string, boolean> | null;
+}
+
 interface RouteDecisionParams {
   isAuthenticated: boolean;
   mustChangePassword?: boolean;
@@ -7,6 +12,7 @@ interface RouteDecisionParams {
   activeRole: OrgRole | null;
   onboardingCompleted: boolean;
   currentPath: string;
+  organization?: OrgLike | null;
 }
 
 /**
@@ -49,7 +55,7 @@ export function getTargetRoute(params: RouteDecisionParams): string | null {
 
   // Authenticated user on login page - redirect to dashboard
   if (currentPath === '/login' || currentPath === '/onboarding') {
-    return getDashboardPath(activeRole, roles);
+    return getDashboardPath(activeRole, roles, params.organization);
   }
 
   // No redirect needed
@@ -57,10 +63,22 @@ export function getTargetRoute(params: RouteDecisionParams): string | null {
 }
 
 /**
- * Get the dashboard path for a given role
+ * Get the dashboard path for a given role.
+ * If the org has the unified owner panel active (basic profile), org_owner
+ * is routed to /dashboard/owner instead of /dashboard/org-owner.
  */
-export function getDashboardPath(activeRole: OrgRole | null, roles: OrgRole[]): string {
+export function getDashboardPath(
+  activeRole: OrgRole | null,
+  roles: OrgRole[],
+  organization?: OrgLike | null,
+): string {
   const role = activeRole || (roles.includes('org_owner') ? 'org_owner' : roles[0]);
   if (!role) return '/login';
+  if (role === 'org_owner') {
+    const profile = organization?.feature_profile;
+    const override = organization?.features?.unified_owner_panel;
+    const unified = override !== undefined ? override : profile !== 'full';
+    if (unified) return '/dashboard/owner';
+  }
   return `/dashboard/${role.replace('_', '-')}`;
 }

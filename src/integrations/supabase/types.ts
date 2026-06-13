@@ -2217,6 +2217,7 @@ export type Database = {
           features: Json
           id: string
           is_active: boolean | null
+          logo_url: string | null
           name: string
           onboarding_completed: boolean | null
           org_access_key: string
@@ -2248,6 +2249,7 @@ export type Database = {
           features?: Json
           id?: string
           is_active?: boolean | null
+          logo_url?: string | null
           name: string
           onboarding_completed?: boolean | null
           org_access_key: string
@@ -2279,6 +2281,7 @@ export type Database = {
           features?: Json
           id?: string
           is_active?: boolean | null
+          logo_url?: string | null
           name?: string
           onboarding_completed?: boolean | null
           org_access_key?: string

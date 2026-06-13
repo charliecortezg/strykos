@@ -17,6 +17,7 @@ import CambiarPassword from "./pages/CambiarPassword";
 import RecuperarPassword from "./pages/RecuperarPassword";
 import Onboarding from "./pages/Onboarding";
 import OrgOwnerDashboard from "./pages/dashboard/OrgOwnerDashboard";
+import OwnerDashboard from "./pages/dashboard/OwnerDashboard";
 import DirectorDeportivoDashboard from "./pages/dashboard/DirectorDeportivoDashboard";
 import EntrenadorDashboard from "./pages/dashboard/EntrenadorDashboard";
 import AdministrativoDashboard from "./pages/dashboard/AdministrativoDashboard";
@@ -132,6 +133,11 @@ function AcademyRoutes() {
         <Route path="/dashboard/org-owner" element={
           <ProtectedRoute allowedRoles={['org_owner']}>
             <OrgOwnerDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/owner" element={
+          <ProtectedRoute allowedRoles={['org_owner']}>
+            <OwnerDashboard />
           </ProtectedRoute>
         } />
         <Route path="/dashboard/director-deportivo" element={

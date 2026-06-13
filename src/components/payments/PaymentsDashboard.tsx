@@ -65,10 +65,10 @@ import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 interface PaymentsDashboardProps {
-  onViewAccountStatement: (player: Player) => void;
+  onViewAccountStatement?: (player: Player) => void;
 }
 
-export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardProps) {
+export function PaymentsDashboard({ onViewAccountStatement = () => {} }: PaymentsDashboardProps = {}) {
   const { roles } = useAuth();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedSportId, setSelectedSportId] = useState<string>('');

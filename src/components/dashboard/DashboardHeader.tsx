@@ -7,6 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { RoleSwitch } from '@/components/dashboard/RoleSwitch';
 import { OrgSwitcher } from '@/components/dashboard/OrgSwitcher';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Sheet,
   SheetContent,
@@ -15,8 +17,14 @@ import {
 
 export function DashboardHeader() {
   const { organization, signOut, user } = useAuth();
+  const { isEnabled } = useOrgFeatures();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const unified = isEnabled('unified_owner_panel');
+  const logoPath = (organization as any)?.logo_url as string | undefined;
+  const logoUrl = logoPath
+    ? supabase.storage.from('org-logos').getPublicUrl(logoPath).data?.publicUrl
+    : null;
 
   const orgId = organization 
     ? `${organization.org_code} / ${organization.org_access_key}`
@@ -68,16 +76,22 @@ export function DashboardHeader() {
             </SheetContent>
           </Sheet>
 
-          <Logo />
+          {logoUrl ? (
+            <img src={logoUrl} alt={organization?.name || ''} className="h-8 w-auto object-contain" />
+          ) : (
+            <Logo />
+          )}
 
           <div className="hidden lg:flex items-center gap-4 ml-6">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">
                 {organization?.name}
               </span>
-              <Badge variant="secondary" className="font-normal">
-                {planLabel}
-              </Badge>
+              {!unified && (
+                <Badge variant="secondary" className="font-normal">
+                  {planLabel}
+                </Badge>
+              )}
             </div>
           </div>
         </div>
