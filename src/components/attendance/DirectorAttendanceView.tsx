@@ -161,8 +161,8 @@ export function DirectorAttendanceView() {
                           <p className="text-xs text-muted-foreground">{player.position || 'Sin posición'}</p>
                         </div>
 
-                        {/* Performance indicator */}
-                        {perfStatus && (
+                        {/* Performance indicator - gated by stryk_way */}
+                        {strykWayEnabled && perfStatus && (
                           <PerformanceIndicator status={perfStatus as any} size="sm" onChange={() => {}} disabled />
                         )}
 
