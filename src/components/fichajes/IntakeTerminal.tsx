@@ -17,9 +17,13 @@ import { useCategories } from '@/hooks/useCategories';
 import { useVenues } from '@/hooks/useVenues';
 import { usePlans } from '@/hooks/usePlans';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronDown, ChevronUp, User, Users, Trophy, CreditCard, Check, AlertCircle, Loader2, MapPin, Receipt } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { ChevronDown, ChevronUp, User, Users, Trophy, CreditCard, Check, AlertCircle, AlertTriangle, Loader2, MapPin, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+const normalizeName = (s: string) =>
+  s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
 
 type Step = 'form' | 'success' | 'error';
 type PaymentMethod = 'efectivo' | 'transferencia' | 'tarjeta' | 'otro';
