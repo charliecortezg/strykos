@@ -28,7 +28,7 @@ import { MoneySummaryCards } from '@/components/dashboard/owner/MoneySummaryCard
 import { PaymentsDashboard } from '@/components/payments/PaymentsDashboard';
 import { ExpensesModule } from '@/components/expenses/ExpensesModule';
 import { BillingConfigurationPanel } from '@/components/billing/BillingConfigurationPanel';
-import { DirectorAttendanceView } from '@/components/attendance/DirectorAttendanceView';
+import { OwnerAttendanceSection } from '@/components/dashboard/owner/OwnerAttendanceSection';
 import { TrainersModule } from '@/components/trainers/TrainersModule';
 import { CreateUserModal } from '@/components/dashboard/CreateUserModal';
 import { AcademyConfigPanel } from '@/components/dashboard/owner/AcademyConfigPanel';
@@ -146,7 +146,7 @@ export default function OwnerDashboard() {
 
           {/* ASISTENCIA */}
           <TabsContent value="asistencia">
-            <DirectorAttendanceView />
+            <OwnerAttendanceSection />
           </TabsContent>
 
           {/* EQUIPO */}
