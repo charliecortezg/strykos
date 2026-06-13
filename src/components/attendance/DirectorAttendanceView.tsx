@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useCategories } from '@/hooks/useCategories';
 import { useDirectorAttendance } from '@/hooks/useDirectorAttendance';
 import { PerformanceIndicator } from '@/components/attendance/PerformanceIndicator';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 import { cn } from '@/lib/utils';
 
 export function DirectorAttendanceView() {
