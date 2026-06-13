@@ -17,6 +17,7 @@ import { EvaluationsModule } from '@/components/evaluations/EvaluationsModule';
 import { CoachExternalEvaluationsView } from '@/components/evaluations/CoachExternalEvaluationsView';
 import { EvaluationsTabsWrapper } from '@/components/evaluations/EvaluationsTabsWrapper';
 import { useFeatureFlags } from '@/hooks/useStrykWay';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 import { BottomNavBar } from '@/components/sessions/BottomNavBar';
 import { SessionHome } from '@/components/sessions/SessionHome';
 import { HistorialSesiones } from '@/components/sessions/HistorialSesiones';
@@ -27,10 +28,12 @@ export default function EntrenadorDashboard() {
   const { user, organization } = useAuth();
   const { categories, hasCategories, isLoading } = useTrainerCategories();
   const { players } = usePlayers();
-  // Asistencia is the default - it's the most frequent action for trainers
-  const [activeTab, setActiveTab] = useState('sesion');
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const { feature_evaluations_enabled } = useFeatureFlags();
+  const { isEnabled } = useOrgFeatures();
+  // Default tab: prefer Sesión when session_planner is on, otherwise Asistencia.
+  const defaultTab = isEnabled('session_planner') ? 'sesion' : 'asistencia';
+  const [activeTab, setActiveTab] = useState(defaultTab);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   // Filter players to only show those in trainer's categories
   const trainerCategoryIds = categories.map(c => c.id);
