@@ -8,6 +8,8 @@ import {
   Percent
 } from 'lucide-react';
 import { useFounderKPIs } from '@/hooks/useFounderKPIs';
+import { useAcademyKpis } from '@/hooks/useAcademyKpis';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   LineChart, 
   Line, 
@@ -20,18 +22,24 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function FounderKPISection() {
-  const { 
-    monthlyRevenue, 
-    pendingPayments, 
-    collectionRate,
+  const { organization } = useAuth();
+  // KPIs canónicos desde RPC (fuente única de verdad)
+  const { kpis, isLoading: kpisLoading, sinAtrasados } = useAcademyKpis(organization?.id);
+  // Solo extras no canónicos (gráfica histórica + entrenamientos/categorías de apoyo)
+  const {
     revenueByMonth,
-    globalAttendanceRate,
     trainingsThisWeek,
     activeCategories,
-    activePlayers,
-    overduePlayersCount,
-    isLoading 
+    isLoading: extrasLoading,
   } = useFounderKPIs();
+
+  const monthlyRevenue = kpis.ingresos_mes;
+  const pendingPayments = kpis.monto_pendiente;
+  const collectionRate = kpis.pct_cobranza;
+  const globalAttendanceRate = kpis.pct_asistencia_mes;
+  const activePlayers = kpis.jugadores_activos;
+  const overduePlayersCount = kpis.mora_1_mes + kpis.mora_2_plus;
+  const isLoading = kpisLoading || extrasLoading;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -171,7 +179,19 @@ export function FounderKPISection() {
           </div>
         </div>
 
-        {overduePlayersCount > 0 ? (
+        {sinAtrasados ? (
+          <div className="stryk-card p-4 border-success/30 bg-success/5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-success" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-success">Sin atrasados</p>
+                <p className="text-sm text-muted-foreground">Todos al día</p>
+              </div>
+            </div>
+          </div>
+        ) : (
           <div className="stryk-card p-4 border-destructive/30 bg-destructive/5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
@@ -181,19 +201,9 @@ export function FounderKPISection() {
                 <p className="text-2xl font-display font-semibold text-destructive">
                   {overduePlayersCount}
                 </p>
-                <p className="text-sm text-muted-foreground">Pagos atrasados</p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="stryk-card p-4 border-success/30 bg-success/5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-success">Sin atrasados</p>
-                <p className="text-sm text-muted-foreground">Todos al día</p>
+                <p className="text-sm text-muted-foreground">
+                  {overduePlayersCount > 0 ? 'jugadores con adeudo' : 'con monto pendiente'}
+                </p>
               </div>
             </div>
           </div>

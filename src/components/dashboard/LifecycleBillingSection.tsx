@@ -2,6 +2,8 @@ import { UserPlus, UserMinus, Users, UserX, AlertTriangle, AlertCircle } from 'l
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useLifecycleKPIs } from '@/hooks/useLifecycleKPIs';
+import { useAcademyKpis } from '@/hooks/useAcademyKpis';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 const BILLING_STATUS_LABELS: Record<string, string> = {
@@ -18,7 +20,22 @@ const LIFECYCLE_STATUS_LABELS: Record<string, string> = {
 };
 
 export function LifecycleBillingSection() {
-  const { kpis, playersAtRisk, isLoading } = useLifecycleKPIs();
+  const { organization } = useAuth();
+  // Conteos canónicos desde RPC (consistentes con FounderKPISection)
+  const { kpis: academyKpis, isLoading: academyLoading } = useAcademyKpis(organization?.id);
+  // Solo tabla de jugadores en riesgo del hook anterior
+  const { playersAtRisk, isLoading: riskLoading } = useLifecycleKPIs();
+  const isLoading = academyLoading || riskLoading;
+
+  // Mapear al shape esperado abajo
+  const kpis = {
+    onboardedThisMonth: academyKpis.nuevos_mes,
+    churnedThisMonth: academyKpis.bajas_mes,
+    activeCount: academyKpis.jugadores_activos,
+    inactiveCount: academyKpis.jugadores_inactivos,
+    overdue1Count: academyKpis.mora_1_mes,
+    overdue2Count: academyKpis.mora_2_plus,
+  };
 
   if (isLoading) {
     return (
