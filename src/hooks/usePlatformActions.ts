@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-type ActionType = 'change_plan' | 'toggle_organization' | 'resolve_upgrade_request';
+type ActionType = 'change_plan' | 'toggle_organization' | 'resolve_upgrade_request' | 'update_features';
 
 interface ActionResult {
   success: boolean;
@@ -72,10 +72,21 @@ export function usePlatformActions() {
     });
   };
 
+  const updateOrgFeatures = async (
+    organizationId: string,
+    payload: { feature_profile?: 'basic' | 'full'; features?: Record<string, boolean> }
+  ) => {
+    return executeAction('update_features', {
+      organization_id: organizationId,
+      ...payload,
+    });
+  };
+
   return {
     isLoading,
     changePlan,
     toggleOrganization,
     resolveUpgradeRequest,
+    updateOrgFeatures,
   };
 }

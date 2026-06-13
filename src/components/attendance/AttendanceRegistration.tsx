@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTrainingAttendance, PlayerAttendanceRecord, PerformanceStatus } from '@/hooks/useTrainingAttendance';
 import { AttendanceStatus, PAYMENT_STATUS_LABELS } from '@/types/categories';
 import { PerformanceIndicator, PerformanceStats } from './PerformanceIndicator';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -26,6 +27,8 @@ type PerformanceFilter = 'all' | 'outstanding' | 'challenge';
 
 export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrationProps) {
   const { playersWithAttendance, isLoading, saveAttendance, hasExistingAttendance, performanceStats, traceabilityInfo } = useTrainingAttendance(categoryId, date);
+  const { isEnabled } = useOrgFeatures();
+  const strykWayEnabled = isEnabled('stryk_way');
   const [localPlayers, setLocalPlayers] = useState<PlayerAttendanceRecord[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [performanceFilter, setPerformanceFilter] = useState<PerformanceFilter>('all');
@@ -155,7 +158,8 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
           </Card>
         </div>
 
-        {/* Performance Stats Row */}
+        {/* Performance Stats Row - gated by stryk_way */}
+        {strykWayEnabled && (
         <div className="flex items-center justify-between mt-3 px-1">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground font-medium">Rendimiento:</span>
@@ -207,6 +211,8 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
             </Button>
           </div>
         </div>
+        )}
+
 
         {/* Global Actions - Large touch targets with explicit button type */}
         <div className="flex gap-2 mt-3">
@@ -313,7 +319,7 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-base truncate">{player.full_name}</p>
                       {/* Performance Indicator - Only visible when present */}
-                      {isPresent && player.performance_status && (
+                      {strykWayEnabled && isPresent && player.performance_status && (
                         <PerformanceIndicator
                           status={player.performance_status}
                           onChange={(status) => updatePlayerPerformance(player.player_id, status)}

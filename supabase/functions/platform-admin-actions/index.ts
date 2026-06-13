@@ -7,13 +7,15 @@ const corsHeaders = {
 };
 
 interface ActionPayload {
-  action: "change_plan" | "toggle_organization" | "resolve_upgrade_request";
+  action: "change_plan" | "toggle_organization" | "resolve_upgrade_request" | "update_features";
   organization_id?: string;
   request_id?: string;
   new_plan?: "freemium" | "starter" | "professional" | "enterprise";
   is_active?: boolean;
   status?: "approved" | "rejected";
   admin_notes?: string;
+  feature_profile?: "basic" | "full";
+  features?: Record<string, boolean>;
 }
 
 serve(async (req) => {
@@ -175,6 +177,47 @@ serve(async (req) => {
           admin_notes: payload.admin_notes
         };
         result = { success: true, message: `Request ${payload.status}` };
+        break;
+      }
+
+      case "update_features": {
+        if (!payload.organization_id) {
+          throw new Error("Missing organization_id");
+        }
+        const updates: Record<string, unknown> = {
+          updated_at: new Date().toISOString(),
+        };
+        if (payload.feature_profile) {
+          if (!["basic", "full"].includes(payload.feature_profile)) {
+            throw new Error("Invalid feature_profile");
+          }
+          updates.feature_profile = payload.feature_profile;
+        }
+        if (payload.features !== undefined) {
+          updates.features = payload.features;
+        }
+
+        const { data: orgBefore } = await supabaseAdmin
+          .from("organizations")
+          .select("name, feature_profile, features")
+          .eq("id", payload.organization_id)
+          .single();
+
+        const { error: updateError } = await supabaseAdmin
+          .from("organizations")
+          .update(updates)
+          .eq("id", payload.organization_id);
+
+        if (updateError) throw updateError;
+
+        auditDetails = {
+          organization_name: orgBefore?.name,
+          previous_feature_profile: orgBefore?.feature_profile,
+          new_feature_profile: payload.feature_profile ?? orgBefore?.feature_profile,
+          previous_features: orgBefore?.features,
+          new_features: payload.features ?? orgBefore?.features,
+        };
+        result = { success: true, message: "Features updated" };
         break;
       }
 

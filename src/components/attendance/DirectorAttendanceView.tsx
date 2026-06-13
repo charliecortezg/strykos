@@ -11,10 +11,13 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useCategories } from '@/hooks/useCategories';
 import { useDirectorAttendance } from '@/hooks/useDirectorAttendance';
 import { PerformanceIndicator } from '@/components/attendance/PerformanceIndicator';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 import { cn } from '@/lib/utils';
 
 export function DirectorAttendanceView() {
   const { categories } = useCategories();
+  const { isEnabled } = useOrgFeatures();
+  const strykWayEnabled = isEnabled('stryk_way');
   const activeCategories = categories.filter(c => c.is_active);
   const [categoryId, setCategoryId] = useState<string>('');
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -158,8 +161,8 @@ export function DirectorAttendanceView() {
                           <p className="text-xs text-muted-foreground">{player.position || 'Sin posición'}</p>
                         </div>
 
-                        {/* Performance indicator */}
-                        {perfStatus && (
+                        {/* Performance indicator - gated by stryk_way */}
+                        {strykWayEnabled && perfStatus && (
                           <PerformanceIndicator status={perfStatus as any} size="sm" onChange={() => {}} disabled />
                         )}
 

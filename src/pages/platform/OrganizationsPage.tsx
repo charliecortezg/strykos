@@ -261,6 +261,7 @@ export default function OrganizationsPage() {
             limits={getLimitsForPlan(selectedOrg.plan)}
             open={!!selectedOrg}
             onOpenChange={(open) => !open && setSelectedOrg(null)}
+            onSaved={refetch}
           />
         )}
       </div>
