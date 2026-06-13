@@ -372,6 +372,7 @@ export default function OrgOwnerDashboard() {
         </div>
 
         {/* STRYK Way Section */}
+        {isEnabled('stryk_way') && (
         <div className="mt-8">
           <h2 className="text-xl font-display font-semibold text-foreground mb-4">
             STRYK Way
@@ -399,8 +400,10 @@ export default function OrgOwnerDashboard() {
             </CardHeader>
         </Card>
         </div>
+        )}
 
         {/* Evaluaciones WLA Section */}
+        {isEnabled('evaluations') && (
         <div className="mt-8">
           <h2 className="text-xl font-display font-semibold text-foreground mb-4">
             Evaluaciones WLA
@@ -450,6 +453,7 @@ export default function OrgOwnerDashboard() {
             </CardHeader>
           </Card>
         </div>
+        )}
       </main>
 
       <CreateUserModal
@@ -480,7 +484,7 @@ export default function OrgOwnerDashboard() {
         isLoading={isDeactivating}
         onConfirm={confirmToggleActive}
       />
-      <FounderCopilot />
+      {isEnabled('founder_copilot') && <FounderCopilot />}
     </div>
   );
 }
