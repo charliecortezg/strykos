@@ -19,9 +19,12 @@ interface CreateUserModalProps {
   onOpenChange: (open: boolean) => void;
   role: Exclude<OrgRole, 'org_owner'>;
   onUserCreated: () => void;
+  /** When set, forces the role and hides any role-related copy variations. */
+  lockedRole?: Exclude<OrgRole, 'org_owner'>;
 }
 
-export function CreateUserModal({ open, onOpenChange, role, onUserCreated }: CreateUserModalProps) {
+export function CreateUserModal({ open, onOpenChange, role: roleProp, onUserCreated, lockedRole }: CreateUserModalProps) {
+  const role = lockedRole ?? roleProp;
   const { toast } = useToast();
   
   const [fullName, setFullName] = useState('');
