@@ -48,6 +48,8 @@ import PortalPlayerView from "./pages/portal/PortalPlayerView";
 import UniformOrderPage from "./pages/uniforms/UniformOrderPage";
 // Cheer (Porra) public page
 import CheerOrderPage from "./pages/cheer/CheerOrderPage";
+// Feature gating
+import { FeatureRoute } from "@/components/auth/FeatureRoute";
 
 const queryClient = new QueryClient();
 
@@ -150,7 +152,9 @@ function AcademyRoutes() {
         {/* Assessment Lab Route */}
         <Route path="/dashboard/assessment-lab" element={
           <ProtectedRoute allowedRoles={['entrenador', 'director_deportivo', 'org_owner']}>
-            <AssessmentLabDashboard />
+            <FeatureRoute featureKey="evaluations">
+              <AssessmentLabDashboard />
+            </FeatureRoute>
           </ProtectedRoute>
         } />
         {/* Fichajes Routes */}
@@ -167,7 +171,9 @@ function AcademyRoutes() {
         {/* STRYK Way Routes */}
         <Route path="/stryk-way" element={
           <ProtectedRoute allowedRoles={['org_owner', 'director_deportivo']}>
-            <StudioPage />
+            <FeatureRoute featureKey="stryk_way">
+              <StudioPage />
+            </FeatureRoute>
           </ProtectedRoute>
         } />
         {/* Internal admin tool: Notes migration (one-off) */}
@@ -185,13 +191,17 @@ function AcademyRoutes() {
         {/* Match detail page */}
         <Route path="/partidos/:id" element={
           <ProtectedRoute allowedRoles={['entrenador', 'director_deportivo', 'org_owner', 'administrativo']}>
-            <MatchDetailPage />
+            <FeatureRoute featureKey="matches">
+              <MatchDetailPage />
+            </FeatureRoute>
           </ProtectedRoute>
         } />
         {/* Training / Capacitación WL */}
         <Route path="/training/*" element={
           <ProtectedRoute allowedRoles={['entrenador', 'director_deportivo', 'org_owner']}>
-            <TrainingPage />
+            <FeatureRoute featureKey="coach_training">
+              <TrainingPage />
+            </FeatureRoute>
           </ProtectedRoute>
         } />
         <Route path="*" element={<NotFound />} />
