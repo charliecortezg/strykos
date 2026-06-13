@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-type ActionType = 'change_plan' | 'toggle_organization' | 'resolve_upgrade_request';
+type ActionType = 'change_plan' | 'toggle_organization' | 'resolve_upgrade_request' | 'update_features';
 
 interface ActionResult {
   success: boolean;
