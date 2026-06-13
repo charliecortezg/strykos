@@ -209,8 +209,9 @@ export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrat
                 </Badge>
               )}
             </Button>
-          </div>
         </div>
+        )}
+
 
         {/* Global Actions - Large touch targets with explicit button type */}
         <div className="flex gap-2 mt-3">
