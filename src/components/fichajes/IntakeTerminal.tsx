@@ -81,6 +81,8 @@ export function IntakeTerminal() {
   });
   const [createdPlayerId, setCreatedPlayerId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [duplicateMatch, setDuplicateMatch] = useState<{ id: string; name: string; categoryName?: string } | null>(null);
+  const [confirmedDuplicate, setConfirmedDuplicate] = useState(false);
 
   // Filter sports to only show Futbol (accent-insensitive)
   const filteredSports = sports.filter(s => {
