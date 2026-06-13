@@ -2925,6 +2925,7 @@ export type Database = {
           last_progression_at: string | null
           lifecycle_status: string
           membership_stage: string
+          merge_note: string | null
           monthly_fee: number | null
           offboarded_at: string | null
           onboarded_at: string | null
@@ -2961,6 +2962,7 @@ export type Database = {
           last_progression_at?: string | null
           lifecycle_status?: string
           membership_stage?: string
+          merge_note?: string | null
           monthly_fee?: number | null
           offboarded_at?: string | null
           onboarded_at?: string | null
@@ -2997,6 +2999,7 @@ export type Database = {
           last_progression_at?: string | null
           lifecycle_status?: string
           membership_stage?: string
+          merge_note?: string | null
           monthly_fee?: number | null
           offboarded_at?: string | null
           onboarded_at?: string | null
@@ -4337,9 +4340,24 @@ export type Database = {
         Returns: undefined
       }
       check_billing_overdue: { Args: never; Returns: number }
+      daitch_mokotoff: { Args: { "": string }; Returns: string[] }
+      dmetaphone: { Args: { "": string }; Returns: string }
+      dmetaphone_alt: { Args: { "": string }; Returns: string }
       evaluate_membership_progression: {
         Args: { p_as_of_date: string; p_org_id: string }
         Returns: Json
+      }
+      find_player_duplicates: {
+        Args: { p_org_id: string }
+        Returns: {
+          category_id: string
+          date_of_birth: string
+          distance: number
+          player_a_id: string
+          player_a_name: string
+          player_b_id: string
+          player_b_name: string
+        }[]
       }
       generate_access_key: { Args: never; Returns: string }
       generate_intake_idempotency_key: {
@@ -4352,6 +4370,7 @@ export type Database = {
         Returns: string
       }
       generate_org_code: { Args: { org_name: string }; Returns: string }
+      get_academy_kpis: { Args: { p_org_id: string }; Returns: Json }
       get_current_org_id: { Args: never; Returns: string }
       get_or_create_monthly_event: {
         Args: { p_org_id: string }
@@ -4385,6 +4404,10 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: never; Returns: boolean }
+      merge_players: {
+        Args: { p_duplicate_id: string; p_keep_id: string }
+        Returns: Json
+      }
       next_receipt_folio: {
         Args: { p_org_id: string }
         Returns: {
@@ -4434,10 +4457,12 @@ export type Database = {
           player_updated_at: string
         }[]
       }
+      soundex: { Args: { "": string }; Returns: string }
       switch_organization: {
         Args: { target_org_id: string }
         Returns: undefined
       }
+      text_soundex: { Args: { "": string }; Returns: string }
       unaccent: { Args: { "": string }; Returns: string }
       user_belongs_to_org: { Args: { _org_id: string }; Returns: boolean }
       validate_org_access: {
