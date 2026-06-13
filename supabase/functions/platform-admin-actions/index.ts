@@ -7,13 +7,15 @@ const corsHeaders = {
 };
 
 interface ActionPayload {
-  action: "change_plan" | "toggle_organization" | "resolve_upgrade_request";
+  action: "change_plan" | "toggle_organization" | "resolve_upgrade_request" | "update_features";
   organization_id?: string;
   request_id?: string;
   new_plan?: "freemium" | "starter" | "professional" | "enterprise";
   is_active?: boolean;
   status?: "approved" | "rejected";
   admin_notes?: string;
+  feature_profile?: "basic" | "full";
+  features?: Record<string, boolean>;
 }
 
 serve(async (req) => {
