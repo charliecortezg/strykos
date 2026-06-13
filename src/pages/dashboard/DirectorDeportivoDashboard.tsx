@@ -25,6 +25,7 @@ import { DirectorEvaluationsView } from '@/components/evaluations/DirectorEvalua
 import { DirectorExternalEvaluationsView } from '@/components/evaluations/DirectorExternalEvaluationsView';
 import { EvaluationsTabsWrapper } from '@/components/evaluations/EvaluationsTabsWrapper';
 import { useFeatureFlags } from '@/hooks/useStrykWay';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 import { MembershipOverview } from '@/components/membership/MembershipOverview';
 import { useAcademyKpis } from '@/hooks/useAcademyKpis';
 
@@ -37,6 +38,7 @@ export default function DirectorDeportivoDashboard() {
   const { trainers } = useTrainersWithCategories();
   const [activeTab, setActiveTab] = useState('jugadores');
   const { feature_evaluations_enabled } = useFeatureFlags();
+  const { isEnabled } = useOrgFeatures();
   // Fuente única de verdad para KPIs canónicos de academia.
   const { kpis, isLoading: kpisLoading } = useAcademyKpis(organization?.id);
 
@@ -148,10 +150,12 @@ export default function DirectorDeportivoDashboard() {
               <CreditCard className="w-4 h-4" />
               Finanzas
             </TabsTrigger>
-            <TabsTrigger value="partidos" className="gap-2">
-              <Trophy className="w-4 h-4" />
-              Partidos
-            </TabsTrigger>
+            {isEnabled('matches') && (
+              <TabsTrigger value="partidos" className="gap-2">
+                <Trophy className="w-4 h-4" />
+                Partidos
+              </TabsTrigger>
+            )}
             <TabsTrigger value="entrenadores" className="gap-2">
               <UserCheck className="w-4 h-4" />
               Entrenadores
@@ -168,10 +172,12 @@ export default function DirectorDeportivoDashboard() {
               <UserPlus className="w-4 h-4" />
               Fichajes
             </TabsTrigger>
-            <TabsTrigger value="bloques" className="gap-2">
-              <Layers className="w-4 h-4" />
-              Bloques
-            </TabsTrigger>
+            {isEnabled('membership_blocks') && (
+              <TabsTrigger value="bloques" className="gap-2">
+                <Layers className="w-4 h-4" />
+                Bloques
+              </TabsTrigger>
+            )}
             <TabsTrigger value="lifecycle" className="gap-2">
               <HeartPulse className="w-4 h-4" />
               Lifecycle
@@ -200,9 +206,11 @@ export default function DirectorDeportivoDashboard() {
             <FinanceModule />
           </TabsContent>
 
-          <TabsContent value="partidos">
-            <MatchHistoryModule canEdit={true} canDelete={true} />
-          </TabsContent>
+          {isEnabled('matches') && (
+            <TabsContent value="partidos">
+              <MatchHistoryModule canEdit={true} canDelete={true} />
+            </TabsContent>
+          )}
 
           <TabsContent value="entrenadores">
             <TrainersModule readOnly={false} />
@@ -248,9 +256,11 @@ export default function DirectorDeportivoDashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="bloques">
-            <MembershipOverview />
-          </TabsContent>
+          {isEnabled('membership_blocks') && (
+            <TabsContent value="bloques">
+              <MembershipOverview />
+            </TabsContent>
+          )}
 
           <TabsContent value="lifecycle">
             <LifecycleBillingSection />
