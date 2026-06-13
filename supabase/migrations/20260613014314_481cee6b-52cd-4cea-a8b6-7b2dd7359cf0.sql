@@ -1,0 +1,1 @@
+UPDATE public.organizations SET onboarding_completed = true WHERE id = '9ad70018-5b81-4f28-932e-26e2718929d9';
