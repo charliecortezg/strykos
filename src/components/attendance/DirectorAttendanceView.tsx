@@ -16,6 +16,8 @@ import { cn } from '@/lib/utils';
 
 export function DirectorAttendanceView() {
   const { categories } = useCategories();
+  const { isEnabled } = useOrgFeatures();
+  const strykWayEnabled = isEnabled('stryk_way');
   const activeCategories = categories.filter(c => c.is_active);
   const [categoryId, setCategoryId] = useState<string>('');
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
