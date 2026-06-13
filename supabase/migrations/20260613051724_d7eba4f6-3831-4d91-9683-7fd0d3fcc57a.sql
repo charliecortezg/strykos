@@ -1,0 +1,1 @@
+UPDATE public.profiles SET is_active = false WHERE id = '75be2426-55af-4537-8a7c-0fbd70febe6d';
