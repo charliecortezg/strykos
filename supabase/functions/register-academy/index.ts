@@ -1,3 +1,4 @@
+// v2: validate organization_type against enum
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
