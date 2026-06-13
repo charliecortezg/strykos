@@ -1,3 +1,4 @@
+// v2: validate organization_type against enum
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
@@ -79,6 +80,22 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Validate organization_type against enum
+    const VALID_ORG_TYPES = [
+      'profesional', 'recreativa', 'escolar', 'gubernamental', 'universitaria',
+      'comunitaria', 'privada', 'federativa', 'club_social', 'otro',
+    ];
+    if (!VALID_ORG_TYPES.includes(organizationType)) {
+      return new Response(
+        JSON.stringify({
+          error: 'Tipo de organización inválido',
+          allowed: VALID_ORG_TYPES,
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
 
     // Check if email already exists
     const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();

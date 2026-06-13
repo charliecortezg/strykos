@@ -4399,6 +4399,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_user_org_ids: { Args: never; Returns: string[] }
       has_intake_access: { Args: never; Returns: boolean }
       has_org_role: {
         Args: { _role: Database["public"]["Enums"]["org_role"] }
