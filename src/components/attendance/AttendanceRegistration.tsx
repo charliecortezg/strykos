@@ -27,6 +27,8 @@ type PerformanceFilter = 'all' | 'outstanding' | 'challenge';
 
 export function AttendanceRegistration({ categoryId, date }: AttendanceRegistrationProps) {
   const { playersWithAttendance, isLoading, saveAttendance, hasExistingAttendance, performanceStats, traceabilityInfo } = useTrainingAttendance(categoryId, date);
+  const { isEnabled } = useOrgFeatures();
+  const strykWayEnabled = isEnabled('stryk_way');
   const [localPlayers, setLocalPlayers] = useState<PlayerAttendanceRecord[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [performanceFilter, setPerformanceFilter] = useState<PerformanceFilter>('all');
