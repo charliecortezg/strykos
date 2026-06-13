@@ -14,6 +14,7 @@ export const FEATURE_KEYS = [
   'family_portal',
   'session_planner',
   'unified_owner_panel',
+  'venues',
 ] as const;
 
 export type FeatureKey = (typeof FEATURE_KEYS)[number];
@@ -33,6 +34,7 @@ export const PROFILE_DEFAULTS: Record<FeatureProfile, Record<FeatureKey, boolean
     family_portal: false,
     session_planner: false,
     unified_owner_panel: true,
+    venues: false,
   },
   full: {
     evaluations: true,
@@ -47,6 +49,7 @@ export const PROFILE_DEFAULTS: Record<FeatureProfile, Record<FeatureKey, boolean
     family_portal: true,
     session_planner: true,
     unified_owner_panel: false,
+    venues: true,
   },
 };
 
@@ -63,6 +66,7 @@ export const FEATURE_LABELS: Record<FeatureKey, string> = {
   family_portal: 'Portal Familiar',
   session_planner: 'Planificador de Sesión',
   unified_owner_panel: 'Panel Unificado del Dueño',
+  venues: 'Sedes',
 };
 
 export interface OrgFeatureSource {
