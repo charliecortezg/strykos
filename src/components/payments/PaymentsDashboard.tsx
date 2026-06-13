@@ -4,6 +4,7 @@ import { usePlayers } from '@/hooks/usePlayers';
 import { useCategories } from '@/hooks/useCategories';
 import { useSports } from '@/hooks/useSports';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAcademyKpis } from '@/hooks/useAcademyKpis';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -86,6 +87,9 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
   const { players } = usePlayers({ isActive: true });
   const { categories } = useCategories();
   const { sports } = useSports();
+  // Authn: necesitamos el organization_id para llamar al RPC canónico.
+  const { organization } = useAuth();
+  const { kpis: academyKpis } = useAcademyKpis(organization?.id);
 
   // Check if user can manage receipts
   const canManageReceipts = roles.some(r => 
@@ -260,63 +264,88 @@ export function PaymentsDashboard({ onViewAccountStatement }: PaymentsDashboardP
   const hasActiveFilters = selectedSportId || selectedCategoryId || selectedPlayerId || selectedMonth;
   const activeFilterCount = [selectedSportId, selectedCategoryId, selectedPlayerId, selectedMonth].filter(Boolean).length;
 
+  // KPIs superiores: sin filtros → fuente canónica RPC; con filtros → cálculo local
+  // con chip "Filtrado". Cobranza (pct) SIEMPRE viene del RPC, sin mezclar.
+  const showFilteredChip = Boolean(hasActiveFilters);
+
   return (
     <div className="space-y-4">
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Recaudado */}
         <Card className="stryk-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
                 <CreditCard className="w-5 h-5 text-success" />
               </div>
-              <div>
-                <p className="text-2xl font-display font-semibold">
-                  {formatCurrency(filteredStats.totalMonth)}
-                </p>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-2xl font-display font-semibold">
+                    {formatCurrency(showFilteredChip ? filteredStats.totalMonth : academyKpis.ingresos_mes)}
+                  </p>
+                  {showFilteredChip && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">Filtrado</Badge>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">Recaudado</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
+        {/* Cobranza — SIEMPRE pct_cobranza del RPC, sin mezclas. */}
         <Card className="stryk-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-display font-semibold">{filteredStats.playersAlDia}</p>
-                <p className="text-sm text-muted-foreground">Al día</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="stryk-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-                <AlertCircle className="w-5 h-5 text-destructive" />
-              </div>
-              <div>
-                <p className="text-2xl font-display font-semibold">{filteredStats.pendingCount}</p>
-                <p className="text-sm text-muted-foreground">Pendientes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="stryk-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
                 <TrendingUp className="w-5 h-5 text-warning" />
               </div>
-              <div>
-                <p className="text-2xl font-display font-semibold">{filteredStats.collectionRate}%</p>
+              <div className="min-w-0">
+                <p className="text-2xl font-display font-semibold">{academyKpis.pct_cobranza}%</p>
                 <p className="text-sm text-muted-foreground">Cobranza</p>
+                <p className="text-[11px] text-muted-foreground/80">del mes</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pendiente — sin filtros: monto pendiente RPC; con filtros: conteo local. */}
+        <Card className="stryk-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5 text-destructive" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-2xl font-display font-semibold">
+                    {showFilteredChip
+                      ? `${filteredStats.pendingCount}`
+                      : formatCurrency(academyKpis.monto_pendiente)}
+                  </p>
+                  {showFilteredChip && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">Filtrado</Badge>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {showFilteredChip ? 'Jugadores pendientes' : 'Pendiente cobrar'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Al día (conteo local) — se preserva como tarjeta secundaria operativa. */}
+        <Card className="stryk-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Users className="w-5 h-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xl font-display font-semibold">{filteredStats.playersAlDia}</p>
+                <p className="text-sm text-muted-foreground">Al día</p>
               </div>
             </div>
           </CardContent>
