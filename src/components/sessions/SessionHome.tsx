@@ -10,6 +10,7 @@ import { PlanificarSesion } from './PlanificarSesion';
 import { PartidoObservacion } from './PartidoObservacion';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { getDisplaySessionStatus, getDisplaySessionStatusLabel } from '@/lib/session-status';
 import {
   Sheet,
   SheetContent,
