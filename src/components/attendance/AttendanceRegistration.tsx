@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTrainingAttendance, PlayerAttendanceRecord, PerformanceStatus } from '@/hooks/useTrainingAttendance';
 import { AttendanceStatus, PAYMENT_STATUS_LABELS } from '@/types/categories';
 import { PerformanceIndicator, PerformanceStats } from './PerformanceIndicator';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
