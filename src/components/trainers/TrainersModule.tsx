@@ -182,6 +182,7 @@ export function TrainersModule({ readOnly = false }: TrainersModuleProps) {
         onOpenChange={setKpisModalOpen}
         trainer={selectedTrainer}
         isPremium={true}
+        showPremiumBadge={showPremiumKpis}
       />
       <TrainerCategoriesModal
         open={categoriesModalOpen}
