@@ -7,7 +7,8 @@ import {
   ClipboardList, 
   LogOut,
   LayoutDashboard,
-  Shield
+  Shield,
+  Copy
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +20,7 @@ const navItems = [
   { path: '/platform-admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { path: '/platform-admin/organizations', label: 'Organizaciones', icon: Building2 },
   { path: '/platform-admin/upgrade-requests', label: 'Solicitudes', icon: ArrowUpCircle },
+  { path: '/platform-admin/duplicates', label: 'Duplicados', icon: Copy },
   { path: '/platform-admin/audit-log', label: 'Auditoría', icon: ClipboardList },
 ];
 

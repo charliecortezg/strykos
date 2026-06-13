@@ -30,6 +30,7 @@ import PlatformDashboard from "./pages/platform/PlatformDashboard";
 import OrganizationsPage from "./pages/platform/OrganizationsPage";
 import UpgradeRequestsPage from "./pages/platform/UpgradeRequestsPage";
 import AuditLogPage from "./pages/platform/AuditLogPage";
+import DuplicatesPage from "./pages/platform/DuplicatesPage";
 // STRYK Way Pages
 import StudioPage from "./pages/stryk-way/StudioPage";
 import TrainingPage from "./pages/TrainingPage";
@@ -74,6 +75,11 @@ function PlatformRoutes() {
         <Route path="audit-log" element={
           <PlatformAuthGuard>
             <AuditLogPage />
+          </PlatformAuthGuard>
+        } />
+        <Route path="duplicates" element={
+          <PlatformAuthGuard>
+            <DuplicatesPage />
           </PlatformAuthGuard>
         } />
       </Routes>
