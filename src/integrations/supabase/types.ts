@@ -2211,8 +2211,10 @@ export type Database = {
           feature_analytics_enabled: boolean
           feature_evaluations_enabled: boolean
           feature_portal_familiar_enabled: boolean
+          feature_profile: string
           feature_stryk_way_enabled: boolean
           feature_studio_pro_enabled: boolean
+          features: Json
           id: string
           is_active: boolean | null
           name: string
@@ -2240,8 +2242,10 @@ export type Database = {
           feature_analytics_enabled?: boolean
           feature_evaluations_enabled?: boolean
           feature_portal_familiar_enabled?: boolean
+          feature_profile?: string
           feature_stryk_way_enabled?: boolean
           feature_studio_pro_enabled?: boolean
+          features?: Json
           id?: string
           is_active?: boolean | null
           name: string
@@ -2269,8 +2273,10 @@ export type Database = {
           feature_analytics_enabled?: boolean
           feature_evaluations_enabled?: boolean
           feature_portal_familiar_enabled?: boolean
+          feature_profile?: string
           feature_stryk_way_enabled?: boolean
           feature_studio_pro_enabled?: boolean
+          features?: Json
           id?: string
           is_active?: boolean | null
           name?: string
