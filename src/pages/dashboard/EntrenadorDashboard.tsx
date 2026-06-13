@@ -112,15 +112,10 @@ export default function EntrenadorDashboard() {
               const sessionOn = isEnabled('session_planner');
               const matchesOn = isEnabled('matches');
               const evalsOn = feature_evaluations_enabled;
-              // Count visible tabs to set grid-cols dynamically
-              const visibleCount = 4 // asistencia, jugadores, fichajes, historial
-                + (sessionOn ? 1 : 0)
-                + (matchesOn ? 1 : 0)
-                + (evalsOn ? 1 : 0)
-                + (sessionOn ? 1 : 0); // sincronizacion only shown when planner is on
               return (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className={`w-full hidden lg:grid mb-4 h-12 grid-cols-${visibleCount}`}>
+              <TabsList className="w-full hidden lg:flex flex-wrap mb-4 h-auto gap-1">
+
                 {sessionOn && (
                   <TabsTrigger value="sesion" className="gap-1.5 text-xs sm:text-sm">
                     <ClipboardList className="w-4 h-4" />
@@ -260,6 +255,8 @@ export default function EntrenadorDashboard() {
                 <SincronizacionStryk onNavigateEvaluations={() => setActiveTab('evaluaciones')} />
               </TabsContent>
             </Tabs>
+              );
+            })()}
           </>
         )}
 
