@@ -14,6 +14,8 @@ export interface PlatformOrganization {
   organization_type: string;
   approximate_students: number;
   onboarding_completed: boolean;
+  feature_profile?: 'basic' | 'full' | null;
+  features?: Record<string, boolean> | null;
   // Counts
   players_count: number;
   categories_count: number;
