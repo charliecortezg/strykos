@@ -33,6 +33,10 @@ export interface Organization {
   onboarding_completed?: boolean;
   created_at: string;
   updated_at: string;
+  // Fase 2: feature profile + per-flag overrides
+  feature_profile?: 'basic' | 'full';
+  features?: Record<string, boolean>;
+  feature_stryk_way_enabled?: boolean | null;
 }
 
 export interface UserProfile {
