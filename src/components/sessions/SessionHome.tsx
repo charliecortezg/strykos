@@ -10,6 +10,7 @@ import { PlanificarSesion } from './PlanificarSesion';
 import { PartidoObservacion } from './PartidoObservacion';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { getDisplaySessionStatus, getDisplaySessionStatusLabel } from '@/lib/session-status';
 import {
   Sheet,
   SheetContent,
@@ -238,17 +239,23 @@ export function SessionHome({ onShowHistorial }: SessionHomeProps) {
                   {session.observaciones_partido && Object.keys(session.observaciones_partido as object).length > 0 && (
                     <span className="text-[10px] text-muted-foreground">⚽</span>
                   )}
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      'text-[10px] border',
-                      session.status === 'completada' && 'border-green-500/30 text-green-500',
-                      session.status === 'activa' && 'border-[#C9A227]/30 text-[#C9A227]',
-                      session.status === 'borrador' && 'border-border text-muted-foreground',
-                    )}
-                  >
-                    {session.status}
-                  </Badge>
+                  {(() => {
+                    const displayStatus = getDisplaySessionStatus(session);
+                    return (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'text-[10px] border',
+                          displayStatus === 'completada' && 'border-green-500/30 text-green-500',
+                          displayStatus === 'activa' && 'border-[#C9A227]/30 text-[#C9A227]',
+                          displayStatus === 'borrador' && 'border-border text-muted-foreground',
+                          displayStatus === 'expirada' && 'border-muted-foreground/30 text-muted-foreground',
+                        )}
+                      >
+                        {getDisplaySessionStatusLabel(displayStatus)}
+                      </Badge>
+                    );
+                  })()}
                 </div>
               </div>
             ))}

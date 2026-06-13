@@ -26,6 +26,7 @@ import { DirectorExternalEvaluationsView } from '@/components/evaluations/Direct
 import { EvaluationsTabsWrapper } from '@/components/evaluations/EvaluationsTabsWrapper';
 import { useFeatureFlags } from '@/hooks/useStrykWay';
 import { MembershipOverview } from '@/components/membership/MembershipOverview';
+import { useAcademyKpis } from '@/hooks/useAcademyKpis';
 
 export default function DirectorDeportivoDashboard() {
   const navigate = useNavigate();
@@ -36,9 +37,12 @@ export default function DirectorDeportivoDashboard() {
   const { trainers } = useTrainersWithCategories();
   const [activeTab, setActiveTab] = useState('jugadores');
   const { feature_evaluations_enabled } = useFeatureFlags();
+  // Fuente única de verdad para KPIs canónicos de academia.
+  const { kpis, isLoading: kpisLoading } = useAcademyKpis(organization?.id);
 
   const activeCategories = categories.filter(c => c.is_active).length;
-  const activePlayers = players.filter(p => p.is_active).length;
+  // Jugadores activos: viene del RPC get_academy_kpis (fuente canónica).
+  // Categorías, Sedes y Entrenadores conservan su cálculo local (no son KPIs financieros).
   const activeVenues = venues.filter(v => v.is_active).length;
   const activeTrainers = trainers.filter(t => t.is_active).length;
 
@@ -83,7 +87,9 @@ export default function DirectorDeportivoDashboard() {
                 <Users className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-display font-semibold">{activePlayers}</p>
+                <p className="text-2xl font-display font-semibold">
+                  {kpisLoading ? '—' : kpis.jugadores_activos}
+                </p>
                 <p className="text-sm text-muted-foreground">Jugadores</p>
               </div>
             </div>
