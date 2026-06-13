@@ -10,7 +10,7 @@ import { ConfirmDeactivateDialog } from '@/components/dashboard/ConfirmDeactivat
 import { UserActionsMenu } from '@/components/dashboard/UserActionsMenu';
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
 import { FounderKPISection } from '@/components/dashboard/FounderKPISection';
-import { PlanLimitBanner } from '@/components/dashboard/PlanLimitBanner';
+// PlanLimitBanner removed for one-price model (Fase 2)
 import { BillingConfigurationPanel } from '@/components/billing/BillingConfigurationPanel';
 import { LifecycleBillingSection } from '@/components/dashboard/LifecycleBillingSection';
 import { MonthlyReportSection } from '@/components/reports/MonthlyReportSection';
@@ -23,6 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ORG_ROLE_LABELS, type OrgRole } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useFeatureFlags } from '@/hooks/useStrykWay';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 import { FounderCopilot } from '@/components/founder/FounderCopilot';
 
 interface OrgUser {
@@ -39,6 +40,7 @@ export default function OrgOwnerDashboard() {
   const { organization, user } = useAuth();
   const { toast } = useToast();
   const { feature_stryk_way_enabled, feature_evaluations_enabled } = useFeatureFlags();
+  const { isEnabled } = useOrgFeatures();
   const [isActivatingEvals, setIsActivatingEvals] = useState(false);
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [categoriesCount, setCategoriesCount] = useState<number>(0);
@@ -249,10 +251,7 @@ export default function OrgOwnerDashboard() {
         {/* Onboarding Checklist */}
         <OnboardingChecklist />
 
-        {/* Plan Limit Warnings */}
-        <PlanLimitBanner type="players" className="mb-4" />
-        <PlanLimitBanner type="categories" className="mb-4" />
-        <PlanLimitBanner type="users" className="mb-4" />
+        {/* Plan limit banners removed (one-price model, Fase 2) */}
 
         {/* Founder KPIs Section */}
         <FounderKPISection />
@@ -373,6 +372,7 @@ export default function OrgOwnerDashboard() {
         </div>
 
         {/* STRYK Way Section */}
+        {isEnabled('stryk_way') && (
         <div className="mt-8">
           <h2 className="text-xl font-display font-semibold text-foreground mb-4">
             STRYK Way
@@ -400,8 +400,10 @@ export default function OrgOwnerDashboard() {
             </CardHeader>
         </Card>
         </div>
+        )}
 
         {/* Evaluaciones WLA Section */}
+        {isEnabled('evaluations') && (
         <div className="mt-8">
           <h2 className="text-xl font-display font-semibold text-foreground mb-4">
             Evaluaciones WLA
@@ -451,6 +453,7 @@ export default function OrgOwnerDashboard() {
             </CardHeader>
           </Card>
         </div>
+        )}
       </main>
 
       <CreateUserModal
@@ -481,7 +484,7 @@ export default function OrgOwnerDashboard() {
         isLoading={isDeactivating}
         onConfirm={confirmToggleActive}
       />
-      <FounderCopilot />
+      {isEnabled('founder_copilot') && <FounderCopilot />}
     </div>
   );
 }

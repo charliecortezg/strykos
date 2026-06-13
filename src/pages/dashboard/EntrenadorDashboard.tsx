@@ -17,6 +17,7 @@ import { EvaluationsModule } from '@/components/evaluations/EvaluationsModule';
 import { CoachExternalEvaluationsView } from '@/components/evaluations/CoachExternalEvaluationsView';
 import { EvaluationsTabsWrapper } from '@/components/evaluations/EvaluationsTabsWrapper';
 import { useFeatureFlags } from '@/hooks/useStrykWay';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 import { BottomNavBar } from '@/components/sessions/BottomNavBar';
 import { SessionHome } from '@/components/sessions/SessionHome';
 import { HistorialSesiones } from '@/components/sessions/HistorialSesiones';
@@ -27,10 +28,12 @@ export default function EntrenadorDashboard() {
   const { user, organization } = useAuth();
   const { categories, hasCategories, isLoading } = useTrainerCategories();
   const { players } = usePlayers();
-  // Asistencia is the default - it's the most frequent action for trainers
-  const [activeTab, setActiveTab] = useState('sesion');
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const { feature_evaluations_enabled } = useFeatureFlags();
+  const { isEnabled } = useOrgFeatures();
+  // Default tab: prefer Sesión when session_planner is on, otherwise Asistencia.
+  const defaultTab = isEnabled('session_planner') ? 'sesion' : 'asistencia';
+  const [activeTab, setActiveTab] = useState(defaultTab);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   // Filter players to only show those in trainer's categories
   const trainerCategoryIds = categories.map(c => c.id);
@@ -105,21 +108,30 @@ export default function EntrenadorDashboard() {
               ))}
             </div>
 
-            {/* Tabs - Priority Order: Asistencia, Partidos, Jugadores */}
+            {(() => {
+              const sessionOn = isEnabled('session_planner');
+              const matchesOn = isEnabled('matches');
+              const evalsOn = feature_evaluations_enabled;
+              return (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className={`w-full hidden lg:grid mb-4 h-12 ${feature_evaluations_enabled ? 'grid-cols-8' : 'grid-cols-7'}`}>
-                <TabsTrigger value="sesion" className="gap-1.5 text-xs sm:text-sm">
-                  <ClipboardList className="w-4 h-4" />
-                  Sesión
-                </TabsTrigger>
+              <TabsList className="w-full hidden lg:flex flex-wrap mb-4 h-auto gap-1">
+
+                {sessionOn && (
+                  <TabsTrigger value="sesion" className="gap-1.5 text-xs sm:text-sm">
+                    <ClipboardList className="w-4 h-4" />
+                    Sesión
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="asistencia" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   <CheckCircle className="w-4 h-4" />
                   Asistencia
                 </TabsTrigger>
-                <TabsTrigger value="partidos" className="gap-1.5 text-xs sm:text-sm">
-                  <Trophy className="w-4 h-4" />
-                  Partidos
-                </TabsTrigger>
+                {matchesOn && (
+                  <TabsTrigger value="partidos" className="gap-1.5 text-xs sm:text-sm">
+                    <Trophy className="w-4 h-4" />
+                    Partidos
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="jugadores" className="gap-1.5 text-xs sm:text-sm">
                   <Users className="w-4 h-4" />
                   Jugadores
@@ -128,7 +140,7 @@ export default function EntrenadorDashboard() {
                   <UserPlus className="w-4 h-4" />
                   Fichajes
                 </TabsTrigger>
-                {feature_evaluations_enabled && (
+                {evalsOn && (
                   <TabsTrigger value="evaluaciones" className="gap-1.5 text-xs sm:text-sm">
                     <ClipboardCheck className="w-4 h-4" />
                     Evaluaciones
@@ -138,23 +150,29 @@ export default function EntrenadorDashboard() {
                   <History className="w-4 h-4" />
                   Historial
                 </TabsTrigger>
-                <TabsTrigger value="sincronizacion" className="gap-1.5 text-xs sm:text-sm">
-                  <ClipboardCheck className="w-4 h-4" />
-                  Sync
-                </TabsTrigger>
+                {sessionOn && (
+                  <TabsTrigger value="sincronizacion" className="gap-1.5 text-xs sm:text-sm">
+                    <ClipboardCheck className="w-4 h-4" />
+                    Sync
+                  </TabsTrigger>
+                )}
               </TabsList>
 
-              <TabsContent value="sesion" className="mt-0">
-                <SessionHome onShowHistorial={() => setActiveTab('historial')} />
-              </TabsContent>
+              {sessionOn && (
+                <TabsContent value="sesion" className="mt-0">
+                  <SessionHome onShowHistorial={() => setActiveTab('historial')} />
+                </TabsContent>
+              )}
 
               <TabsContent value="asistencia" className="mt-0">
                 <TrainingAttendanceModule categories={categories} />
               </TabsContent>
 
-              <TabsContent value="partidos" className="mt-0">
-                <TrainerMatchesModule categories={categories} />
-              </TabsContent>
+              {matchesOn && (
+                <TabsContent value="partidos" className="mt-0">
+                  <TrainerMatchesModule categories={categories} />
+                </TabsContent>
+              )}
 
               <TabsContent value="jugadores" className="mt-0">
                 <div className="space-y-3">
@@ -237,6 +255,8 @@ export default function EntrenadorDashboard() {
                 <SincronizacionStryk onNavigateEvaluations={() => setActiveTab('evaluaciones')} />
               </TabsContent>
             </Tabs>
+              );
+            })()}
           </>
         )}
 
