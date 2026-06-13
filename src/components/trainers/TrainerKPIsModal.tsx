@@ -45,7 +45,7 @@ const MONTHS = [
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 3 }, (_, i) => currentYear - i);
 
-export function TrainerKPIsModal({ open, onOpenChange, trainer, isPremium = true }: TrainerKPIsModalProps) {
+export function TrainerKPIsModal({ open, onOpenChange, trainer, isPremium = true, showPremiumBadge = isPremium }: TrainerKPIsModalProps & { showPremiumBadge?: boolean }) {
   const { kpis, isLoading, fetchKPIs } = useTrainerKPIs();
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
@@ -94,10 +94,12 @@ export function TrainerKPIsModal({ open, onOpenChange, trainer, isPremium = true
               <TrendingUp className="w-5 h-5 text-primary" />
               KPIs del Entrenador
             </div>
-            <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
-              <Crown className="w-3 h-3 mr-1" />
-              Premium
-            </Badge>
+            {showPremiumBadge && (
+              <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
+                <Crown className="w-3 h-3 mr-1" />
+                Premium
+              </Badge>
+            )}
           </DialogTitle>
         </DialogHeader>
 

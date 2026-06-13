@@ -55,7 +55,7 @@ export function MonthlyReportSection() {
       { Métrica: 'Activos', Valor: snapshot.total_active || 0 },
       { Métrica: 'Ingresos', Valor: snapshot.total_ingresos || 0 },
       { Métrica: 'Egresos', Valor: snapshot.total_egresos || 0 },
-      { Métrica: 'Churn %', Valor: `${snapshot.churn_rate || 0}%` },
+      { Métrica: '% Bajas', Valor: `${snapshot.churn_rate || 0}%` },
       { Métrica: '% Asistencia', Valor: `${snapshot.attendance_rate || 0}%` },
       { Métrica: '% Cobranza', Valor: `${snapshot.collection_rate || 0}%` },
     ];
@@ -192,7 +192,7 @@ export function MonthlyReportSection() {
               <Card className="p-4 text-center">
                 <TrendingDown className="w-5 h-5 text-warning mx-auto mb-1" />
                 <p className="text-xl font-bold">{snapshot?.churn_rate || 0}%</p>
-                <p className="text-xs text-muted-foreground">Churn</p>
+                <p className="text-xs text-muted-foreground">% Bajas</p>
               </Card>
               <Card className="p-4 text-center">
                 <Percent className="w-5 h-5 text-primary mx-auto mb-1" />

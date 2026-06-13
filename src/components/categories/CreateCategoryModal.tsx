@@ -170,7 +170,7 @@ export function CreateCategoryModal({ open, onOpenChange, onCategoryCreated }: C
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={venuesEnabled ? "grid grid-cols-2 gap-4" : ""}>
               <FormField
                 control={form.control}
                 name="sport_id"
@@ -192,36 +192,38 @@ export function CreateCategoryModal({ open, onOpenChange, onCategoryCreated }: C
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="venue_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sede</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {loadingVenues ? (
-                          <SelectItem value="_loading" disabled>Cargando...</SelectItem>
-                        ) : venues.length === 0 ? (
-                          <SelectItem value="_empty" disabled>Sin sedes</SelectItem>
-                        ) : (
-                          venues.map(venue => (
-                            <SelectItem key={venue.id} value={venue.id}>
-                              {venue.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {venuesEnabled && (
+                <FormField
+                  control={form.control}
+                  name="venue_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sede</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {loadingVenues ? (
+                            <SelectItem value="_loading" disabled>Cargando...</SelectItem>
+                          ) : venues.length === 0 ? (
+                            <SelectItem value="_empty" disabled>Sin sedes</SelectItem>
+                          ) : (
+                            venues.map(venue => (
+                              <SelectItem key={venue.id} value={venue.id}>
+                                {venue.name}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             <FormField
