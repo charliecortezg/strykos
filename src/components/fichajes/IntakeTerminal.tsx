@@ -17,6 +17,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useVenues } from '@/hooks/useVenues';
 import { usePlans } from '@/hooks/usePlans';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 import { supabase } from '@/integrations/supabase/client';
 import { ChevronDown, ChevronUp, User, Users, Trophy, CreditCard, Check, AlertCircle, AlertTriangle, Loader2, MapPin, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
@@ -69,6 +70,8 @@ export function IntakeTerminal() {
   const { categories } = useCategories();
   const { activeVenues: venues } = useVenues();
   const { plans } = usePlans();
+  const { isEnabled } = useOrgFeatures();
+  const venuesEnabled = isEnabled('venues');
   const { createIntake, isCreating } = useCreateIntake();
 
   const [step, setStep] = useState<Step>('form');
@@ -549,7 +552,7 @@ export function IntakeTerminal() {
                         <Trophy className="w-4 h-4 text-muted-foreground" />
                       )}
                     </div>
-                    <CardTitle className="text-base">Deporte, Sede y Plan</CardTitle>
+                    <CardTitle className="text-base">{venuesEnabled ? 'Deporte, Sede y Mensualidad' : 'Deporte y Mensualidad'}</CardTitle>
                   </div>
                   {openSections.sport ? (
                     <ChevronUp className="w-5 h-5 text-muted-foreground" />
@@ -605,7 +608,7 @@ export function IntakeTerminal() {
                 )}
 
                 {/* Venue */}
-                {formData.sportId && filteredVenues.length > 0 && (
+                {venuesEnabled && formData.sportId && filteredVenues.length > 0 && (
                   <div>
                     <Label className="flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5" />
@@ -656,12 +659,12 @@ export function IntakeTerminal() {
                   <div className="space-y-2">
                     <Label className="flex items-center gap-1.5">
                       <Receipt className="w-3.5 h-3.5" />
-                      Planes * <span className="text-xs text-muted-foreground font-normal">(mínimo 1)</span>
+                      Mensualidades * <span className="text-xs text-muted-foreground font-normal">(mínimo 1)</span>
                     </Label>
                     
                     {filteredPlans.length === 0 ? (
                       <p className="text-xs text-muted-foreground p-3 bg-muted/30 rounded-lg">
-                        No hay planes activos configurados para este deporte.
+                        No hay mensualidades activas configuradas para este deporte.
                       </p>
                     ) : (
                       <div className="space-y-2">
@@ -731,7 +734,7 @@ export function IntakeTerminal() {
                     {formData.selectedPlanIds.length === 0 && formData.sportId && (
                       <p className="text-xs text-destructive flex items-center gap-1">
                         <AlertCircle className="w-3 h-3" />
-                        Selecciona al menos 1 plan para continuar
+                        Selecciona al menos 1 mensualidad para continuar
                       </p>
                     )}
                   </div>
