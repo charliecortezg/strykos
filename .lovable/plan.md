@@ -1,233 +1,84 @@
-# Fase 3 — Panel del Dueño
+## Limpieza de seguridad — usuarios y org de prueba
 
-Producto unificado para academias nuevas (perfil ≠ 'full'). White Lions (full) NO se toca: sigue con sus 4 paneles y selector de rol.
+Antes de borrar nada, esta es la lista exacta encontrada (todos los emails terminan en `@stryk-test.com`, verificado). **Necesito tu confirmación explícita antes de ejecutar.**
 
-## 1. Nuevo flag y diccionario de lenguaje
+### 1. Usuarios a eliminar de `auth.users` + `profiles` (5, no 4)
 
-`src/lib/feature-profiles.ts`
+Encontré un usuario extra que no estaba en tu lista — `test2-owner@stryk-test.com` (huérfano, sin profile ni org). Te confirmo si lo incluyo:
 
-- Agregar `'venues'` a `FEATURE_KEYS`. `basic.venues = false`, `full.venues = true`.
-- (Ya existe `unified_owner_panel`: basic=true, full=false → se usa como discriminador del Panel del Dueño.)
 
-**Nuevo** `src/lib/owner-language.ts` (constantes de copy para reutilizar):
+| Email                                            | user_id      | Org actual                  |
+| ------------------------------------------------ | ------------ | --------------------------- |
+| `wl-test-owner@stryk-test.com` ⚠️                | `b26e1709-…` | White Lions (org_owner)     |
+| `demo-test-owner@stryk-test.com`                 | `caf7c42b-…` | Academia Demo (org_owner)   |
+| `test2b-owner@stryk-test.com`                    | `816220e1-…` | Academia Test 2 (org_owner) |
+| `demo-owner@stryk-test.com`                      | `75be2426-…` | Academia Demo (4 roles)     |
+| `test2-owner@stryk-test.com` *(extra, huérfano)* | `3a2ae5b6-…` | — sin profile               |
 
-```
-ESTADO_ACADEMIA, NUEVOS_INGRESOS, BAJAS, DEBEN_1, DEBEN_2,
-JUGADORES_POR_RECUPERAR, INGRESOS_MES, GASTOS_MES, UTILIDAD,
-COBRANZA_PCT, ASISTENCIA_PCT, ACTIVOS, ENTRENAMIENTOS_SEMANA
-```
 
-Esto evita que cada componente reinvente el texto.
+Tu usuario real `charliecortezg@gmail.com` **NO** está en esta lista. Verificado.
 
-## 2. Ruteo y header
+### 2. Filas de `user_org_roles` a eliminar (7)
 
-`src/App.tsx`
+- demo-owner: 4 roles en Academia Demo (org_owner, director_deportivo, entrenador, administrativo)
+- demo-test-owner: 1 en Academia Demo (org_owner)
+- test2b-owner: 1 en Academia Test 2 (org_owner)
+- **wl-test-owner: 1 en White Lions (org_owner)** ← única fila que se toca de WL
 
-- Nueva ruta `/dashboard/owner` → `OwnerDashboard` (protegida, `org_owner`, gateada con `unified_owner_panel`).
-- En `auth-routing.ts` (`getDashboardPath`): si org tiene `unified_owner_panel` activo y el rol activo es `org_owner` → devolver `/dashboard/owner` en vez de `/dashboard/org-owner`.
-- Las rutas existentes `/dashboard/org-owner`, `/dashboard/director-deportivo`, `/dashboard/administrativo` se conservan (White Lions las usa) pero quedan inalcanzables para academias no-full porque el routing las redirige.
+### 3. Organización a eliminar: Academia Test 2 (`aaaaaaaa-…-2222`)
 
-`src/components/dashboard/DashboardHeader.tsx`
+Datos a borrar junto con la org:
 
-- Ocultar `<RoleSwitch />` cuando `unified_owner_panel` está activo.
-- Quitar el badge de plan ("Freemium") en perfil no-full — no se vende plan.
-- Mostrar `organization.name` (ya lo hace).
+- 2 players, 1 payment, 1 category, 1 organization row
 
-`src/components/dashboard/RoleSwitch.tsx`: añadir guarda interna `if (isEnabled('unified_owner_panel')) return null;` por defensa en profundidad.
+### 4. Datos que **NO** se tocan (garantizado)
 
-## 3. `OwnerDashboard.tsx` (nuevo, 5 secciones)
+- White Lions org, sus 75 jugadores, 178 pagos, categorías, etc. — intactos. Solo se quita la fila de role del usuario de prueba.
+- Academia Demo (`9ad70018-…`) — se conserva como entorno de pruebas (queda sin usuarios de acceso).
+- `charliecortezg@gmail.com` y cualquier email que no termine en `@stryk-test.com` — intocables.
 
-`src/pages/dashboard/OwnerDashboard.tsx` con bottom nav móvil + sidebar desktop. Tab activo en state local.
+### Ejecución (orden, una vez confirmes)
 
-```text
-[Inicio] [Jugadores] [Dinero] [Asistencia] [Equipo]
-```
+1. Por cada uno de los 5 user_ids, en este orden, con guard SQL `WHERE email LIKE '%@stryk-test.com'` antes de cada delete:
+  - DELETE de `user_org_roles` (vía migration)
+  - DELETE de `profiles` (vía migration)
+  - DELETE de `auth.users` vía edge function admin (usando `supabase.auth.admin.deleteUser`) — extender `manage-org-user` o crear una función one-shot `cleanup-test-users` con allowlist hardcoded de los 5 emails y verificación `endsWith('@stryk-test.com')`.
+2. DELETE en cascada de Academia Test 2: players → payments → categories → organization (en migration, scoped a `organization_id='aaaaaaaa-…-2222'`).
+3. Verificación final:
+  ```sql
+   SELECT count(*) FROM auth.users WHERE email ILIKE '%@stryk-test.com';
+   SELECT count(*) FROM public.profiles p JOIN auth.users u ON u.id=p.id WHERE u.email ILIKE '%@stryk-test.com';
+   SELECT count(*) FROM public.organizations WHERE id='aaaaaaaa-2222-4222-8222-222222222222';
+  ```
+   Esperado: 0, 0, 0.
 
-### Sección 1 — Inicio
+### Preguntas antes de ejecutar
 
-Reutiliza tal cual:
+1. ¿Incluyo el 5º usuario huérfano `test2-owner@stryk-test.com`? (recomiendo sí)
+2. ¿Apruebas el plan completo tal cual? Responde "sí, ejecuta" y procedo.
 
-- `FounderKPISection` (6 KPIs desde `useAcademyKpis`)
-- `LifecycleBillingSection` envuelto en un wrapper `EstadoAcademiaSection` que **pasa los labels traducidos** vía props o usa el diccionario `owner-language.ts`. Si el componente actual hardcodea los textos, hago un fork ligero `EstadoAcademiaSection.tsx` que llama a los mismos hooks (`useLifecycleKPIs`) pero renderiza con copy nuevo.
-- Lista "Jugadores por recuperar" (deriva de overdue 1/2): reutiliza el listado dentro de `LifecycleBillingSection`; agrego botón WhatsApp `https://wa.me/<phone>?text=<mensaje>` con mensaje pre-llenado.
-- Botón "Descargar Reporte Mensual" → llama al pipeline existente (`MonthlyReportSection` o `report-orchestrator`).
-
-### Sección 2 — Jugadores
-
-Tabs internos: **Jugadores** | **Categorías**.
-
-- **Jugadores**: `PlayersTable` + búsqueda + filtro categoría + botones "+ Fichar" (link a `/fichajes/terminal`) e "Importar Excel" (`ExcelImportModal`). Ficha individual: `PlayerProfileModal` (ya existe).
-- **Categorías**: `CategoriesTable` + `CreateCategoryModal` / `EditCategoryModal`. **Importante**: dentro de los modales de categoría, ocultar el campo "Sede" cuando `!isEnabled('venues')`. Edito los dos modales para gatear ese campo (no removerlo del schema).
-
-### Sección 3 — Dinero
-
-Tabs: **Pagos** | **Gastos** | **Configuración de cobranza**.
-
-- Header con tres tarjetas: `ingresos_mes`, `gastos_mes`, `utilidad = ingresos - gastos`, más `% cobranza`.
-- Pagos: `PaymentsDashboard` (registrar + tabla del mes).
-- Gastos: `ExpensesModule`.
-- Configuración: `BillingConfigurationPanel`.
-
-Las cifras vienen del mismo RPC `get_academy_kpis` (ingresos, cobranza) + suma de `expenses` del mes. Un pequeño hook `useMonthlyFinanceSummary` (o cálculo inline en el header) que retorna `{ingresos, gastos, utilidad}`.
-
-### Sección 4 — Asistencia
-
-- Reutiliza `DirectorAttendanceView` (resumen por categoría + ranking de faltas).
-- Botón "Pasar lista hoy" abre `AttendanceRegistration` (selector de categoría → lista).
-- En `AttendanceRegistration`: ya gateado el bloque de Performance/XP por `feature_evaluations_enabled` / STRYK Way — verifico que en perfil basic no se muestre.
-
-### Sección 5 — Equipo
-
-Tabs: **Equipo** | **Configuración de la academia**.
-
-- **Equipo**: `TrainersModule` (tabla + acciones). Botón "+ Crear Entrenador" abre `CreateUserModal` **forzando el rol a** `entrenador` vía prop nueva `lockedRole?: OrgRole` (oculta el selector y envía siempre `entrenador`).
-- **Configuración de la academia**: nuevo componente simple `AcademyConfigPanel` que muestra/edita `organization.name`, `primary_sport`, métodos de pago/bancarios (de `org_intake_settings` — `IntakeSettingsPanel`) y prefijo de folio (read-only). Logo: si no hay infra, dejo placeholder "Próximamente" — confirmo con el usuario antes de inventar storage.
-
-## 4. Backend: gate de roles en `create-org-user`
-
-`supabase/functions/create-org-user/index.ts`:
-
-- Obtener `feature_profile` de la org del caller.
-- Si `feature_profile != 'full'` y `role != 'entrenador'` → 403 `{"error":"En esta academia solo puedes crear entrenadores"}`.
-- Mismo gate en `manage-org-user` para edición de rol.
-
-## 5. Limpieza de lenguaje (sweep)
-
-Greppear y reemplazar dentro de los componentes que renderiza el Panel del Dueño (NO en White Lions):
-
-- "Lifecycle", "Onboarding", "Churn", "Mora", "Plan", "Premium", "Básico", "Upgrade" → labels del diccionario.
-- En `DashboardHeader`: quitar badge de plan cuando unified panel.
-
-White Lions usa los componentes originales sin el wrapper, así que su copy no cambia. Los wrappers `EstadoAcademiaSection`, etc., solo se usan en `OwnerDashboard`.
-
-## 6. Verificación (navegar de verdad, no "por construcción")
-
-Login con `demo-owner@stryk-test.com / DemoStryk1234!` (Academia Demo, basic) y reportar PASA/FALLA en los 9 puntos del brief. Para White Lions (caso 7), pido al usuario que valide con su sesión (igual que en Fase 2).
-
-## Archivos a tocar
-
-**Nuevos**
-
-- `src/pages/dashboard/OwnerDashboard.tsx`
-- `src/components/dashboard/owner/EstadoAcademiaSection.tsx`
-- `src/components/dashboard/owner/JugadoresPorRecuperar.tsx`
-- `src/components/dashboard/owner/AcademyConfigPanel.tsx`
-- `src/components/dashboard/owner/OwnerBottomNav.tsx` (móvil) / sidebar inline
-- `src/lib/owner-language.ts`
-
-**Editados**
-
-- `src/lib/feature-profiles.ts` (+ flag `venues`)
-- `src/App.tsx` (ruta `/dashboard/owner`)
-- `src/lib/auth-routing.ts` (redirect a `/dashboard/owner` cuando aplica)
-- `src/components/dashboard/DashboardHeader.tsx` (ocultar RoleSwitch + badge plan)
-- `src/components/dashboard/RoleSwitch.tsx` (guarda)
-- `src/components/dashboard/CreateUserModal.tsx` (prop `lockedRole`)
-- `src/components/categories/CreateCategoryModal.tsx` + `EditCategoryModal.tsx` (gate Sede)
-- `supabase/functions/create-org-user/index.ts` y `manage-org-user/index.ts` (gate de rol)
-
-## Riesgo / preguntas abiertas
-
-1. **Logo de academia**: no veo infra de storage para logos en `organizations`. Propongo dejar el campo como "Próximamente" en esta fase para no inventar bucket/columna sin tu visto bueno.
-2. **Sección Dinero — utilidad**: si no existe RPC que sume gastos del mes, lo resuelvo con un `useQuery` simple sobre `expenses`. Sin nuevo backend.
-3. **WhatsApp pre-llenado**: uso `wa.me` con texto plantilla "Hola {tutor}, te recuerdo el pago pendiente de {jugador} por ${monto}…". Si quieres otro copy, dímelo.
-
-¿Apruebo y avanzo, o ajustas algo (sobre todo logo y el copy del WhatsApp)?
+Sí, ejecuta — incluye el 5º usuario huérfano test2-owner.
 
 &nbsp;
 
-&nbsp;
+Agrega a la verificación final estas dos consultas de control para
 
-Apruebo el plan con estos ajustes:
-
-&nbsp;
-
-1. LOGO (sí implementar, no "Próximamente"):
-
-   - Permitir que el dueño suba el logo de su academia en formato
-
-     PNG, JPG o SVG (NO PDF — no es renderizable como imagen).
-
-     Límite de tamaño razonable (ej. 2MB), validar tipo de archivo.
-
-   - Crea la infra mínima: bucket de storage para logos + columna
-
-     logo_url en organizations (migración aditiva).
-
-   - El logo se muestra en el header del Panel del Dueño junto al
-
-     nombre de la academia, y queda disponible para recibos/reportes.
-
-   - Si no hay logo subido, fallback al ícono/nombre actual.
+confirmar que White Lions quedó intacto:
 
 &nbsp;
 
-2. SECCIÓN DINERO — separar cifras, no inventar "utilidad neta":
+  SELECT count(*) FROM players WHERE organization_id='982f355c-0196-46d3-8da9-3e5e83813dad';
 
-   - Mostrar DOS tarjetas separadas y claras: "Ingresos del mes" y
-
-     "Gastos del mes". Son datos distintos, se presentan distintos.
-
-   - Si se incluye un tercer número, NO se llama "Utilidad" a secas
-
-     (sería engañoso: el dueño no registra todos sus gastos, y bruta
-
-     ≠ neta). Etiquétalo literal: "Ingresos − Gastos registrados"
-
-     con una nota pequeña: "Solo considera los gastos que registraste
-
-     en STRYK".
-
-   - Fuente única: hook useMonthlyFinanceSummary(orgId) que devuelve
-
-     {ingresos, gastos}. ingresos del RPC get_academy_kpis (no
-
-     recalcular); gastos = suma de expenses del mes usando la MISMA
-
-     ventana de fecha que define el RPC para su mes, sin desfases de
-
-     corte. Documenta esto en comentario del hook. Cualquier otra
-
-     vista que muestre gastos usa este mismo hook.
+  SELECT count(*) FROM payments WHERE organization_id='982f355c-0196-46d3-8da9-3e5e83813dad';
 
 &nbsp;
 
-3. Copy WhatsApp (tono humano, no cobranza fría):
+Esperado: 75 jugadores y 178 pagos (los mismos de antes). Si esos
 
-   "Hola {tutor}, ¿cómo está? Le recuerdo que {jugador} tiene
-
-   pendiente la mensualidad de ${monto}. Cualquier cosa me dice
-
-   para apoyarle. ¡Gracias!"
+números cambiaron, algo salió mal y hay que detenerse.
 
 &nbsp;
 
-4. Confirma que reutilizar ExpensesModule en el Panel del Dueño NO
+También confirma que mi usuario charliecortezg@gmail.com sigue
 
-   cambia su comportamiento para White Lions (que lo usa hoy en
-
-   Finanzas del DD).
-
-&nbsp;
-
-Todo lo demás aprobado tal cual: wrapper EstadoAcademiaSection para
-
-no contaminar el copy de WL, lockedRole=entrenador, gate doble de
-
-roles en create-org-user y manage-org-user, gate del campo Sede en
-
-modales de categoría, diccionario owner-language.ts, redirect de
-
-routing a /dashboard/owner.
-
-&nbsp;
-
-IMPORTANTE para la verificación: Academia Demo está vacía. Antes de
-
-reportar PASA/FALLA en la sección Dinero, carga datos de prueba en
-
-Demo (2-3 jugadores, 1-2 pagos, 1-2 gastos) para verificar que
-
-Ingresos y Gastos muestran cifras reales y cuadran con el resto.
-
-Una pantalla en ceros no prueba nada.
+existiendo en auth.users y conserva su rol en White Lions.
