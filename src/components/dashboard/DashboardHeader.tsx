@@ -76,16 +76,22 @@ export function DashboardHeader() {
             </SheetContent>
           </Sheet>
 
-          <Logo />
+          {logoUrl ? (
+            <img src={logoUrl} alt={organization?.name || ''} className="h-8 w-auto object-contain" />
+          ) : (
+            <Logo />
+          )}
 
           <div className="hidden lg:flex items-center gap-4 ml-6">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">
                 {organization?.name}
               </span>
-              <Badge variant="secondary" className="font-normal">
-                {planLabel}
-              </Badge>
+              {!unified && (
+                <Badge variant="secondary" className="font-normal">
+                  {planLabel}
+                </Badge>
+              )}
             </div>
           </div>
         </div>

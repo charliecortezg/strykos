@@ -134,6 +134,22 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Fase 3: gate roles based on org feature_profile.
+    // Non-'full' orgs (academia nueva, one-product model) can ONLY create entrenadores.
+    const { data: orgRow } = await supabaseAdmin
+      .from('organizations')
+      .select('feature_profile')
+      .eq('id', callingProfile.organization_id)
+      .single();
+    const orgProfile = (orgRow as any)?.feature_profile;
+    if (orgProfile !== 'full' && role !== 'entrenador') {
+      log(`Rol ${role} rechazado en org perfil=${orgProfile}`);
+      return new Response(
+        JSON.stringify({ error: 'En esta academia solo puedes crear entrenadores', logs }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const normalizedEmail = email.toLowerCase().trim();
     log(`Creando ${ROLE_LABELS[role]}: ${normalizedEmail}`);
 

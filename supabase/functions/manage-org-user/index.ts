@@ -182,6 +182,19 @@ Deno.serve(async (req) => {
           );
         }
 
+        // Fase 3: non-'full' orgs can only assign entrenador
+        const { data: orgRow } = await supabaseAdmin
+          .from('organizations')
+          .select('feature_profile')
+          .eq('id', callingProfile.organization_id)
+          .single();
+        if ((orgRow as any)?.feature_profile !== 'full' && data.role !== 'entrenador') {
+          return new Response(
+            JSON.stringify({ error: 'En esta academia solo puedes asignar rol de entrenador' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         // Update the role (replace existing non-org_owner role)
         const { error: deleteError } = await supabaseAdmin
           .from('user_org_roles')
