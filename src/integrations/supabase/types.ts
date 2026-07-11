@@ -4339,6 +4339,262 @@ export type Database = {
           },
         ]
       }
+      wl_battery_items: {
+        Row: {
+          category_key: string
+          created_at: string
+          criterion: string
+          dimension: string
+          id: string
+          item_number: number
+          observable: string
+          org_id: string
+          window_source: string | null
+        }
+        Insert: {
+          category_key: string
+          created_at?: string
+          criterion: string
+          dimension: string
+          id?: string
+          item_number: number
+          observable: string
+          org_id: string
+          window_source?: string | null
+        }
+        Update: {
+          category_key?: string
+          created_at?: string
+          criterion?: string
+          dimension?: string
+          id?: string
+          item_number?: number
+          observable?: string
+          org_id?: string
+          window_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wl_battery_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wl_methodology_categories: {
+        Row: {
+          age_range: string
+          category_key: string
+          consolidation_threshold: number
+          created_at: string
+          display_name: string
+          id: string
+          org_id: string
+        }
+        Insert: {
+          age_range: string
+          category_key: string
+          consolidation_threshold: number
+          created_at?: string
+          display_name: string
+          id?: string
+          org_id: string
+        }
+        Update: {
+          age_range?: string
+          category_key?: string
+          consolidation_threshold?: number
+          created_at?: string
+          display_name?: string
+          id?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wl_methodology_categories_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wl_monthly_evaluations: {
+        Row: {
+          battery_results: Json
+          category_id: string
+          category_key: string
+          coach_note: string | null
+          created_at: string
+          id: string
+          month_key: string
+          nivel_ind1: number | null
+          nivel_ind2: number | null
+          org_id: string
+          player_id: string
+          recorded_by: string | null
+          season: string
+          updated_at: string
+        }
+        Insert: {
+          battery_results?: Json
+          category_id: string
+          category_key: string
+          coach_note?: string | null
+          created_at?: string
+          id?: string
+          month_key: string
+          nivel_ind1?: number | null
+          nivel_ind2?: number | null
+          org_id: string
+          player_id: string
+          recorded_by?: string | null
+          season?: string
+          updated_at?: string
+        }
+        Update: {
+          battery_results?: Json
+          category_id?: string
+          category_key?: string
+          coach_note?: string | null
+          created_at?: string
+          id?: string
+          month_key?: string
+          nivel_ind1?: number | null
+          nivel_ind2?: number | null
+          org_id?: string
+          player_id?: string
+          recorded_by?: string | null
+          season?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wl_monthly_evaluations_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wl_monthly_evaluations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wl_monthly_evaluations_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wl_monthly_indicators: {
+        Row: {
+          category_key: string
+          context_note: string | null
+          created_at: string
+          eval_type: string
+          id: string
+          ind1_dim: string | null
+          ind1_frase1: string | null
+          ind1_frase2: string | null
+          ind1_frase3: string | null
+          ind1_is_proposed: boolean | null
+          ind1_name: string | null
+          ind1_nivel1: string | null
+          ind1_nivel2: string | null
+          ind1_nivel3: string | null
+          ind1_source: string | null
+          ind2_dim: string | null
+          ind2_frase1: string | null
+          ind2_frase2: string | null
+          ind2_frase3: string | null
+          ind2_is_proposed: boolean | null
+          ind2_name: string | null
+          ind2_nivel1: string | null
+          ind2_nivel2: string | null
+          ind2_nivel3: string | null
+          ind2_source: string | null
+          month_key: string
+          month_order: number
+          org_id: string
+        }
+        Insert: {
+          category_key: string
+          context_note?: string | null
+          created_at?: string
+          eval_type: string
+          id?: string
+          ind1_dim?: string | null
+          ind1_frase1?: string | null
+          ind1_frase2?: string | null
+          ind1_frase3?: string | null
+          ind1_is_proposed?: boolean | null
+          ind1_name?: string | null
+          ind1_nivel1?: string | null
+          ind1_nivel2?: string | null
+          ind1_nivel3?: string | null
+          ind1_source?: string | null
+          ind2_dim?: string | null
+          ind2_frase1?: string | null
+          ind2_frase2?: string | null
+          ind2_frase3?: string | null
+          ind2_is_proposed?: boolean | null
+          ind2_name?: string | null
+          ind2_nivel1?: string | null
+          ind2_nivel2?: string | null
+          ind2_nivel3?: string | null
+          ind2_source?: string | null
+          month_key: string
+          month_order: number
+          org_id: string
+        }
+        Update: {
+          category_key?: string
+          context_note?: string | null
+          created_at?: string
+          eval_type?: string
+          id?: string
+          ind1_dim?: string | null
+          ind1_frase1?: string | null
+          ind1_frase2?: string | null
+          ind1_frase3?: string | null
+          ind1_is_proposed?: boolean | null
+          ind1_name?: string | null
+          ind1_nivel1?: string | null
+          ind1_nivel2?: string | null
+          ind1_nivel3?: string | null
+          ind1_source?: string | null
+          ind2_dim?: string | null
+          ind2_frase1?: string | null
+          ind2_frase2?: string | null
+          ind2_frase3?: string | null
+          ind2_is_proposed?: boolean | null
+          ind2_name?: string | null
+          ind2_nivel1?: string | null
+          ind2_nivel2?: string | null
+          ind2_nivel3?: string | null
+          ind2_source?: string | null
+          month_key?: string
+          month_order?: number
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wl_monthly_indicators_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
