@@ -8,6 +8,7 @@ import { usePortalAuth } from '@/contexts/PortalAuthContext';
 import { usePlayerProgress, usePlayerBadges, usePlayerActivity, useActiveChallenges } from '@/hooks/usePortal';
 import { ProgressCard, BadgesGrid, ChallengesActive, ActivityFeed, LastEvaluationCard, IDPCard } from '@/components/portal';
 import { ExercisesTab } from '@/components/portal/ExercisesTab';
+import { WLFamilyProfile } from '@/components/wl/portal/WLFamilyProfile';
 import { MembershipTimeline } from '@/components/membership/MembershipTimeline';
 import { MembershipHeroCard } from '@/components/membership/MembershipHeroCard';
 import { usePlayerMembershipProgress } from '@/hooks/useMembershipBlocks';
@@ -151,6 +152,7 @@ export default function PortalPlayerView() {
 
               <TabsContent value="evaluacion" className="mt-4 space-y-4">
                 <LastEvaluationCard playerId={playerId!} />
+                <WLFamilyProfile playerId={playerId!} playerName={player.full_name} />
               </TabsContent>
 
               <TabsContent value="plan" className="mt-4 space-y-4">
