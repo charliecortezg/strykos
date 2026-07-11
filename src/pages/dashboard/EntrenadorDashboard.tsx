@@ -13,9 +13,7 @@ import { usePlayers } from '@/hooks/usePlayers';
 import { IntakeHistory } from '@/components/fichajes/IntakeHistory';
 import { PlayerProfileModal } from '@/components/players/PlayerProfileModal';
 import type { Player } from '@/types/categories';
-import { EvaluationsModule } from '@/components/evaluations/EvaluationsModule';
-import { CoachExternalEvaluationsView } from '@/components/evaluations/CoachExternalEvaluationsView';
-import { EvaluationsTabsWrapper } from '@/components/evaluations/EvaluationsTabsWrapper';
+import { WLMonthlyEvaluationModule } from '@/components/wl/WLMonthlyEvaluationModule';
 import { useFeatureFlags } from '@/hooks/useStrykWay';
 import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 import { BottomNavBar } from '@/components/sessions/BottomNavBar';
@@ -239,11 +237,7 @@ export default function EntrenadorDashboard() {
 
               {feature_evaluations_enabled && (
                 <TabsContent value="evaluaciones" className="mt-0">
-                  <EvaluationsTabsWrapper
-                    internalView={<EvaluationsModule categories={categories} />}
-                    externalView={<CoachExternalEvaluationsView />}
-                    showBadge
-                  />
+                  <WLMonthlyEvaluationModule categories={categories} />
                 </TabsContent>
               )}
 

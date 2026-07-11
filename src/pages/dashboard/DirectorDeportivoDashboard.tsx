@@ -21,9 +21,7 @@ import { usePlayers } from '@/hooks/usePlayers';
 import { useVenues } from '@/hooks/useVenues';
 import { useTrainersWithCategories } from '@/hooks/useTrainersWithCategories';
 import { LifecycleBillingSection } from '@/components/dashboard/LifecycleBillingSection';
-import { DirectorEvaluationsView } from '@/components/evaluations/DirectorEvaluationsView';
-import { DirectorExternalEvaluationsView } from '@/components/evaluations/DirectorExternalEvaluationsView';
-import { EvaluationsTabsWrapper } from '@/components/evaluations/EvaluationsTabsWrapper';
+import { WLMonthlyEvaluationModule } from '@/components/wl/WLMonthlyEvaluationModule';
 import { useFeatureFlags } from '@/hooks/useStrykWay';
 import { useOrgFeatures } from '@/hooks/useOrgFeatures';
 import { MembershipOverview } from '@/components/membership/MembershipOverview';
@@ -268,10 +266,7 @@ export default function DirectorDeportivoDashboard() {
 
           {feature_evaluations_enabled && (
             <TabsContent value="evaluaciones">
-              <EvaluationsTabsWrapper
-                internalView={<DirectorEvaluationsView />}
-                externalView={<DirectorExternalEvaluationsView />}
-              />
+              <WLMonthlyEvaluationModule categories={categories} />
             </TabsContent>
           )}
         </Tabs>
