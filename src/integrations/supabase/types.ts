@@ -4739,6 +4739,18 @@ export type Database = {
         }
         Returns: Json
       }
+      wl_get_family_profile: {
+        Args: { p_guardian_id: string; p_player_id: string }
+        Returns: {
+          ind1_frase: string
+          ind1_name: string
+          ind2_frase: string
+          ind2_name: string
+          month_key: string
+          month_order: number
+          season: string
+        }[]
+      }
     }
     Enums: {
       attendance_performance_status:
