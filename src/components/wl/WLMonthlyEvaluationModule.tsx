@@ -1,12 +1,15 @@
 import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePlayers } from '@/hooks/usePlayers';
 import { useWLMonthly, useHasWLMethodology } from '@/hooks/useWLMonthly';
 import { WLPlayerEvaluationSheet } from './WLPlayerEvaluationSheet';
+import { WLGroupBatteryPanel } from './WLGroupBatteryPanel';
+import { WLPlayerProgressionSheet } from './WLPlayerProgressionSheet';
 import { wlCurrentMonthKey, wlCurrentSeason, wlCategoryKeyFromAgeGroup } from '@/lib/wl-utils';
 import { WL_MONTHS, type WLMonthKey } from '@/types/wl';
-import { ClipboardCheck, CheckCircle2, Clock, ShieldAlert } from 'lucide-react';
+import { ClipboardCheck, CheckCircle2, Clock, ShieldAlert, TrendingUp } from 'lucide-react';
 
 interface Props {
   categories: { id: string; name: string; age_group?: string }[];
@@ -18,6 +21,7 @@ export function WLMonthlyEvaluationModule({ categories }: Props) {
   const [monthKey, setMonthKey] = useState<WLMonthKey>(wlCurrentMonthKey());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [progressionPlayer, setProgressionPlayer] = useState<{ id: string; name: string } | null>(null);
 
   const season = wlCurrentSeason();
   const selectedCategory = categories.find(c => c.id === selectedCategoryId);
@@ -110,61 +114,84 @@ export function WLMonthlyEvaluationModule({ categories }: Props) {
         <Badge variant="outline" className="self-center">{completedCount}/{playerStatuses.length} evaluados</Badge>
       </div>
 
-      {monthConfig && (
-        <div className="rounded-lg border p-3" style={{ borderColor: '#C9A22740', backgroundColor: '#C9A22708' }}>
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <Badge className="text-[10px] text-black" style={{ backgroundColor: '#C9A227' }}>
-              {monthConfig.eval_type.toUpperCase().replace('_', ' ')}
-            </Badge>
-            {monthConfig.ind1_name && (
-              <span className="text-xs font-medium">{monthConfig.ind1_name}</span>
-            )}
-          </div>
-          {monthConfig.ind2_name && <p className="text-xs font-medium mb-1">{monthConfig.ind2_name}</p>}
-          {monthConfig.context_note && (
-            <p className="text-[11px] text-muted-foreground leading-relaxed">{monthConfig.context_note}</p>
-          )}
-        </div>
-      )}
+      <Tabs defaultValue="capturar" className="w-full">
+        <TabsList className="mb-3">
+          <TabsTrigger value="capturar" className="text-xs">Capturar</TabsTrigger>
+          <TabsTrigger value="grupo" className="text-xs">Grupo</TabsTrigger>
+        </TabsList>
 
-      {isLoading ? (
-        <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" /></div>
-      ) : categoryPlayers.length === 0 ? (
-        <div className="stryk-card p-8 text-center"><p className="text-muted-foreground">No hay jugadores en esta categoría.</p></div>
-      ) : (
-        <div className="grid gap-2">
-          {playerStatuses.map((s, idx) => (
-            <button
-              key={s.player.id}
-              onClick={() => { setSelectedIdx(idx); setSheetOpen(true); }}
-              className="flex items-center justify-between p-3 bg-card border border-border rounded-lg hover:bg-accent/50 transition-colors text-left w-full"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-sm truncate">{s.player.full_name}</p>
-                {s.status === 'completado' && (
-                  <p className="text-xs text-muted-foreground">
-                    {s.evaluation?.nivel_ind1 ? `Ind.1: N${s.evaluation.nivel_ind1}` : ''}
-                    {s.evaluation?.nivel_ind2 ? ` · Ind.2: N${s.evaluation.nivel_ind2}` : ''}
-                    {` · Batería ${s.batteryCount}/15`}
-                  </p>
+        <TabsContent value="capturar" className="space-y-4">
+          {monthConfig && (
+            <div className="rounded-lg border p-3" style={{ borderColor: '#C9A22740', backgroundColor: '#C9A22708' }}>
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <Badge className="text-[10px] text-black" style={{ backgroundColor: '#C9A227' }}>
+                  {monthConfig.eval_type.toUpperCase().replace('_', ' ')}
+                </Badge>
+                {monthConfig.ind1_name && (
+                  <span className="text-xs font-medium">{monthConfig.ind1_name}</span>
                 )}
               </div>
-              <Badge
-                variant="outline"
-                className={`ml-2 text-xs shrink-0 gap-1 ${
-                  s.status === 'completado'
-                    ? 'bg-success/10 text-success border-success/20'
-                    : 'bg-warning/10 text-warning border-warning/20'
-                }`}
-              >
-                {s.status === 'completado'
-                  ? <><CheckCircle2 className="w-3 h-3" /> Listo</>
-                  : <><Clock className="w-3 h-3" /> Pendiente</>}
-              </Badge>
-            </button>
-          ))}
-        </div>
-      )}
+              {monthConfig.ind2_name && <p className="text-xs font-medium mb-1">{monthConfig.ind2_name}</p>}
+              {monthConfig.context_note && (
+                <p className="text-[11px] text-muted-foreground leading-relaxed">{monthConfig.context_note}</p>
+              )}
+            </div>
+          )}
+
+          {isLoading ? (
+            <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" /></div>
+          ) : categoryPlayers.length === 0 ? (
+            <div className="stryk-card p-8 text-center"><p className="text-muted-foreground">No hay jugadores en esta categoría.</p></div>
+          ) : (
+            <div className="grid gap-2">
+              {playerStatuses.map((s, idx) => (
+                <div
+                  key={s.player.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => { setSelectedIdx(idx); setSheetOpen(true); }}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { setSelectedIdx(idx); setSheetOpen(true); } }}
+                  className="flex items-center justify-between p-3 bg-card border border-border rounded-lg hover:bg-accent/50 transition-colors text-left w-full cursor-pointer"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm truncate">{s.player.full_name}</p>
+                    {s.status === 'completado' && (
+                      <p className="text-xs text-muted-foreground">
+                        {s.evaluation?.nivel_ind1 ? `Ind.1: N${s.evaluation.nivel_ind1}` : ''}
+                        {s.evaluation?.nivel_ind2 ? ` · Ind.2: N${s.evaluation.nivel_ind2}` : ''}
+                        {` · Batería ${s.batteryCount}/15`}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setProgressionPlayer({ id: s.player.id, name: s.player.full_name }); }}
+                    className="p-1.5 rounded-md hover:bg-accent shrink-0 mr-1"
+                    title="Ver progresión anual"
+                  >
+                    <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                  <Badge
+                    variant="outline"
+                    className={`ml-1 text-xs shrink-0 gap-1 ${
+                      s.status === 'completado'
+                        ? 'bg-success/10 text-success border-success/20'
+                        : 'bg-warning/10 text-warning border-warning/20'
+                    }`}
+                  >
+                    {s.status === 'completado'
+                      ? <><CheckCircle2 className="w-3 h-3" /> Listo</>
+                      : <><Clock className="w-3 h-3" /> Pendiente</>}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="grupo">
+          <WLGroupBatteryPanel batteryItems={batteryItems} evaluations={evaluations} />
+        </TabsContent>
+      </Tabs>
 
       {monthConfig && current && (
         <WLPlayerEvaluationSheet
@@ -180,6 +207,17 @@ export function WLMonthlyEvaluationModule({ categories }: Props) {
           onNext={handleNext}
           hasNext={playerStatuses.some((s, i) => i !== selectedIdx && s.status === 'pendiente')}
           isSaving={saveEvaluation.isPending}
+        />
+      )}
+
+      {categoryKey && (
+        <WLPlayerProgressionSheet
+          open={!!progressionPlayer}
+          onOpenChange={(o) => !o && setProgressionPlayer(null)}
+          playerName={progressionPlayer?.name || ''}
+          playerId={progressionPlayer?.id || null}
+          categoryKey={categoryKey}
+          season={season}
         />
       )}
     </div>
