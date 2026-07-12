@@ -12,7 +12,7 @@ import { WL_MONTHS, type WLMonthKey } from '@/types/wl';
 import { ClipboardCheck, CheckCircle2, Clock, ShieldAlert, TrendingUp } from 'lucide-react';
 
 interface Props {
-  categories: { id: string; name: string; age_group?: string }[];
+  categories: { id: string; name: string; age_group?: string; wl_category_key?: string | null }[];
 }
 
 export function WLMonthlyEvaluationModule({ categories }: Props) {
@@ -25,8 +25,11 @@ export function WLMonthlyEvaluationModule({ categories }: Props) {
 
   const season = wlCurrentSeason();
   const selectedCategory = categories.find(c => c.id === selectedCategoryId);
-  const categoryKey = wlCategoryKeyFromAgeGroup(selectedCategory?.age_group)
-    ?? wlCategoryKeyFromAgeGroup(selectedCategory?.name);
+  // Single source of truth: categories.wl_category_key. Text inference is fallback only.
+  const categoryKey =
+    (selectedCategory?.wl_category_key as ReturnType<typeof wlCategoryKeyFromAgeGroup>) ??
+    wlCategoryKeyFromAgeGroup(selectedCategory?.age_group) ??
+    wlCategoryKeyFromAgeGroup(selectedCategory?.name);
   const threshold = wlCategories.find(c => c.category_key === categoryKey)?.consolidation_threshold ?? 65;
 
   const { monthConfig, batteryItems, evaluations, isLoading, saveEvaluation } =

@@ -1,20 +1,15 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Sparkles, LogOut, ClipboardCheck, Target, TrendingUp, Activity, Dumbbell, User, History } from 'lucide-react';
+import { ArrowLeft, Sparkles, LogOut, ClipboardCheck, Target, Dumbbell, User, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePortalAuth } from '@/contexts/PortalAuthContext';
-import { usePlayerActivity, useActiveChallenges, usePlayerBadges } from '@/hooks/usePortal';
-import { BadgesGrid, ChallengesActive, ActivityFeed, IDPCard } from '@/components/portal';
+import { IDPCard } from '@/components/portal';
 import { ExercisesTab } from '@/components/portal/ExercisesTab';
 import { WLFamilyProfile } from '@/components/wl/portal/WLFamilyProfile';
 import { WLPlayerHistory } from '@/components/wl/portal/WLPlayerHistory';
 import { useWLFamilyProfile } from '@/hooks/useWLFamilyProfile';
-import { useWLPlayerHistory } from '@/hooks/useWLPlayerHistory';
-import { MembershipTimeline } from '@/components/membership/MembershipTimeline';
-import { MembershipHeroCard } from '@/components/membership/MembershipHeroCard';
-import { usePlayerMembershipProgress } from '@/hooks/useMembershipBlocks';
 import { usePlayerIDP } from '@/hooks/usePortal/usePlayerIDP';
 import { IDPSessionModal } from '@/components/portal/IDPSessionModal';
 
@@ -22,7 +17,6 @@ export default function PortalPlayerView() {
   const { playerId } = useParams<{ playerId: string }>();
   const navigate = useNavigate();
   const { linkedPlayers, logout } = usePortalAuth();
-  const [activityFilter, setActivityFilter] = useState<'block' | 'all'>('all');
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [exerciseCategory, setExerciseCategory] = useState<string | null>(null);
   const [exerciseSkillName, setExerciseSkillName] = useState<string | null>(null);
@@ -35,13 +29,8 @@ export default function PortalPlayerView() {
   };
 
   const player = linkedPlayers.find(p => p.id === playerId);
-  const { earnedBadges, lockedBadges } = usePlayerBadges(playerId || null);
-  const { events } = usePlayerActivity(playerId || null);
-  const { activeChallenges } = useActiveChallenges(playerId || null);
-  const membership = usePlayerMembershipProgress(playerId || null);
   const { idpCycle, sessions, hasSessionToday, registerSession } = usePlayerIDP(playerId || null);
   const { hasData: hasWLData, isLoading: loadingWL } = useWLFamilyProfile(playerId || null);
-  const { hasData: hasHistoryData } = useWLPlayerHistory(playerId || null);
 
   if (!player) {
     return (
@@ -57,15 +46,6 @@ export default function PortalPlayerView() {
   }
 
   const firstName = player.full_name.split(' ')[0] || player.full_name;
-
-  const blockDateRange = membership.blockStartDate && membership.blockEndDate
-    ? { start: membership.blockStartDate, end: membership.blockEndDate }
-    : null;
-
-  const filteredEvents = activityFilter === 'block' && blockDateRange
-    ? events.filter(e => e.created_at >= blockDateRange.start && e.created_at <= blockDateRange.end)
-    : events;
-
   const showFloatingButton = !!idpCycle && !hasSessionToday && idpCycle.status !== 'completed';
 
   return (
@@ -92,7 +72,7 @@ export default function PortalPlayerView() {
       </header>
 
       <main className="container px-4 py-4 space-y-4 pb-24">
-        {/* Simple player header — no numbers, no OVR, no XP */}
+        {/* Simple player header */}
         <Card className="border-primary/10">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -107,9 +87,9 @@ export default function PortalPlayerView() {
           </CardContent>
         </Card>
 
-        {/* Main Tabs */}
+        {/* Main Tabs: Eval · Plan · Ejer · Historial */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid w-full ${hasHistoryData ? 'grid-cols-6' : 'grid-cols-5'} h-auto`}>
+          <TabsList className="grid w-full grid-cols-4 h-auto">
             <TabsTrigger value="evaluacion" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
               <ClipboardCheck className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Evaluación</span>
@@ -124,22 +104,10 @@ export default function PortalPlayerView() {
               <span className="hidden sm:inline">Ejercicios</span>
               <span className="sm:hidden">Ejer</span>
             </TabsTrigger>
-            <TabsTrigger value="progreso" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
-              <TrendingUp className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Progreso</span>
-              <span className="sm:hidden">Prog</span>
-            </TabsTrigger>
-            {hasHistoryData && (
-              <TabsTrigger value="historial" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
-                <History className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Historial</span>
-                <span className="sm:hidden">Hist</span>
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="actividad" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
-              <Activity className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Actividad</span>
-              <span className="sm:hidden">Act</span>
+            <TabsTrigger value="historial" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
+              <History className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Historial</span>
+              <span className="sm:hidden">Hist</span>
             </TabsTrigger>
           </TabsList>
 
@@ -185,73 +153,13 @@ export default function PortalPlayerView() {
             />
           </TabsContent>
 
-          <TabsContent value="progreso" className="mt-4 space-y-4">
-            <MembershipHeroCard
-              currentBlock={membership.currentBlock}
-              currentStage={membership.currentStage}
-              blockStartDate={membership.blockStartDate}
-              blockEndDate={membership.blockEndDate}
-              evalCount={membership.eval_count}
-              attendancePct={membership.attendance_pct}
-              daysRemaining={membership.days_remaining}
-              eligibleForProgression={membership.eligibleForProgression}
-            />
-            {membership.blocks.length > 0 && (
-              <MembershipTimeline blocks={membership.blocks} currentStage={membership.currentStage} />
-            )}
-          </TabsContent>
-
-          {hasHistoryData && (
-            <TabsContent value="historial" className="mt-4 space-y-4">
-              <WLPlayerHistory playerId={playerId!} />
-            </TabsContent>
-          )}
-
-          <TabsContent value="actividad" className="mt-4 space-y-4">
-            <Card>
-              <CardContent className="pt-4">
-                <ChallengesActive challenges={activeChallenges} />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-sm">Logros ({earnedBadges.length})</h3>
-                </div>
-                <BadgesGrid
-                  earnedBadges={earnedBadges}
-                  lockedBadges={lockedBadges}
-                  blockDateRange={blockDateRange}
-                />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-sm">Actividad Reciente</h3>
-                  {blockDateRange && (
-                    <div className="flex gap-1">
-                      <Button
-                        variant={activityFilter === 'block' ? 'default' : 'outline'}
-                        size="sm" className="text-xs h-7 px-2"
-                        onClick={() => setActivityFilter('block')}
-                      >Este bloque</Button>
-                      <Button
-                        variant={activityFilter === 'all' ? 'default' : 'outline'}
-                        size="sm" className="text-xs h-7 px-2"
-                        onClick={() => setActivityFilter('all')}
-                      >Todo</Button>
-                    </div>
-                  )}
-                </div>
-                <ActivityFeed events={filteredEvents} />
-              </CardContent>
-            </Card>
+          <TabsContent value="historial" className="mt-4 space-y-4">
+            <WLPlayerHistory playerId={playerId!} playerName={player.full_name} />
           </TabsContent>
         </Tabs>
       </main>
 
-      {/* Floating Session Button (IDP — usada por la familia, se mantiene) */}
+      {/* Floating Session Button (IDP) */}
       {showFloatingButton && (
         <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50 px-4">
           <Button

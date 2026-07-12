@@ -61,6 +61,7 @@ export interface Category {
   end_time: string | null;
   days_of_week: string[];
   age_group: string;
+  wl_category_key?: 'sub-5' | 'sub-7' | 'sub-9' | 'sub-11' | 'sub-13' | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;

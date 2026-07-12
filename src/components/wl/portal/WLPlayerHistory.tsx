@@ -7,6 +7,7 @@ import { useWLPlayerHistory } from '@/hooks/useWLPlayerHistory';
 
 interface Props {
   playerId: string;
+  playerName?: string;
 }
 
 function typeLabel(t: string | null | undefined): string {
@@ -20,8 +21,9 @@ function typeLabel(t: string | null | undefined): string {
   return m[t.toLowerCase()] || t;
 }
 
-export function WLPlayerHistory({ playerId }: Props) {
+export function WLPlayerHistory({ playerId, playerName }: Props) {
   const { history, isLoading, hasData } = useWLPlayerHistory(playerId);
+  const firstName = (playerName || '').split(' ')[0] || 'este jugador';
 
   if (isLoading) {
     return (
@@ -35,7 +37,18 @@ export function WLPlayerHistory({ playerId }: Props) {
     );
   }
 
-  if (!hasData || !history) return null;
+  if (!hasData || !history) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="p-6 text-center space-y-2">
+          <CalendarDays className="h-6 w-6 text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">
+            El historial de {firstName} se construye con cada entrenamiento y partido.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const { show_stats, training, totals, matches } = history;
   const trainingAttended = training.presente + training.justificado;
