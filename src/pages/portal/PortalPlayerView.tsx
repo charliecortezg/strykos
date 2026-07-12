@@ -9,7 +9,9 @@ import { usePlayerActivity, useActiveChallenges, usePlayerBadges } from '@/hooks
 import { BadgesGrid, ChallengesActive, ActivityFeed, IDPCard } from '@/components/portal';
 import { ExercisesTab } from '@/components/portal/ExercisesTab';
 import { WLFamilyProfile } from '@/components/wl/portal/WLFamilyProfile';
+import { WLPlayerHistory } from '@/components/wl/portal/WLPlayerHistory';
 import { useWLFamilyProfile } from '@/hooks/useWLFamilyProfile';
+import { useWLPlayerHistory } from '@/hooks/useWLPlayerHistory';
 import { MembershipTimeline } from '@/components/membership/MembershipTimeline';
 import { MembershipHeroCard } from '@/components/membership/MembershipHeroCard';
 import { usePlayerMembershipProgress } from '@/hooks/useMembershipBlocks';
