@@ -148,6 +148,7 @@ export type Database = {
           trainer_id: string | null
           updated_at: string
           venue_id: string | null
+          wl_category_key: string | null
         }
         Insert: {
           age_group?: string
@@ -163,6 +164,7 @@ export type Database = {
           trainer_id?: string | null
           updated_at?: string
           venue_id?: string | null
+          wl_category_key?: string | null
         }
         Update: {
           age_group?: string
@@ -178,6 +180,7 @@ export type Database = {
           trainer_id?: string | null
           updated_at?: string
           venue_id?: string | null
+          wl_category_key?: string | null
         }
         Relationships: [
           {
