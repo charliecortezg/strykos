@@ -4751,6 +4751,10 @@ export type Database = {
           season: string
         }[]
       }
+      wl_get_player_history: {
+        Args: { p_guardian_id: string; p_player_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       attendance_performance_status:

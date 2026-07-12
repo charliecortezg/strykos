@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Sparkles, LogOut, ClipboardCheck, Target, TrendingUp, Activity, Dumbbell, User } from 'lucide-react';
+import { ArrowLeft, Sparkles, LogOut, ClipboardCheck, Target, TrendingUp, Activity, Dumbbell, User, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +9,9 @@ import { usePlayerActivity, useActiveChallenges, usePlayerBadges } from '@/hooks
 import { BadgesGrid, ChallengesActive, ActivityFeed, IDPCard } from '@/components/portal';
 import { ExercisesTab } from '@/components/portal/ExercisesTab';
 import { WLFamilyProfile } from '@/components/wl/portal/WLFamilyProfile';
+import { WLPlayerHistory } from '@/components/wl/portal/WLPlayerHistory';
 import { useWLFamilyProfile } from '@/hooks/useWLFamilyProfile';
+import { useWLPlayerHistory } from '@/hooks/useWLPlayerHistory';
 import { MembershipTimeline } from '@/components/membership/MembershipTimeline';
 import { MembershipHeroCard } from '@/components/membership/MembershipHeroCard';
 import { usePlayerMembershipProgress } from '@/hooks/useMembershipBlocks';
@@ -39,6 +41,7 @@ export default function PortalPlayerView() {
   const membership = usePlayerMembershipProgress(playerId || null);
   const { idpCycle, sessions, hasSessionToday, registerSession } = usePlayerIDP(playerId || null);
   const { hasData: hasWLData, isLoading: loadingWL } = useWLFamilyProfile(playerId || null);
+  const { hasData: hasHistoryData } = useWLPlayerHistory(playerId || null);
 
   if (!player) {
     return (
@@ -106,27 +109,34 @@ export default function PortalPlayerView() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 h-auto">
-            <TabsTrigger value="evaluacion" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+          <TabsList className={`grid w-full ${hasHistoryData ? 'grid-cols-6' : 'grid-cols-5'} h-auto`}>
+            <TabsTrigger value="evaluacion" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
               <ClipboardCheck className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Evaluación</span>
               <span className="sm:hidden">Eval</span>
             </TabsTrigger>
-            <TabsTrigger value="plan" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+            <TabsTrigger value="plan" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
               <Target className="h-3.5 w-3.5" />
               Plan
             </TabsTrigger>
-            <TabsTrigger value="ejercicios" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+            <TabsTrigger value="ejercicios" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
               <Dumbbell className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Ejercicios</span>
               <span className="sm:hidden">Ejer</span>
             </TabsTrigger>
-            <TabsTrigger value="progreso" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+            <TabsTrigger value="progreso" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
               <TrendingUp className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Progreso</span>
               <span className="sm:hidden">Prog</span>
             </TabsTrigger>
-            <TabsTrigger value="actividad" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+            {hasHistoryData && (
+              <TabsTrigger value="historial" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
+                <History className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Historial</span>
+                <span className="sm:hidden">Hist</span>
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="actividad" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
               <Activity className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Actividad</span>
               <span className="sm:hidden">Act</span>
@@ -190,6 +200,12 @@ export default function PortalPlayerView() {
               <MembershipTimeline blocks={membership.blocks} currentStage={membership.currentStage} />
             )}
           </TabsContent>
+
+          {hasHistoryData && (
+            <TabsContent value="historial" className="mt-4 space-y-4">
+              <WLPlayerHistory playerId={playerId!} />
+            </TabsContent>
+          )}
 
           <TabsContent value="actividad" className="mt-4 space-y-4">
             <Card>
