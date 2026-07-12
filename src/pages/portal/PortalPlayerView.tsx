@@ -41,6 +41,7 @@ export default function PortalPlayerView() {
   const membership = usePlayerMembershipProgress(playerId || null);
   const { idpCycle, sessions, hasSessionToday, registerSession } = usePlayerIDP(playerId || null);
   const { hasData: hasWLData, isLoading: loadingWL } = useWLFamilyProfile(playerId || null);
+  const { hasData: hasHistoryData } = useWLPlayerHistory(playerId || null);
 
   if (!player) {
     return (
