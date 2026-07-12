@@ -7,6 +7,7 @@ import { useWLPlayerHistory } from '@/hooks/useWLPlayerHistory';
 
 interface Props {
   playerId: string;
+  playerName?: string;
 }
 
 function typeLabel(t: string | null | undefined): string {
