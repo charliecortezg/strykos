@@ -109,27 +109,34 @@ export default function PortalPlayerView() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 h-auto">
-            <TabsTrigger value="evaluacion" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+          <TabsList className={`grid w-full ${hasHistoryData ? 'grid-cols-6' : 'grid-cols-5'} h-auto`}>
+            <TabsTrigger value="evaluacion" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
               <ClipboardCheck className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Evaluación</span>
               <span className="sm:hidden">Eval</span>
             </TabsTrigger>
-            <TabsTrigger value="plan" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+            <TabsTrigger value="plan" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
               <Target className="h-3.5 w-3.5" />
               Plan
             </TabsTrigger>
-            <TabsTrigger value="ejercicios" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+            <TabsTrigger value="ejercicios" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
               <Dumbbell className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Ejercicios</span>
               <span className="sm:hidden">Ejer</span>
             </TabsTrigger>
-            <TabsTrigger value="progreso" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+            <TabsTrigger value="progreso" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
               <TrendingUp className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Progreso</span>
               <span className="sm:hidden">Prog</span>
             </TabsTrigger>
-            <TabsTrigger value="actividad" className="text-xs px-1 py-2 gap-1 flex-col sm:flex-row">
+            {hasHistoryData && (
+              <TabsTrigger value="historial" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
+                <History className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Historial</span>
+                <span className="sm:hidden">Hist</span>
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="actividad" className="text-[11px] px-0.5 py-2 gap-1 flex-col sm:flex-row sm:text-xs sm:px-1">
               <Activity className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Actividad</span>
               <span className="sm:hidden">Act</span>
