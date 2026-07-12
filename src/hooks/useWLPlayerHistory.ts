@@ -43,7 +43,10 @@ export function useWLPlayerHistory(playerId: string | null | undefined) {
         p_guardian_id: guardianId!,
         p_player_id: playerId!,
       });
-      if (error) return null;
+      if (error) {
+        console.error('[useWLPlayerHistory] RPC error', error);
+        return null;
+      }
       return (data as unknown as PlayerHistory) || null;
     },
   });
