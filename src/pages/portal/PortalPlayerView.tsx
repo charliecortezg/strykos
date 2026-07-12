@@ -201,6 +201,12 @@ export default function PortalPlayerView() {
             )}
           </TabsContent>
 
+          {hasHistoryData && (
+            <TabsContent value="historial" className="mt-4 space-y-4">
+              <WLPlayerHistory playerId={playerId!} />
+            </TabsContent>
+          )}
+
           <TabsContent value="actividad" className="mt-4 space-y-4">
             <Card>
               <CardContent className="pt-4">
