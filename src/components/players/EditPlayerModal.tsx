@@ -72,6 +72,7 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
     defaultValues: {
       full_name: '',
       email: '',
+      date_of_birth: '',
       category_id: '',
       sport_id: '',
       plan_id: '',
