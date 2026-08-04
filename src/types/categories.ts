@@ -44,6 +44,7 @@ export interface Venue {
 }
 
 export const AGE_GROUPS = [
+  { value: '4-5', label: '4-5 años' },
   { value: '6-7', label: '6-7 años' },
   { value: '8-9', label: '8-9 años' },
   { value: '10-11', label: '10-11 años' },
