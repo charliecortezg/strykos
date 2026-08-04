@@ -33,10 +33,12 @@ import { usePlans } from '@/hooks/usePlans';
 import { useToast } from '@/hooks/use-toast';
 import { PAYMENT_STATUS_LABELS, type Player, type PaymentStatus } from '@/types/categories';
 import { SmartSportSelector } from '@/components/ui/smart-sport-selector';
+import { DateInput } from '@/components/fichajes/DateInput';
 
 const formSchema = z.object({
   full_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100),
   email: z.string().email('Correo electrónico inválido').optional().or(z.literal('')),
+  date_of_birth: z.string().optional(),
   category_id: z.string().optional(),
   sport_id: z.string().optional(),
   plan_id: z.string().optional(),
