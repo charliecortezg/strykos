@@ -12,6 +12,7 @@ export function calculateAgeGroup(dateOfBirth: string | null): string {
   const m = today.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
 
+  if (age <= 5) return '4-5';
   if (age <= 7) return '6-7';
   if (age <= 9) return '8-9';
   if (age <= 11) return '10-11';
