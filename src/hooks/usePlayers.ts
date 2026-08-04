@@ -134,6 +134,7 @@ export function usePlayers(filters?: PlayersFilters) {
       if (data.plan !== undefined) updateData.plan = data.plan || null;
       if (data.monthly_fee !== undefined) updateData.monthly_fee = data.monthly_fee || null;
       if (data.is_scholarship !== undefined) updateData.is_scholarship = data.is_scholarship;
+      if (data.date_of_birth !== undefined) updateData.date_of_birth = data.date_of_birth || null;
       if (data.payment_status !== undefined) updateData.payment_status = data.payment_status;
       if (data.is_active !== undefined) updateData.is_active = data.is_active;
 
