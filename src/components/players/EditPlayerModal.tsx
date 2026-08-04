@@ -126,6 +126,7 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
     const success = await updatePlayer(player.id, {
       full_name: values.full_name,
       email: values.email || undefined,
+      date_of_birth: values.date_of_birth || null,
       category_id: values.category_id || undefined,
       sport_id: values.sport_id || undefined,
       plan_id: values.plan_id || undefined,
