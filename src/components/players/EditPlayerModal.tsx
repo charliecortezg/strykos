@@ -211,6 +211,28 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="date_of_birth"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <DateInput
+                      key={player?.id ?? 'new'}
+                      label="Fecha de nacimiento (opcional)"
+                      value={field.value || ''}
+                      onChange={(iso) => field.onChange(iso)}
+                      minAge={2}
+                      maxAge={60}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
