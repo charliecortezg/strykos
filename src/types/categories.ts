@@ -181,6 +181,7 @@ export interface CreatePlayerData {
   plan?: string;
   monthly_fee?: number;
   is_scholarship?: boolean;
+  date_of_birth?: string | null;
 }
 
 export interface CreatePaymentData {

@@ -33,10 +33,12 @@ import { usePlans } from '@/hooks/usePlans';
 import { useToast } from '@/hooks/use-toast';
 import { PAYMENT_STATUS_LABELS, type Player, type PaymentStatus } from '@/types/categories';
 import { SmartSportSelector } from '@/components/ui/smart-sport-selector';
+import { DateInput } from '@/components/fichajes/DateInput';
 
 const formSchema = z.object({
   full_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100),
   email: z.string().email('Correo electrónico inválido').optional().or(z.literal('')),
+  date_of_birth: z.string().optional(),
   category_id: z.string().optional(),
   sport_id: z.string().optional(),
   plan_id: z.string().optional(),
@@ -70,6 +72,7 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
     defaultValues: {
       full_name: '',
       email: '',
+      date_of_birth: '',
       category_id: '',
       sport_id: '',
       plan_id: '',
@@ -87,6 +90,7 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
       form.reset({
         full_name: player.full_name,
         email: player.email || '',
+        date_of_birth: player.date_of_birth || '',
         category_id: player.category_id || '',
         sport_id: player.sport_id || '',
         plan_id: player.plan_id || '',
@@ -122,6 +126,7 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
     const success = await updatePlayer(player.id, {
       full_name: values.full_name,
       email: values.email || undefined,
+      date_of_birth: values.date_of_birth || null,
       category_id: values.category_id || undefined,
       sport_id: values.sport_id || undefined,
       plan_id: values.plan_id || undefined,
@@ -205,6 +210,28 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="date_of_birth"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <DateInput
+                      key={player?.id ?? 'new'}
+                      label="Fecha de nacimiento (opcional)"
+                      value={field.value || ''}
+                      onChange={(iso) => field.onChange(iso)}
+                      minAge={2}
+                      maxAge={60}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
