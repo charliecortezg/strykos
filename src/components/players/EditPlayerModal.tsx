@@ -90,6 +90,7 @@ export function EditPlayerModal({ open, onOpenChange, player, onPlayerUpdated }:
       form.reset({
         full_name: player.full_name,
         email: player.email || '',
+        date_of_birth: player.date_of_birth || '',
         category_id: player.category_id || '',
         sport_id: player.sport_id || '',
         plan_id: player.plan_id || '',
