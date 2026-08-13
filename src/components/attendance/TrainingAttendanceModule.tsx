@@ -91,11 +91,49 @@ export function TrainingAttendanceModule({ categories }: TrainingAttendanceModul
             </Select>
           </div>
 
-          {/* Date - Locked to today, using parseDateOnly to avoid UTC drift */}
-          <div className="w-full sm:w-44 space-y-1.5">
+          {/* Date - selectable (today or past), using parseDateOnly to avoid UTC drift */}
+          <div className="w-full sm:w-56 space-y-1.5">
             <Label className="text-xs text-muted-foreground">Fecha</Label>
-            <div className="h-12 flex items-center px-3 bg-muted/50 border border-input rounded-md text-base">
-              {format(parseDateOnly(selectedDate), "dd/MM/yyyy")}
+            <div className="flex gap-2">
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn(
+                      'h-12 flex-1 justify-start text-left text-base font-normal',
+                      isRetroactive && 'border-primary text-primary'
+                    )}
+                  >
+                    <CalendarIcon className="w-4 h-4 mr-2 shrink-0" />
+                    {format(parseDateOnly(selectedDate), 'dd/MM/yyyy')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    locale={es}
+                    selected={parseDateOnly(selectedDate)}
+                    onSelect={(d) => {
+                      if (d) setSelectedDate(toLocalKey(d));
+                      setCalendarOpen(false);
+                    }}
+                    disabled={(d) => d > parseDateOnly(today)}
+                    initialFocus
+                    className={cn('p-3 pointer-events-auto')}
+                  />
+                </PopoverContent>
+              </Popover>
+              {isRetroactive && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-12 px-3 text-sm"
+                  onClick={() => setSelectedDate(today)}
+                >
+                  Hoy
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -111,11 +149,17 @@ export function TrainingAttendanceModule({ categories }: TrainingAttendanceModul
                 {selectedCategory.venue.name}
               </Badge>
             )}
-            <span className="text-muted-foreground text-xs">
+            <span className="text-muted-foreground text-xs capitalize">
               {formatLocalDate(selectedDate)}
             </span>
+            {isRetroactive && (
+              <Badge variant="secondary" className="text-[10px]">
+                Registro retroactivo
+              </Badge>
+            )}
           </div>
         )}
+
       </Card>
 
       {/* Attendance Registration */}
