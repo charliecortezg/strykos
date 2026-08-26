@@ -140,7 +140,7 @@ serve(async (req: Request): Promise<Response> => {
       .from('intake_requests')
       .select(`
         *,
-        organizations!inner(id, name, city, receipt_logo_url, org_code, org_access_key),
+        organizations!inner(id, name, city, receipt_logo_url, org_code),
         categories(id, name),
         sports(id, name),
         venues:venue_id(id, name),
@@ -194,7 +194,7 @@ serve(async (req: Request): Promise<Response> => {
     const orgName = intake.organizations?.name || 'Academia';
     const cityName = intake.organizations?.city || '';
     const logoUrl = intake.organizations?.receipt_logo_url || '';
-    const orgCode = `${intake.organizations?.org_code || '---'} / ${intake.organizations?.org_access_key || '---'}`;
+    const orgCode = intake.organizations?.org_code || '---';
     
     const toRecipients = hasValidGuardianEmail ? [guardianEmail!] : [adminEmail];
     const bccRecipients = (hasValidGuardianEmail && hasValidAdminEmail) ? [adminEmail] : undefined;

@@ -157,6 +157,21 @@ export function IntakeTerminal() {
       });
     }
 
+    // La promo de fichaje en cancha es un COMBINADO: inscripción + primer mes por
+    // un solo precio (settings.promo_fee). Si además de la mensualidad con promo
+    // también se seleccionó la línea de Inscripción (periodicidad "Anual"), esa
+    // línea queda incluida sin costo adicional — el total de la transacción debe
+    // ser igual a promo_fee, no promo_fee + inscripción.
+    const hasMonthlyPromo = lines.some(l => l.isPromo && l.periodicity === 'Mensual');
+    if (hasMonthlyPromo) {
+      for (const line of lines) {
+        if (line.periodicity === 'Anual') {
+          line.finalPrice = 0;
+          line.isPromo = true;
+        }
+      }
+    }
+
     const total = lines.reduce((sum, l) => sum + l.finalPrice, 0);
     const hasPromo = lines.some(l => l.isPromo);
 
@@ -687,6 +702,22 @@ export function IntakeTerminal() {
                             isSelected
                           ) {
                             displayPrice = settings.promo_fee || plan.price;
+                            showPromo = true;
+                          }
+
+                          // La promo es un combinado: si además hay una mensualidad
+                          // con promo seleccionada, la línea de Inscripción (annual)
+                          // se muestra en $0, incluida en el combinado.
+                          const hasSelectedMonthlyPromo =
+                            formData.isPitchSigning &&
+                            settings?.promo_active &&
+                            isSoccer &&
+                            formData.selectedPlanIds.some(id => {
+                              const p = plans.find(pl => pl.id === id);
+                              return p?.periodicity === 'monthly';
+                            });
+                          if (plan.periodicity === 'annual' && isSelected && hasSelectedMonthlyPromo) {
+                            displayPrice = 0;
                             showPromo = true;
                           }
 
