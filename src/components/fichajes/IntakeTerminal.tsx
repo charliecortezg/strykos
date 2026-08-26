@@ -705,6 +705,22 @@ export function IntakeTerminal() {
                             showPromo = true;
                           }
 
+                          // La promo es un combinado: si además hay una mensualidad
+                          // con promo seleccionada, la línea de Inscripción (annual)
+                          // se muestra en $0, incluida en el combinado.
+                          const hasSelectedMonthlyPromo =
+                            formData.isPitchSigning &&
+                            settings?.promo_active &&
+                            isSoccer &&
+                            formData.selectedPlanIds.some(id => {
+                              const p = plans.find(pl => pl.id === id);
+                              return p?.periodicity === 'monthly';
+                            });
+                          if (plan.periodicity === 'annual' && isSelected && hasSelectedMonthlyPromo) {
+                            displayPrice = 0;
+                            showPromo = true;
+                          }
+
                           return (
                             <div
                               key={plan.id}
