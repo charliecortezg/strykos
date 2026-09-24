@@ -42,6 +42,7 @@ const BORDER = '#2a3a5a';
 type CampaignState = 'loading' | 'active' | 'closed' | 'invalid' | 'success';
 
 interface Category { id: string; name: string }
+interface PlayerOption { id: string; full_name: string }
 
 export default function UniformOrderPage() {
   const { token } = useParams<{ token: string }>();
@@ -49,9 +50,12 @@ export default function UniformOrderPage() {
   const [campaignName, setCampaignName] = useState('');
   const [campaignId, setCampaignId] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
+  const [players, setPlayers] = useState<PlayerOption[]>([]);
   const [occupied, setOccupied] = useState<number[]>([]);
 
   const [playerName, setPlayerName] = useState('');
+  const [playerId, setPlayerId] = useState('');
+  const [playerListOpen, setPlayerListOpen] = useState(false);
   const [categoryId, setCategoryId] = useState('');
   const [uniformType, setUniformType] = useState<string>('');
   const [jerseySize, setJerseySize] = useState('');
@@ -81,9 +85,23 @@ export default function UniformOrderPage() {
   }, [token]);
 
   useEffect(() => {
-    if (!categoryId || !token) return;
+    if (!categoryId || !token) {
+      setPlayers([]);
+      return;
+    }
+    fetch(`${baseUrl}?${new URLSearchParams({ token, action: 'players', category_id: categoryId }).toString()}`)
+      .then((r) => r.json())
+      .then((d) => setPlayers(d.players || []))
+      .catch(() => setPlayers([]));
+  }, [categoryId, token]);
+
+  useEffect(() => {
+    if (!categoryId || !token || !playerId) {
+      setOccupied([]);
+      return;
+    }
     const params = new URLSearchParams({ token, action: 'available-numbers', category_id: categoryId });
-    if (playerName.trim()) params.set('player_name', playerName.trim());
+    params.set('player_id', playerId);
     const timer = setTimeout(() => {
       fetch(`${baseUrl}?${params.toString()}`)
         .then((r) => r.json())
@@ -91,14 +109,20 @@ export default function UniformOrderPage() {
         .catch(() => {});
     }, 350);
     return () => clearTimeout(timer);
-  }, [categoryId, token, playerName]);
+  }, [categoryId, token, playerId]);
+
+  const filteredPlayers = useMemo(() => {
+    const query = playerName.trim().toLocaleLowerCase('es');
+    if (!query) return players;
+    return players.filter((player) => player.full_name.toLocaleLowerCase('es').includes(query));
+  }, [players, playerName]);
 
   const selectedSizeInfo = useMemo(() => SIZE_OPTIONS.find((s) => s.value === jerseySize) || null, [jerseySize]);
 
   const numberAvailable = requestedNumber !== null && requestedNumber >= 1 && requestedNumber <= 99 && !occupied.includes(requestedNumber);
   const numberInvalid = requestedNumber !== null && (requestedNumber < 1 || requestedNumber > 99 || occupied.includes(requestedNumber));
 
-  const canSubmit = playerName.trim() && categoryId && uniformType && jerseySize &&
+  const canSubmit = playerId && playerName.trim() && categoryId && uniformType && jerseySize &&
     nameOnJersey.trim() && nameOnJersey.trim().length <= 12 && numberAvailable && !submitting;
 
   const categoryName = categories.find((c) => c.id === categoryId)?.name || '';
@@ -114,6 +138,7 @@ export default function UniformOrderPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           player_name: playerName.trim(),
+          player_id: playerId,
           category_id: categoryId,
           category_name: categoryName,
           uniform_type: uniformType,
@@ -128,7 +153,7 @@ export default function UniformOrderPage() {
         setErrorMsg(data.message || data.error || 'Error al enviar pedido');
         if (categoryId && token) {
           const rp = new URLSearchParams({ token, action: 'available-numbers', category_id: categoryId });
-          if (playerName.trim()) rp.set('player_name', playerName.trim());
+          if (playerId) rp.set('player_id', playerId);
           const nr = await fetch(`${baseUrl}?${rp.toString()}`);
           const nd = await nr.json();
           setOccupied(nd.occupied || []);
@@ -218,24 +243,67 @@ export default function UniformOrderPage() {
 
         {/* Step 1: Player */}
         <Section title="1. Datos del jugador">
-          <input
-            className="w-full rounded-lg px-4 py-3 text-white text-sm outline-none placeholder:text-white/30"
-            style={{ background: CARD, border: `1px solid ${BORDER}` }}
-            placeholder="Nombre completo del jugador"
-            value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
-          />
           <select
-            className="w-full rounded-lg px-4 py-3 text-white text-sm outline-none mt-3 appearance-none"
+            className="w-full rounded-lg px-4 py-3 text-white text-sm outline-none appearance-none"
             style={{ background: CARD, border: `1px solid ${BORDER}` }}
             value={categoryId}
-            onChange={(e) => { setCategoryId(e.target.value); setRequestedNumber(null); }}
+            onChange={(e) => {
+              setCategoryId(e.target.value);
+              setPlayerId('');
+              setPlayerName('');
+              setPlayerListOpen(false);
+              setRequestedNumber(null);
+            }}
           >
             <option value="">Selecciona categoría</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
+          {categoryId && (
+            <div className="relative mt-3">
+              <input
+                className="w-full rounded-lg px-4 py-3 text-white text-sm outline-none placeholder:text-white/30"
+                style={{ background: CARD, border: `1px solid ${playerId ? GOLD : BORDER}` }}
+                placeholder="Busca y selecciona al jugador"
+                value={playerName}
+                autoComplete="off"
+                onFocus={() => setPlayerListOpen(true)}
+                onChange={(e) => {
+                  setPlayerName(e.target.value);
+                  setPlayerId('');
+                  setRequestedNumber(null);
+                  setPlayerListOpen(true);
+                }}
+              />
+              {playerListOpen && !playerId && (
+                <div
+                  className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-lg shadow-xl"
+                  style={{ background: CARD, border: `1px solid ${BORDER}` }}
+                >
+                  {filteredPlayers.length > 0 ? filteredPlayers.map((player) => (
+                    <button
+                      type="button"
+                      key={player.id}
+                      className="block w-full px-4 py-3 text-left text-sm text-white border-b last:border-b-0"
+                      style={{ borderColor: BORDER }}
+                      onClick={() => {
+                        setPlayerId(player.id);
+                        setPlayerName(player.full_name);
+                        setPlayerListOpen(false);
+                        setRequestedNumber(null);
+                      }}
+                    >
+                      {player.full_name}
+                    </button>
+                  )) : (
+                    <p className="px-4 py-3 text-sm text-white/50">No encontramos jugadores con ese nombre.</p>
+                  )}
+                </div>
+              )}
+              {playerId && <p className="mt-2 text-xs" style={{ color: GOLD }}>✓ Jugador seleccionado</p>}
+            </div>
+          )}
         </Section>
 
         {/* Step 2: Type */}
@@ -310,8 +378,8 @@ export default function UniformOrderPage() {
 
         {/* Step 5: Number */}
         <Section title="5. Número de camiseta">
-          {!categoryId ? (
-            <p className="text-sm text-white/40 text-center py-4">Primero selecciona la categoría de tu hijo.</p>
+          {!categoryId || !playerId ? (
+            <p className="text-sm text-white/40 text-center py-4">Primero selecciona la categoría y al jugador.</p>
           ) : (
             <div className="space-y-3">
               <p className="text-xs text-white/50">Del 1 al 99. Sin repetidos en tu categoría.</p>

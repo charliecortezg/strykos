@@ -60,13 +60,51 @@ Deno.serve(async (req) => {
       const categoryId = url.searchParams.get("category_id");
       if (!categoryId) return json({ error: "category_id requerido" }, 400);
 
+      const playerId = url.searchParams.get("player_id");
+      if (!playerId) return json({ error: "player_id requerido" }, 400);
+
+      const player = await getCampaignPlayer(
+        supabase,
+        campaign.org_id,
+        categoryId,
+        playerId
+      );
+      if (!player) return json({ error: "Jugador inválido" }, 400);
+
       const occupied = await getOccupiedNumbers(
         supabase,
         campaign.org_id,
         categoryId,
-        url.searchParams.get("player_name") || undefined
+        player.id,
+        player.full_name
       );
       return json({ occupied, min: MIN_NUMBER, max: MAX_NUMBER });
+    }
+
+    if (action === "players") {
+      const categoryId = url.searchParams.get("category_id");
+      if (!categoryId) return json({ error: "category_id requerido" }, 400);
+
+      const { data: category } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("id", categoryId)
+        .eq("organization_id", campaign.org_id)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (!category) return json({ error: "Categoría inválida" }, 400);
+
+      const { data: players, error: playersErr } = await supabase
+        .from("players")
+        .select("id, full_name")
+        .eq("organization_id", campaign.org_id)
+        .eq("category_id", categoryId)
+        .eq("is_active", true)
+        .order("full_name");
+
+      if (playersErr) return json({ error: "Error al consultar jugadores" }, 500);
+      return json({ players: players || [] });
     }
 
     // Default: return campaign data + categories
@@ -96,6 +134,7 @@ Deno.serve(async (req) => {
 
     const {
       player_name,
+      player_id,
       category_id,
       category_name,
       uniform_type,
@@ -106,7 +145,7 @@ Deno.serve(async (req) => {
     } = body;
 
     // Validations
-    if (!player_name?.trim()) return json({ error: "Nombre del jugador requerido" }, 400);
+    if (!player_id) return json({ error: "Jugador requerido" }, 400);
     if (!category_id) return json({ error: "Categoría requerida" }, 400);
 
     // Verify category belongs to org
@@ -118,6 +157,14 @@ Deno.serve(async (req) => {
       .single();
 
     if (!cat) return json({ error: "Categoría inválida" }, 400);
+
+    const player = await getCampaignPlayer(
+      supabase,
+      campaign.org_id,
+      category_id,
+      player_id
+    );
+    if (!player) return json({ error: "Selecciona un jugador válido" }, 400);
 
     if (!uniform_type || !PRICES[uniform_type])
       return json({ error: "Tipo de uniforme inválido" }, 400);
@@ -140,7 +187,8 @@ Deno.serve(async (req) => {
       supabase,
       campaign.org_id,
       category_id,
-      player_name
+      player.id,
+      player.full_name
     );
 
     if (occupied.includes(num)) {
@@ -157,7 +205,8 @@ Deno.serve(async (req) => {
       .insert({
         org_id: campaign.org_id,
         campaign_id: campaign.id,
-        player_name: player_name.trim(),
+        player_id: player.id,
+        player_name: player.full_name,
         category_id,
         category_name: category_name || cat.name,
         uniform_type,
@@ -202,54 +251,81 @@ Deno.serve(async (req) => {
 });
 
 function normalizeName(name: string): string {
-  return name.trim().toLowerCase().replace(/\s+/g, " ");
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+async function getCampaignPlayer(
+  supabase: any,
+  orgId: string,
+  categoryId: string,
+  playerId: string
+): Promise<{ id: string; full_name: string } | null> {
+  const { data } = await supabase
+    .from("players")
+    .select("id, full_name")
+    .eq("id", playerId)
+    .eq("organization_id", orgId)
+    .eq("category_id", categoryId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  return data || null;
 }
 
 async function getOccupiedNumbers(
   supabase: any,
   orgId: string,
   categoryId: string,
-  playerName?: string
+  playerId: string,
+  playerName: string
 ): Promise<number[]> {
   const occupied = new Set<number>(PERMANENT_BLOCKS);
-  const requester = playerName ? normalizeName(playerName) : null;
+  const requester = normalizeName(playerName);
 
   // Players with jersey_number in this category
   const { data: players } = await supabase
     .from("players")
-    .select("jersey_number, full_name")
+    .select("id, jersey_number, full_name")
     .eq("organization_id", orgId)
     .eq("category_id", categoryId)
     .not("jersey_number", "is", null);
 
   players?.forEach((p: any) => {
     // El jugador conserva su propio número: no se bloquea para sí mismo
-    if (requester && p.full_name && normalizeName(p.full_name) === requester) return;
+    if (p.id === playerId) return;
     occupied.add(p.jersey_number);
   });
 
   // Blocked numbers
   const { data: blocked } = await supabase
     .from("uniform_blocked_numbers")
-    .select("number, player_name")
+    .select("number, player_id, player_name")
     .eq("org_id", orgId)
     .eq("category_id", categoryId);
 
   blocked?.forEach((b: any) => {
     // Misma excepción: el número bloqueado a nombre de este jugador queda libre para él
-    if (requester && b.player_name && normalizeName(b.player_name) === requester) return;
+    if (b.player_id === playerId) return;
+    if (!b.player_id && b.player_name && normalizeName(b.player_name) === requester) return;
     occupied.add(b.number);
   });
 
   // Orders (submitted or confirmed)
   const { data: orders } = await supabase
     .from("uniform_orders")
-    .select("assigned_number")
+    .select("assigned_number, player_id, player_name")
     .eq("org_id", orgId)
     .eq("category_id", categoryId)
     .in("number_status", ["submitted", "confirmed"]);
 
   orders?.forEach((o: any) => {
+    if (o.player_id === playerId) return;
+    if (!o.player_id && normalizeName(o.player_name) === requester) return;
     if (o.assigned_number) occupied.add(o.assigned_number);
   });
 
