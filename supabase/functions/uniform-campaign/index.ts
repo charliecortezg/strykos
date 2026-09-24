@@ -63,7 +63,8 @@ Deno.serve(async (req) => {
       const occupied = await getOccupiedNumbers(
         supabase,
         campaign.org_id,
-        categoryId
+        categoryId,
+        url.searchParams.get("player_name") || undefined
       );
       return json({ occupied, min: MIN_NUMBER, max: MAX_NUMBER });
     }
@@ -134,11 +135,12 @@ Deno.serve(async (req) => {
     if (PERMANENT_BLOCKS.includes(num))
       return json({ success: false, message: "Número no disponible. Elige otro." }, 409);
 
-    // Check occupied
+    // Check occupied (excluye el número si ya pertenece al mismo jugador)
     const occupied = await getOccupiedNumbers(
       supabase,
       campaign.org_id,
-      category_id
+      category_id,
+      player_name
     );
 
     if (occupied.includes(num)) {
@@ -199,31 +201,45 @@ Deno.serve(async (req) => {
   return json({ error: "Método no permitido" }, 405);
 });
 
+function normalizeName(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 async function getOccupiedNumbers(
   supabase: any,
   orgId: string,
-  categoryId: string
+  categoryId: string,
+  playerName?: string
 ): Promise<number[]> {
   const occupied = new Set<number>(PERMANENT_BLOCKS);
+  const requester = playerName ? normalizeName(playerName) : null;
 
   // Players with jersey_number in this category
   const { data: players } = await supabase
     .from("players")
-    .select("jersey_number")
+    .select("jersey_number, full_name")
     .eq("organization_id", orgId)
     .eq("category_id", categoryId)
     .not("jersey_number", "is", null);
 
-  players?.forEach((p: any) => occupied.add(p.jersey_number));
+  players?.forEach((p: any) => {
+    // El jugador conserva su propio número: no se bloquea para sí mismo
+    if (requester && p.full_name && normalizeName(p.full_name) === requester) return;
+    occupied.add(p.jersey_number);
+  });
 
   // Blocked numbers
   const { data: blocked } = await supabase
     .from("uniform_blocked_numbers")
-    .select("number")
+    .select("number, player_name")
     .eq("org_id", orgId)
     .eq("category_id", categoryId);
 
-  blocked?.forEach((b: any) => occupied.add(b.number));
+  blocked?.forEach((b: any) => {
+    // Misma excepción: el número bloqueado a nombre de este jugador queda libre para él
+    if (requester && b.player_name && normalizeName(b.player_name) === requester) return;
+    occupied.add(b.number);
+  });
 
   // Orders (submitted or confirmed)
   const { data: orders } = await supabase
