@@ -127,7 +127,9 @@ export default function UniformOrderPage() {
       if (!res.ok || data.success === false) {
         setErrorMsg(data.message || data.error || 'Error al enviar pedido');
         if (categoryId && token) {
-          const nr = await fetch(`${baseUrl}?token=${token}&action=available-numbers&category_id=${categoryId}`);
+          const rp = new URLSearchParams({ token, action: 'available-numbers', category_id: categoryId });
+          if (playerName.trim()) rp.set('player_name', playerName.trim());
+          const nr = await fetch(`${baseUrl}?${rp.toString()}`);
           const nd = await nr.json();
           setOccupied(nd.occupied || []);
         }
