@@ -6,13 +6,11 @@ const PERMANENT_BLOCKS = [67, 69];
 
 const PRICES: Record<string, number> = {
   manga_corta: 500,
-  manga_larga: 600,
   solo_camisa: 350,
 };
 
 const TYPE_LABELS: Record<string, string> = {
   manga_corta: 'Manga Corta',
-  manga_larga: 'Manga Larga',
   solo_camisa: 'Solo Camisa',
 };
 
@@ -235,10 +233,9 @@ export default function UniformOrderPage() {
 
         {/* Step 2: Type */}
         <Section title="2. Tipo de uniforme">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             {([
               { key: 'manga_corta', label: 'MANGA CORTA', price: 500, desc: 'Completo', sub: 'Camisa + Shorts + Calcetas' },
-              { key: 'manga_larga', label: 'MANGA LARGA', price: 600, desc: 'Completo', sub: 'Camisa + Shorts + Calcetas' },
               { key: 'solo_camisa', label: 'SOLO CAMISA', price: 350, desc: 'Solo prenda', sub: 'Únicamente la camisa' },
             ] as const).map((t) => (
               <button
@@ -451,9 +448,9 @@ function PaymentInfoCard({ price }: { price: number }) {
       )}
       <div className="text-sm text-white/80 space-y-1">
         <p className="font-semibold text-white">Transfiere o deposita a:</p>
-        <p>Nombre: Carlos Mario Cortez Gurrola</p>
-        <p>Banco: Citibanamex</p>
-        <p className="font-mono tracking-wider">Tarjeta: 5256 7840 0306 7195</p>
+        <p>Nombre: Carlos Cortez</p>
+        <p>Banco: Mercado Pago</p>
+        <p className="font-mono tracking-wider">Cuenta: 722969020720055297</p>
       </div>
       <p className="text-xs text-white/50">Guarda tu comprobante de pago. El equipo de White Lions Academy lo verificará y confirmará tu pedido.</p>
     </div>
