@@ -4150,6 +4150,7 @@ export type Database = {
           org_id: string
           paid: boolean
           payment_notes: string | null
+          player_id: string | null
           player_name: string
           price: number
           requested_number: number | null
@@ -4171,6 +4172,7 @@ export type Database = {
           org_id: string
           paid?: boolean
           payment_notes?: string | null
+          player_id?: string | null
           player_name: string
           price?: number
           requested_number?: number | null
@@ -4192,6 +4194,7 @@ export type Database = {
           org_id?: string
           paid?: boolean
           payment_notes?: string | null
+          player_id?: string | null
           player_name?: string
           price?: number
           requested_number?: number | null
@@ -4218,6 +4221,13 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "uniform_orders_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
             referencedColumns: ["id"]
           },
         ]
