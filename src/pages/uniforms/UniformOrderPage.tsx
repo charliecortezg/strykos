@@ -82,11 +82,16 @@ export default function UniformOrderPage() {
 
   useEffect(() => {
     if (!categoryId || !token) return;
-    fetch(`${baseUrl}?token=${token}&action=available-numbers&category_id=${categoryId}`)
-      .then((r) => r.json())
-      .then((d) => setOccupied(d.occupied || []))
-      .catch(() => {});
-  }, [categoryId, token]);
+    const params = new URLSearchParams({ token, action: 'available-numbers', category_id: categoryId });
+    if (playerName.trim()) params.set('player_name', playerName.trim());
+    const timer = setTimeout(() => {
+      fetch(`${baseUrl}?${params.toString()}`)
+        .then((r) => r.json())
+        .then((d) => setOccupied(d.occupied || []))
+        .catch(() => {});
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [categoryId, token, playerName]);
 
   const selectedSizeInfo = useMemo(() => SIZE_OPTIONS.find((s) => s.value === jerseySize) || null, [jerseySize]);
 
