@@ -6,6 +6,7 @@ import { usePlayers } from '@/hooks/usePlayers';
 import { useWLMonthly, useHasWLMethodology } from '@/hooks/useWLMonthly';
 import { WLPlayerEvaluationSheet } from './WLPlayerEvaluationSheet';
 import { WLGroupBatteryPanel } from './WLGroupBatteryPanel';
+import { WLGroupIndicatorsPanel } from './WLGroupIndicatorsPanel';
 import { WLPlayerProgressionSheet } from './WLPlayerProgressionSheet';
 import { wlCurrentMonthKey, wlCurrentSeason, wlCategoryKeyFromAgeGroup } from '@/lib/wl-utils';
 import { WL_MONTHS, type WLMonthKey } from '@/types/wl';
@@ -191,7 +192,8 @@ export function WLMonthlyEvaluationModule({ categories }: Props) {
           )}
         </TabsContent>
 
-        <TabsContent value="grupo">
+        <TabsContent value="grupo" className="space-y-6">
+          <WLGroupIndicatorsPanel monthConfig={monthConfig ?? null} evaluations={evaluations} />
           <WLGroupBatteryPanel batteryItems={batteryItems} evaluations={evaluations} />
         </TabsContent>
       </Tabs>
