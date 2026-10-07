@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { PORTAL_DOCS_TOKEN_KEY } from '@/lib/documents';
 
 type PortalAuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'error';
 
@@ -225,6 +226,14 @@ export function PortalAuthProvider({ children }: { children: React.ReactNode }) 
       };
       localStorage.setItem(PORTAL_SESSION_KEY, JSON.stringify(session));
 
+      // Server-issued token for sensitive actions (documents). Non-blocking for the rest of the portal.
+      try {
+        const { data: tk } = await supabase.functions.invoke('player-documents', {
+          body: { action: 'portal-login', org_code: orgCode, phone, pin },
+        });
+        if (tk?.token) localStorage.setItem(PORTAL_DOCS_TOKEN_KEY, tk.token);
+      } catch { /* documents will ask to log in again */ }
+
       setState({
         status: 'authenticated',
         guardian: guardian as Guardian,
@@ -248,6 +257,7 @@ export function PortalAuthProvider({ children }: { children: React.ReactNode }) 
 
   const logout = useCallback(() => {
     localStorage.removeItem(PORTAL_SESSION_KEY);
+    localStorage.removeItem(PORTAL_DOCS_TOKEN_KEY);
     setState({
       status: 'unauthenticated',
       guardian: null,

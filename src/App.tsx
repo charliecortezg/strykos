@@ -45,6 +45,7 @@ import MonthlyReportsPage from "./pages/director/MonthlyReportsPage";
 import PortalLogin from "./pages/portal/PortalLogin";
 import PortalDashboard from "./pages/portal/PortalDashboard";
 import PortalPlayerView from "./pages/portal/PortalPlayerView";
+import PortalDocumentos from "./pages/portal/PortalDocumentos";
 // Uniform public page
 import UniformOrderPage from "./pages/uniforms/UniformOrderPage";
 // Cheer (Porra) public page
@@ -99,6 +100,11 @@ function PortalFamiliarRoutes() {
         <Route path="" element={
           <PortalAuthGuard>
             <PortalDashboard />
+          </PortalAuthGuard>
+        } />
+        <Route path="documentos" element={
+          <PortalAuthGuard>
+            <PortalDocumentos />
           </PortalAuthGuard>
         } />
         <Route path="jugador/:playerId" element={

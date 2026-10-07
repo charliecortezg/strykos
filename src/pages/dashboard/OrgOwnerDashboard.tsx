@@ -10,6 +10,7 @@ import { ConfirmDeactivateDialog } from '@/components/dashboard/ConfirmDeactivat
 import { UserActionsMenu } from '@/components/dashboard/UserActionsMenu';
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
 import { FounderKPISection } from '@/components/dashboard/FounderKPISection';
+import { DocsCompletitudIndicator } from '@/components/documents/DocsCompletitudIndicator';
 // PlanLimitBanner removed for one-price model (Fase 2)
 import { BillingConfigurationPanel } from '@/components/billing/BillingConfigurationPanel';
 import { LifecycleBillingSection } from '@/components/dashboard/LifecycleBillingSection';
@@ -263,6 +264,7 @@ export default function OrgOwnerDashboard() {
 
         {/* Founder KPIs Section */}
         <FounderKPISection />
+        <DocsCompletitudIndicator />
 
         {/* Lifecycle & Billing Section */}
         <LifecycleBillingSection />
