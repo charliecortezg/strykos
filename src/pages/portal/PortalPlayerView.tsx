@@ -20,15 +20,6 @@ import { IDPSessionModal } from '@/components/portal/IDPSessionModal';
 export default function PortalPlayerView() {
   const { playerId } = useParams<{ playerId: string }>();
   const navigate = useNavigate();
-  const { organizationId: docsOrgId } = usePortalAuthDocs();
-  const { data: docsEnabled } = useDocsQuery({
-    queryKey: ['portal-docs-flag', docsOrgId],
-    enabled: !!docsOrgId,
-    queryFn: async () => {
-      const { data } = await sbDocs.from('organizations').select('features').eq('id', docsOrgId!).maybeSingle();
-      return (data?.features as any)?.documentos === true;
-    },
-  });
   const { linkedPlayers, logout } = usePortalAuth();
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [exerciseCategory, setExerciseCategory] = useState<string | null>(null);
