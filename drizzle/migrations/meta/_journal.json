@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791403364137,
+      "tag": "0000_player_documents_module",
+      "breakpoints": true
+    }
+  ]
+}

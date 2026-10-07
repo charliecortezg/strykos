@@ -414,6 +414,68 @@ export type Database = {
           },
         ]
       }
+      document_access_log: {
+        Row: {
+          action: string
+          created_at: string
+          document_id: string | null
+          guardian_id: string | null
+          id: string
+          org_id: string
+          player_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          document_id?: string | null
+          guardian_id?: string | null
+          id?: string
+          org_id: string
+          player_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          document_id?: string | null
+          guardian_id?: string | null
+          id?: string
+          org_id?: string
+          player_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_access_log_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "player_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_access_log_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_access_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_access_log_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evaluation_achievements: {
         Row: {
           achievement_key: string
@@ -2230,6 +2292,7 @@ export type Database = {
           plan: Database["public"]["Enums"]["subscription_plan"] | null
           primary_sport: string
           receipt_logo_url: string | null
+          temporada_actual: string | null
           updated_at: string | null
         }
         Insert: {
@@ -2262,6 +2325,7 @@ export type Database = {
           plan?: Database["public"]["Enums"]["subscription_plan"] | null
           primary_sport: string
           receipt_logo_url?: string | null
+          temporada_actual?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -2294,6 +2358,7 @@ export type Database = {
           plan?: Database["public"]["Enums"]["subscription_plan"] | null
           primary_sport?: string
           receipt_logo_url?: string | null
+          temporada_actual?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -2639,6 +2704,88 @@ export type Database = {
           },
         ]
       }
+      player_documents: {
+        Row: {
+          doc_type: string
+          id: string
+          is_current: boolean
+          mime_type: string | null
+          org_id: string
+          player_id: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          season: string | null
+          source: string
+          status: string
+          storage_path: string
+          uploaded_at: string
+          uploaded_by: string | null
+          uploaded_by_guardian: string | null
+          version: number
+        }
+        Insert: {
+          doc_type: string
+          id?: string
+          is_current?: boolean
+          mime_type?: string | null
+          org_id: string
+          player_id: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          season?: string | null
+          source: string
+          status: string
+          storage_path: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          uploaded_by_guardian?: string | null
+          version?: number
+        }
+        Update: {
+          doc_type?: string
+          id?: string
+          is_current?: boolean
+          mime_type?: string | null
+          org_id?: string
+          player_id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          season?: string | null
+          source?: string
+          status?: string
+          storage_path?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          uploaded_by_guardian?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_documents_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_documents_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_documents_uploaded_by_guardian_fkey"
+            columns: ["uploaded_by_guardian"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_guardians: {
         Row: {
           created_at: string | null
@@ -2924,6 +3071,7 @@ export type Database = {
           block_start_date: string | null
           category_id: string | null
           created_at: string
+          curp: string | null
           date_of_birth: string | null
           eligible_for_progression: boolean
           email: string | null
@@ -2961,6 +3109,7 @@ export type Database = {
           block_start_date?: string | null
           category_id?: string | null
           created_at?: string
+          curp?: string | null
           date_of_birth?: string | null
           eligible_for_progression?: boolean
           email?: string | null
@@ -2998,6 +3147,7 @@ export type Database = {
           block_start_date?: string | null
           category_id?: string | null
           created_at?: string
+          curp?: string | null
           date_of_birth?: string | null
           eligible_for_progression?: boolean
           email?: string | null
@@ -4621,6 +4771,66 @@ export type Database = {
       daitch_mokotoff: { Args: { "": string }; Returns: string[] }
       dmetaphone: { Args: { "": string }; Returns: string }
       dmetaphone_alt: { Args: { "": string }; Returns: string }
+      docs_completitud_org: {
+        Args: never
+        Returns: {
+          completo: boolean
+          constancia: string
+          datos_completos: boolean
+          obligatorios_aprobados: number
+          player_id: string
+          por_revisar: number
+        }[]
+      }
+      docs_constancia_vigencia: {
+        Args: { p_player_id: string }
+        Returns: string
+      }
+      docs_eliminar: { Args: { p_document_id: string }; Returns: undefined }
+      docs_es_admin: { Args: { _org: string }; Returns: boolean }
+      docs_es_servicio: { Args: never; Returns: boolean }
+      docs_estado_jugador: {
+        Args: { p_guardian_id?: string; p_player_id: string }
+        Returns: Json
+      }
+      docs_guardar_datos_base: {
+        Args: {
+          p_curp: string
+          p_fecha_nac: string
+          p_guardian_id?: string
+          p_nombre: string
+          p_player_id: string
+        }
+        Returns: undefined
+      }
+      docs_revisar: {
+        Args: { p_decision: string; p_document_id: string; p_motivo?: string }
+        Returns: undefined
+      }
+      docs_set_temporada: { Args: { p_temporada: string }; Returns: undefined }
+      docs_subir: {
+        Args: {
+          p_doc_type: string
+          p_guardian_id?: string
+          p_mime_type?: string
+          p_player_id: string
+          p_source: string
+          p_storage_path: string
+        }
+        Returns: string
+      }
+      docs_tutor_de: {
+        Args: { _guardian: string; _player: string }
+        Returns: boolean
+      }
+      docs_url_firmada: {
+        Args: {
+          p_accion?: string
+          p_document_id: string
+          p_guardian_id?: string
+        }
+        Returns: string
+      }
       evaluate_membership_progression: {
         Args: { p_as_of_date: string; p_org_id: string }
         Returns: Json
@@ -4705,6 +4915,8 @@ export type Database = {
         Args: { p_intake_request_id: string }
         Returns: Json
       }
+      puede_subir_documentos: { Args: { _path: string }; Returns: boolean }
+      puede_ver_documentos: { Args: { _path: string }; Returns: boolean }
       reset_active_organization: { Args: never; Returns: undefined }
       reset_monthly_payment_status: { Args: never; Returns: number }
       search_players: {
