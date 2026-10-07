@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.uniform-campaign]
 verify_jwt = false
+
+[functions.player-documents]
+verify_jwt = false
