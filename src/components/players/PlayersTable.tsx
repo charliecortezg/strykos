@@ -44,6 +44,16 @@ import { ExcelImportModal } from './ExcelImportModal';
 import { CreatePaymentModal } from '@/components/payments/CreatePaymentModal';
 import { PAYMENT_STATUS_LABELS, type Player, type PaymentStatus } from '@/types/categories';
 import { useToast } from '@/hooks/use-toast';
+import { useDocsCompletitud } from '@/hooks/useDocsCompletitud';
+import { portalDocsLink, VIGENCIA_LABELS } from '@/lib/documents';
+import { MessageCircle } from 'lucide-react';
+
+function whatsappDocsUrl(player: Player) {
+  const raw = ((player as any).parent_phone || player.phone || '').replace(/\D/g, '');
+  const phone = raw.length === 10 ? `52${raw}` : raw;
+  const msg = `Hola, ¿cómo estás? Para tener completo el expediente de ${player.full_name} en la academia, ¿nos ayudas a subir sus documentos (CURP, acta de nacimiento y foto) aquí? ${portalDocsLink()} ¡Gracias!`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+}
 
 export function PlayersTable() {
   const { toast } = useToast();
@@ -65,10 +75,19 @@ export function PlayersTable() {
     search: searchQuery || undefined,
   });
 
+  const docs = useDocsCompletitud();
+  const [docFilter, setDocFilter] = useState<'' | 'faltantes' | 'revisar' | 'vencida'>('');
+
   // Filter by plan client-side
-  const filteredPlayers = planFilter 
-    ? players.filter(p => p.plan_id === planFilter)
-    : players;
+  const filteredPlayers = players
+    .filter(p => !planFilter || p.plan_id === planFilter)
+    .filter(p => {
+      if (!docFilter || !docs.enabled) return true;
+      const r = docs.map.get(p.id);
+      if (docFilter === 'faltantes') return !r?.completo;
+      if (docFilter === 'revisar') return (r?.por_revisar ?? 0) > 0;
+      return r?.constancia === 'vencida';
+    });
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -353,6 +372,14 @@ export function PlayersTable() {
         {filteredPlayers.length} jugador{filteredPlayers.length !== 1 ? 'es' : ''}
       </p>
 
+      {docs.enabled && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {([['', 'Todos'], ['faltantes', 'Faltan documentos'], ['revisar', 'Por revisar'], ['vencida', 'Constancia vencida']] as const).map(([v, l]) => (
+            <Button key={v} size="sm" variant={docFilter === v ? 'default' : 'outline'} className="h-8 text-xs" onClick={() => setDocFilter(v)}>{l}</Button>
+          ))}
+        </div>
+      )}
+
       {/* Table/Cards */}
       <div className="stryk-card overflow-x-auto">
         {isLoading ? (
@@ -383,6 +410,7 @@ export function PlayersTable() {
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Categoría</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Plan</th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">Pago</th>
+                    {docs.enabled && <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">Documentos</th>}
                     <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground w-12"></th>
                   </tr>
                 </thead>
@@ -452,6 +480,11 @@ export function PlayersTable() {
                           </Badge>
                         </button>
                       </td>
+                      {docs.enabled && (
+                        <td className="px-4 py-3 text-center">
+                          <DocsCell row={docs.map.get(player.id)} />
+                        </td>
+                      )}
                       {/* Actions menu */}
                       <td className="px-4 py-3 text-right">
                         <DropdownMenu>
@@ -466,6 +499,12 @@ export function PlayersTable() {
                               Registrar pago
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
+                            {docs.enabled && (
+                              <DropdownMenuItem onClick={() => window.open(whatsappDocsUrl(player), '_blank', 'noopener')}>
+                                <MessageCircle className="w-4 h-4 mr-2" />
+                                Pedir documentos por WhatsApp
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={() => setViewingPlayer(player)}>
                               <Eye className="w-4 h-4 mr-2" />
                               Ver perfil
@@ -534,6 +573,7 @@ export function PlayersTable() {
                           {player.plan_data?.name || 'Sin plan'}
                           {player.monthly_fee && ` • $${player.monthly_fee}`}
                         </span>
+                        {docs.enabled && <DocsCell row={docs.map.get(player.id)} />}
                       </div>
                     </div>
                     
@@ -549,6 +589,12 @@ export function PlayersTable() {
                           Registrar pago
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
+                        {docs.enabled && (
+                          <DropdownMenuItem onClick={() => window.open(whatsappDocsUrl(player), '_blank', 'noopener')} className="py-3">
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            Pedir documentos por WhatsApp
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => setViewingPlayer(player)} className="py-3">
                           <Eye className="w-4 h-4 mr-2" />
                           Ver perfil
@@ -647,5 +693,18 @@ export function PlayersTable() {
         defaultPlayerId={paymentPlayerId}
       />
     </div>
+  );
+}
+function DocsCell({ row }: { row?: { obligatorios_aprobados: number; completo: boolean; constancia: 'vigente' | 'vencida' | 'sin_constancia' } }) {
+  if (!row) return <span className="text-xs text-muted-foreground">—</span>;
+  return (
+    <span className="inline-flex items-center gap-1">
+      <Badge variant="outline" className={row.completo ? 'border-success text-success text-xs' : 'text-xs'}>
+        Docs {row.obligatorios_aprobados}/3
+      </Badge>
+      <Badge variant="secondary" className="text-[10px]">
+        {row.constancia === 'sin_constancia' ? '—' : VIGENCIA_LABELS[row.constancia]}
+      </Badge>
+    </span>
   );
 }

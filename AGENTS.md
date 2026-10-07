@@ -1,0 +1,2 @@
+- Player documents: family (portal) actions go through the `player-documents` backend function with a server-issued token (`tutor_auth_tokens`), never direct table/storage access — the portal has no real auth session.
+- Player documents files are only served via 60s signed URLs from `player-documents` after `docs_url_firmada` logs the access; no SELECT policy on the bucket, so every view is logged.

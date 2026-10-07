@@ -16,6 +16,9 @@ import { PAYMENT_STATUS_LABELS, ATTENDANCE_STATUS_LABELS, type Player, type Paym
 import { getMatchResult } from '@/types/matches';
 import { cn } from '@/lib/utils';
 import { PlayerTimeline } from './PlayerTimeline';
+import { PlayerDocumentsTab } from '@/components/documents/PlayerDocumentsTab';
+import { useOrgFeatures } from '@/hooks/useOrgFeatures';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PlayerProfileModalProps {
   open: boolean;
@@ -41,6 +44,9 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
   const { attendance, stats, isLoading: loadingAttendance } = usePlayerAttendance(player?.id || null);
   const { matches, matchStats, isLoading: loadingMatches } = usePlayerMatches(player?.id || null);
   const { getPlayerPayments } = usePayments();
+  const { isEnabled } = useOrgFeatures();
+  const { activeRole } = useAuth();
+  const showDocs = isEnabled('documentos') && (activeRole === 'org_owner' || activeRole === 'administrativo');
   
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
@@ -146,12 +152,13 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
           {/* Tabs - inside scrollable area */}
           <div className="p-4 sm:p-6">
             <Tabs defaultValue="asistencia" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 mb-4">
+              <TabsList className={cn("grid w-full mb-4", showDocs ? "grid-cols-6" : "grid-cols-5")}>
                 <TabsTrigger value="asistencia" className="text-xs sm:text-sm">Asistencia</TabsTrigger>
                 <TabsTrigger value="partidos" className="text-xs sm:text-sm">Partidos</TabsTrigger>
                 <TabsTrigger value="pagos" className="text-xs sm:text-sm">Pagos</TabsTrigger>
                 <TabsTrigger value="timeline" className="text-xs sm:text-sm">Timeline</TabsTrigger>
                 <TabsTrigger value="info" className="text-xs sm:text-sm">Info</TabsTrigger>
+                {showDocs && <TabsTrigger value="documentos" className="text-xs sm:text-sm">Docs</TabsTrigger>}
               </TabsList>
 
             {/* Attendance Tab */}
@@ -463,6 +470,12 @@ export function PlayerProfileModal({ open, onOpenChange, player }: PlayerProfile
             <TabsContent value="timeline">
               <PlayerTimeline playerId={player.id} />
             </TabsContent>
+
+            {showDocs && (
+              <TabsContent value="documentos">
+                <PlayerDocumentsTab playerId={player.id} />
+              </TabsContent>
+            )}
 
             <TabsContent value="info">
               <div className="space-y-4">

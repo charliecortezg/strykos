@@ -15,6 +15,7 @@ export const FEATURE_KEYS = [
   'session_planner',
   'unified_owner_panel',
   'venues',
+  'documentos',
 ] as const;
 
 export type FeatureKey = (typeof FEATURE_KEYS)[number];
@@ -35,6 +36,7 @@ export const PROFILE_DEFAULTS: Record<FeatureProfile, Record<FeatureKey, boolean
     session_planner: false,
     unified_owner_panel: true,
     venues: false,
+    documentos: false,
   },
   full: {
     evaluations: true,
@@ -50,6 +52,7 @@ export const PROFILE_DEFAULTS: Record<FeatureProfile, Record<FeatureKey, boolean
     session_planner: true,
     unified_owner_panel: false,
     venues: true,
+    documentos: false,
   },
 };
 
@@ -67,6 +70,7 @@ export const FEATURE_LABELS: Record<FeatureKey, string> = {
   session_planner: 'Planificador de Sesión',
   unified_owner_panel: 'Panel Unificado del Dueño',
   venues: 'Sedes',
+  documentos: 'Documentos',
 };
 
 export interface OrgFeatureSource {

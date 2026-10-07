@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { usePortalAuth } from '@/contexts/PortalAuthContext';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,7 @@ interface PortalAuthGuardProps {
 
 export function PortalAuthGuard({ children }: PortalAuthGuardProps) {
   const { status, isLoading, organizationId } = usePortalAuth();
+  const location = useLocation();
   const [checking, setChecking] = useState(true);
   const [portalEnabled, setPortalEnabled] = useState<boolean | null>(null);
 
@@ -47,7 +48,7 @@ export function PortalAuthGuard({ children }: PortalAuthGuardProps) {
   }
 
   if (status !== 'authenticated') {
-    return <Navigate to="/portal/login" replace />;
+    return <Navigate to={`/portal/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
   if (portalEnabled === false) {

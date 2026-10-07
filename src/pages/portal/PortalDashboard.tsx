@@ -50,6 +50,10 @@ export default function PortalDashboard() {
           </p>
         </div>
 
+        <Button variant="outline" className="w-full" onClick={() => navigate('/portal/documentos')}>
+          Documentos de mis hijos
+        </Button>
+
         {/* Players List */}
         <div className="space-y-3">
           <h2 className="text-lg font-semibold">Tus jugadores</h2>

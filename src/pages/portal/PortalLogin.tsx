@@ -27,7 +27,7 @@ export default function PortalLogin() {
     const success = await login(orgCode, phone, pin);
     if (success) {
       toast.success('¡Bienvenido al Portal Familiar!');
-      navigate('/portal');
+      navigate(new URLSearchParams(window.location.search).get('redirect')?.startsWith('/portal') ? new URLSearchParams(window.location.search).get('redirect')! : '/portal');
     }
   };
 

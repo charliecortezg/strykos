@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { OWNER_COPY } from '@/lib/owner-language';
 
 import { FounderKPISection } from '@/components/dashboard/FounderKPISection';
+import { DocsCompletitudIndicator } from '@/components/documents/DocsCompletitudIndicator';
 import { EstadoAcademiaSection } from '@/components/dashboard/owner/EstadoAcademiaSection';
 import { JugadoresPorRecuperar } from '@/components/dashboard/owner/JugadoresPorRecuperar';
 import { MonthlyReportSection } from '@/components/reports/MonthlyReportSection';
@@ -102,6 +103,7 @@ export default function OwnerDashboard() {
           {/* INICIO */}
           <TabsContent value="inicio" className="space-y-6">
             <FounderKPISection />
+            <DocsCompletitudIndicator />
             <EstadoAcademiaSection />
             <JugadoresPorRecuperar />
             <MonthlyReportSection />
