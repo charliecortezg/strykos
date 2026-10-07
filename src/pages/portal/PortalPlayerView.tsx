@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FileText } from 'lucide-react';
-import { supabase as sbDocs } from '@/integrations/supabase/client';
-import { useQuery as useDocsQuery } from '@tanstack/react-query';
-import { usePortalAuth as usePortalAuthDocs } from '@/contexts/PortalAuthContext';
 import { ArrowLeft, Sparkles, LogOut, ClipboardCheck, Target, Dumbbell, User, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -76,12 +73,10 @@ export default function PortalPlayerView() {
       </header>
 
       <main className="container px-4 py-4 space-y-4 pb-24">
-        {docsEnabled && (
-          <Button variant="outline" className="w-full justify-start gap-2 h-12" onClick={() => navigate('/portal/documentos')}>
-            <FileText className="h-5 w-5 text-primary" />
-            Subir documentos (CURP, acta y foto)
-          </Button>
-        )}
+        <Button variant="outline" className="w-full justify-start gap-2 h-12" onClick={() => navigate('/portal/documentos')}>
+          <FileText className="h-5 w-5 text-primary" />
+          Subir documentos (CURP, acta y foto)
+        </Button>
         {/* Simple player header */}
         <Card className="border-primary/10">
           <CardContent className="p-4 flex items-center gap-3">
