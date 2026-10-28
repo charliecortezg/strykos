@@ -4596,6 +4596,7 @@ export type Database = {
           nivel_ind1: number | null
           nivel_ind2: number | null
           org_id: string
+          physical_results: Json
           player_id: string
           recorded_by: string | null
           season: string
@@ -4612,6 +4613,7 @@ export type Database = {
           nivel_ind1?: number | null
           nivel_ind2?: number | null
           org_id: string
+          physical_results?: Json
           player_id: string
           recorded_by?: string | null
           season?: string
@@ -4628,6 +4630,7 @@ export type Database = {
           nivel_ind1?: number | null
           nivel_ind2?: number | null
           org_id?: string
+          physical_results?: Json
           player_id?: string
           recorded_by?: string | null
           season?: string
@@ -4751,6 +4754,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "wl_monthly_indicators_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wl_physical_tests: {
+        Row: {
+          category_key: string
+          created_at: string
+          green_min: number
+          id: string
+          kind: string
+          name: string
+          org_id: string
+          sort_order: number
+          test_key: string
+          unit: string
+          yellow_min: number
+        }
+        Insert: {
+          category_key: string
+          created_at?: string
+          green_min: number
+          id?: string
+          kind: string
+          name: string
+          org_id: string
+          sort_order?: number
+          test_key: string
+          unit: string
+          yellow_min: number
+        }
+        Update: {
+          category_key?: string
+          created_at?: string
+          green_min?: number
+          id?: string
+          kind?: string
+          name?: string
+          org_id?: string
+          sort_order?: number
+          test_key?: string
+          unit?: string
+          yellow_min?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wl_physical_tests_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"

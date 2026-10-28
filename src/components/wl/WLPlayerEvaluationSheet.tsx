@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { WL_LEVEL_CONFIG } from '@/lib/wl-utils';
+import { WL_LEVEL_CONFIG, type WLPhysicalTest, type WLPhysicalResults } from '@/lib/wl-utils';
+import { WLPhysicalTestsCard } from './WLPhysicalTestsCard';
 import type { WLMonthlyIndicator, WLBatteryItem, WLMonthlyEvaluation } from '@/types/wl';
 import { Save, ChevronRight, MessageSquarePlus } from 'lucide-react';
 
@@ -15,6 +16,7 @@ interface Props {
   playerId: string;
   monthConfig: WLMonthlyIndicator;
   batteryItems: WLBatteryItem[];
+  physicalTests?: WLPhysicalTest[];
   existing: WLMonthlyEvaluation | null;
   threshold: number;
   onSave: (payload: {
@@ -22,6 +24,7 @@ interface Props {
     nivelInd1: 1 | 2 | 3 | null;
     nivelInd2: 1 | 2 | 3 | null;
     batteryResults: Record<string, boolean>;
+    physicalResults?: WLPhysicalResults;
     coachNote: string | null;
   }) => Promise<void>;
   onNext: () => void;
@@ -77,12 +80,13 @@ function IndicatorCard({
 }
 
 export function WLPlayerEvaluationSheet({
-  open, onOpenChange, playerName, playerId, monthConfig, batteryItems,
+  open, onOpenChange, playerName, playerId, monthConfig, batteryItems, physicalTests = [],
   existing, threshold, onSave, onNext, hasNext, isSaving,
 }: Props) {
   const [nivelInd1, setNivelInd1] = useState<1 | 2 | 3 | null>(null);
   const [nivelInd2, setNivelInd2] = useState<1 | 2 | 3 | null>(null);
   const [battery, setBattery] = useState<Record<string, boolean>>({});
+  const [physical, setPhysical] = useState<WLPhysicalResults>({});
   const [note, setNote] = useState('');
   const [showNote, setShowNote] = useState(false);
 
@@ -90,6 +94,7 @@ export function WLPlayerEvaluationSheet({
     setNivelInd1((existing?.nivel_ind1 as 1 | 2 | 3 | null) ?? null);
     setNivelInd2((existing?.nivel_ind2 as 1 | 2 | 3 | null) ?? null);
     setBattery(existing?.battery_results ?? {});
+    setPhysical((existing?.physical_results as WLPhysicalResults) ?? {});
     setNote(existing?.coach_note ?? '');
     setShowNote(!!existing?.coach_note);
   }, [playerId, existing]);
@@ -109,6 +114,7 @@ export function WLPlayerEvaluationSheet({
       nivelInd1,
       nivelInd2,
       batteryResults: battery,
+      ...(physicalTests.length ? { physicalResults: physical } : {}),
       coachNote: note.trim() || null,
     });
     if (hasNext) onNext();
@@ -200,6 +206,8 @@ export function WLPlayerEvaluationSheet({
               ))}
             </div>
           </div>
+
+          <WLPhysicalTestsCard tests={physicalTests} value={physical} onChange={setPhysical} />
 
           {showNote ? (
             <Input

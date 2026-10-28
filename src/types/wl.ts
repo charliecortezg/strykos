@@ -61,6 +61,7 @@ export interface WLMonthlyEvaluation {
   nivel_ind1: 1 | 2 | 3 | null;
   nivel_ind2: 1 | 2 | 3 | null;
   battery_results: Record<string, boolean>;
+  physical_results?: Record<string, number | { nivel: number; recorrido: number } | null>;
   coach_note: string | null;
   recorded_by: string | null;
   created_at: string;

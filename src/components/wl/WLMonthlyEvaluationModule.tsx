@@ -1,3 +1,4 @@
+import { WLGroupPhysicalPanel } from './WLGroupPhysicalPanel';
 import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,7 +34,7 @@ export function WLMonthlyEvaluationModule({ categories }: Props) {
     wlCategoryKeyFromAgeGroup(selectedCategory?.name);
   const threshold = wlCategories.find(c => c.category_key === categoryKey)?.consolidation_threshold ?? 65;
 
-  const { monthConfig, batteryItems, evaluations, isLoading, saveEvaluation } =
+  const { monthConfig, batteryItems, physicalTests, evaluations, isLoading, saveEvaluation } =
     useWLMonthly(selectedCategoryId || null, categoryKey, monthKey, season);
 
   const { players } = usePlayers();
@@ -194,6 +195,7 @@ export function WLMonthlyEvaluationModule({ categories }: Props) {
 
         <TabsContent value="grupo" className="space-y-6">
           <WLGroupIndicatorsPanel monthConfig={monthConfig ?? null} evaluations={evaluations} />
+          <WLGroupPhysicalPanel tests={physicalTests} evaluations={evaluations} />
           <WLGroupBatteryPanel batteryItems={batteryItems} evaluations={evaluations} />
         </TabsContent>
       </Tabs>
@@ -206,6 +208,7 @@ export function WLMonthlyEvaluationModule({ categories }: Props) {
           playerId={current.player.id}
           monthConfig={monthConfig}
           batteryItems={batteryItems}
+          physicalTests={physicalTests}
           existing={current.evaluation}
           threshold={threshold}
           onSave={async payload => { await saveEvaluation.mutateAsync(payload); }}
