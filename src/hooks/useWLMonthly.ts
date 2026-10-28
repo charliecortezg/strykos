@@ -1,3 +1,4 @@
+import type { WLPhysicalTest } from '@/lib/wl-utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -87,6 +88,7 @@ export function useWLMonthly(categoryId: string | null, categoryKey: WLCategoryK
       nivelInd1: 1 | 2 | 3 | null;
       nivelInd2: 1 | 2 | 3 | null;
       batteryResults: Record<string, boolean>;
+      physicalResults?: Record<string, unknown>;
       coachNote: string | null;
     }) => {
       if (!orgId || !categoryId || !categoryKey) throw new Error('Faltan datos de contexto');
@@ -102,6 +104,7 @@ export function useWLMonthly(categoryId: string | null, categoryKey: WLCategoryK
           nivel_ind1: payload.nivelInd1,
           nivel_ind2: payload.nivelInd2,
           battery_results: payload.batteryResults,
+          ...(payload.physicalResults ? { physical_results: payload.physicalResults as never } : {}),
           coach_note: payload.coachNote,
           recorded_by: userId,
           updated_at: new Date().toISOString(),
@@ -118,7 +121,24 @@ export function useWLMonthly(categoryId: string | null, categoryKey: WLCategoryK
     },
   });
 
+  const { data: physicalTests = [] } = useQuery({
+    queryKey: ['wl_physical_tests', orgId, categoryKey],
+    queryFn: async () => {
+      if (!orgId || !categoryKey) return [];
+      const { data, error } = await supabase
+        .from('wl_physical_tests')
+        .select('id,test_key,name,unit,kind,yellow_min,green_min,sort_order')
+        .eq('org_id', orgId)
+        .eq('category_key', categoryKey)
+        .order('sort_order');
+      if (error) throw error;
+      return (data ?? []) as unknown as WLPhysicalTest[];
+    },
+    enabled: !!orgId && !!categoryKey,
+  });
+
   return {
+    physicalTests,
     monthConfig,
     batteryItems,
     evaluations,
