@@ -45,3 +45,42 @@ export const WL_LEVEL_CONFIG = [
   { nivel: 2 as const, label: 'En Desarrollo', color: 'border-yellow-400 bg-yellow-500/5', selectedColor: 'border-yellow-500 bg-yellow-500/15 ring-2 ring-yellow-400/40', dot: 'bg-yellow-400' },
   { nivel: 3 as const, label: 'Consolidado', color: 'border-green-400 bg-green-500/5', selectedColor: 'border-green-500 bg-green-500/15 ring-2 ring-green-400/40', dot: 'bg-green-400' },
 ];
+
+// ---------- Pruebas físicas (Sub-11 / Sub-13) ----------
+export type WLPhysicalColor = 'rojo' | 'amarillo' | 'verde' | null;
+export interface WLPhysicalTest {
+  id: string; test_key: string; name: string; unit: string;
+  kind: 'reps' | 'beep'; yellow_min: number; green_min: number; sort_order: number;
+}
+export type WLBeepValue = { nivel: number; recorrido: number };
+export type WLPhysicalResults = Record<string, number | WLBeepValue | null>;
+
+export const WL_PHYSICAL_MAX_REPS = 150;
+export const WL_PHYSICAL_CONFIRM_REPS = 80;
+
+/** Numeric score used for color: reps as-is, beep uses the level reached. */
+export function physicalScore(test: Pick<WLPhysicalTest, 'kind'>, v: WLPhysicalResults[string] | undefined): number | null {
+  if (v === null || v === undefined) return null;
+  if (test.kind === 'beep') return typeof v === 'object' ? v.nivel : null;
+  return typeof v === 'number' ? v : null;
+}
+
+export function getPhysicalColor(test: Pick<WLPhysicalTest, 'kind' | 'yellow_min' | 'green_min'>, v: WLPhysicalResults[string] | undefined): WLPhysicalColor {
+  const s = physicalScore(test, v);
+  if (s === null) return null;
+  if (s >= test.green_min) return 'verde';
+  if (s >= test.yellow_min) return 'amarillo';
+  return 'rojo';
+}
+
+export function formatPhysical(test: Pick<WLPhysicalTest, 'kind'>, v: WLPhysicalResults[string] | undefined): string {
+  if (v === null || v === undefined) return 'Sin dato';
+  if (test.kind === 'beep' && typeof v === 'object') return `${v.nivel}.${v.recorrido}`;
+  return String(v);
+}
+
+export const WL_PHYSICAL_COLOR_STYLE: Record<'rojo' | 'amarillo' | 'verde', { label: string; cls: string }> = {
+  rojo: { label: 'Rojo', cls: 'bg-red-100 text-red-700 border-red-300' },
+  amarillo: { label: 'Amarillo', cls: 'bg-amber-100 text-amber-800 border-amber-300' },
+  verde: { label: 'Verde', cls: 'bg-green-100 text-green-700 border-green-300' },
+};
