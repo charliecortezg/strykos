@@ -52,6 +52,7 @@ export default function UniformOrderPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [players, setPlayers] = useState<PlayerOption[]>([]);
   const [occupied, setOccupied] = useState<number[]>([]);
+  const [currentNumber, setCurrentNumber] = useState<number | null>(null);
 
   const [playerName, setPlayerName] = useState('');
   const [playerId, setPlayerId] = useState('');
@@ -98,6 +99,7 @@ export default function UniformOrderPage() {
   useEffect(() => {
     if (!categoryId || !token || !playerId) {
       setOccupied([]);
+      setCurrentNumber(null);
       return;
     }
     const params = new URLSearchParams({ token, action: 'available-numbers', category_id: categoryId });
@@ -105,7 +107,12 @@ export default function UniformOrderPage() {
     const timer = setTimeout(() => {
       fetch(`${baseUrl}?${params.toString()}`)
         .then((r) => r.json())
-        .then((d) => setOccupied(d.occupied || []))
+        .then((d) => {
+          setOccupied(d.occupied || []);
+          const cur = typeof d.current_number === 'number' ? d.current_number : null;
+          setCurrentNumber(cur);
+          if (cur !== null) setRequestedNumber(cur);
+        })
         .catch(() => {});
     }, 350);
     return () => clearTimeout(timer);
@@ -382,7 +389,15 @@ export default function UniformOrderPage() {
             <p className="text-sm text-white/40 text-center py-4">Primero selecciona la categoría y al jugador.</p>
           ) : (
             <div className="space-y-3">
-              <p className="text-xs text-white/50">Del 1 al 99. Sin repetidos en tu categoría.</p>
+              {currentNumber !== null && (
+                <div className="flex items-center justify-between gap-2 rounded-lg px-3 py-2" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+                  <span className="text-sm text-white/80">Número actual: <strong className="text-white">{currentNumber}</strong></span>
+                  <button type="button" onClick={() => setRequestedNumber(currentNumber)} className="text-xs font-bold underline text-white">
+                    {requestedNumber === currentNumber ? 'Manteniendo mi número' : 'Mantener mi número'}
+                  </button>
+                </div>
+              )}
+              <p className="text-xs text-white/50">Del 1 al 99. Sin repetidos en tu categoría. Puedes cambiarlo si quieres.</p>
               <input
                 type="number"
                 min={1}

@@ -76,9 +76,12 @@ Deno.serve(async (req) => {
         campaign.org_id,
         categoryId,
         player.id,
-        player.full_name
+        player.full_name,
+        campaign.id
       );
-      return json({ occupied, min: MIN_NUMBER, max: MAX_NUMBER });
+      const { data: pj } = await supabase.from("players").select("jersey_number").eq("id", player.id).maybeSingle();
+      const cur = pj?.jersey_number ?? null;
+      return json({ occupied, current_number: cur !== null && !occupied.includes(cur) ? cur : null, min: MIN_NUMBER, max: MAX_NUMBER });
     }
 
     if (action === "players") {
@@ -188,7 +191,8 @@ Deno.serve(async (req) => {
       campaign.org_id,
       category_id,
       player.id,
-      player.full_name
+      player.full_name,
+      campaign.id
     );
 
     if (occupied.includes(num)) {
@@ -282,7 +286,8 @@ async function getOccupiedNumbers(
   orgId: string,
   categoryId: string,
   playerId: string,
-  playerName: string
+  playerName: string,
+  campaignId: string
 ): Promise<number[]> {
   const occupied = new Set<number>(PERMANENT_BLOCKS);
   const requester = normalizeName(playerName);
@@ -293,9 +298,11 @@ async function getOccupiedNumbers(
     .select("id, jersey_number, full_name")
     .eq("organization_id", orgId)
     .eq("category_id", categoryId)
-    .not("jersey_number", "is", null);
+    .eq("is_active", true);
 
+  const activeIds = new Set<string>((players || []).map((p: any) => p.id));
   players?.forEach((p: any) => {
+    if (p.jersey_number === null) return;
     // El jugador conserva su propio número: no se bloquea para sí mismo
     if (p.id === playerId) return;
     occupied.add(p.jersey_number);
@@ -321,10 +328,12 @@ async function getOccupiedNumbers(
     .select("assigned_number, player_id, player_name")
     .eq("org_id", orgId)
     .eq("category_id", categoryId)
+    .eq("campaign_id", campaignId)
     .in("number_status", ["submitted", "confirmed"]);
 
   orders?.forEach((o: any) => {
     if (o.player_id === playerId) return;
+    if (o.player_id && !activeIds.has(o.player_id)) return;
     if (!o.player_id && normalizeName(o.player_name) === requester) return;
     if (o.assigned_number) occupied.add(o.assigned_number);
   });
