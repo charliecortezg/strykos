@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { SIZE_OPTIONS, SIZE_GROUPS } from '@/lib/uniform-sizes';
 
 const PERMANENT_BLOCKS = [67, 69];
 
@@ -13,20 +15,6 @@ const TYPE_LABELS: Record<string, string> = {
   manga_corta: 'Manga Corta',
   solo_camisa: 'Solo Camisa',
 };
-
-const SIZE_OPTIONS = [
-  { group: 'INFANTIL', value: '2-4', label: 'Talla 2-4', ancho: 29, largo: 44 },
-  { group: 'INFANTIL', value: '6-8', label: 'Talla 6-8', ancho: 31, largo: 52 },
-  { group: 'INFANTIL', value: '10-12', label: 'Talla 10-12', ancho: 33, largo: 57 },
-  { group: 'INFANTIL', value: '14-16', label: 'Talla 14-16', ancho: 36, largo: 60 },
-  { group: 'ADULTO', value: 'S', label: 'Talla S/36', ancho: 50, largo: 70 },
-  { group: 'ADULTO', value: 'M', label: 'Talla M/38', ancho: 52, largo: 72 },
-  { group: 'ADULTO', value: 'L', label: 'Talla L/40', ancho: 57, largo: 75 },
-  { group: 'ADULTO', value: 'XL', label: 'Talla XL/42', ancho: 57, largo: 77 },
-  { group: 'ADULTO', value: 'XXL', label: 'Talla XXL/44', ancho: 58, largo: 80 },
-  { group: 'ADULTO', value: 'XXXL', label: 'Talla XXXL/46', ancho: 62, largo: 80 },
-  { group: 'ADULTO', value: '4XL', label: 'Talla 4XL', ancho: 67, largo: 82 },
-];
 
 // STRYK colors
 const GOLD = '#d4a030';
@@ -352,27 +340,40 @@ export default function UniformOrderPage() {
           </div>
         </Section>
 
-        {/* Step 4: Size — native select with measurements */}
+        {/* Step 4: All sizes and measurements, selectable on mobile */}
         <Section title="4. Talla">
-          <select
-            className="w-full rounded-lg px-4 py-3 text-white text-sm outline-none appearance-none"
-            style={{ background: CARD, border: `1px solid ${BORDER}` }}
-            value={jerseySize}
-            onChange={(e) => setJerseySize(e.target.value)}
-          >
-            <option value="">Selecciona talla</option>
-            {(['INFANTIL CORTE RECTO', 'MASCULINO', 'FEMENINO'] as const).map((group) => (
-              <optgroup key={group} label={group}>
-                {SIZE_OPTIONS.filter((s) => s.group === group).map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label} — Ancho {s.ancho} cm · Largo {s.largo} cm
-                  </option>
-                ))}
-              </optgroup>
+          <div className="space-y-4">
+            {SIZE_GROUPS.map((group) => (
+              <div key={group} role="group" aria-label={`Tallas ${group}`}>
+                <p className="mb-2 text-xs font-bold text-stryk-gold">{group}</p>
+                <div className="grid grid-cols-[1.2fr_1fr_1fr] px-3 pb-2 text-xs text-stryk-silver">
+                  <span>Talla</span><span className="text-center">Ancho (cm)</span><span className="text-center">Largo (cm)</span>
+                </div>
+                <div className="space-y-1">
+                  {SIZE_OPTIONS.filter((size) => size.group === group).map((size) => (
+                    <Button
+                      key={size.value}
+                      type="button"
+                      variant={jerseySize === size.value ? 'gold' : 'outline'}
+                      aria-pressed={jerseySize === size.value}
+                      aria-label={`${group} ${size.label}, ancho ${size.ancho} cm, largo ${size.largo} cm`}
+                      onClick={() => setJerseySize(size.value)}
+                      className={cn(
+                        'grid h-12 w-full grid-cols-[1.2fr_1fr_1fr] gap-0 px-3 text-sm',
+                        jerseySize !== size.value && 'border-stryk-silver/20 bg-stryk-navy text-stryk-silver hover:bg-stryk-navyDeep hover:text-stryk-silver'
+                      )}
+                    >
+                      <span className="text-left">{size.label.replace('Talla ', '')}</span>
+                      <span>{size.ancho} cm</span>
+                      <span>{size.largo} cm</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
             ))}
-          </select>
+          </div>
           {selectedSizeInfo && (
-            <p className="text-xs text-center mt-2" style={{ color: GOLD }}>
+            <p role="status" className="text-xs text-center mt-2 text-stryk-gold">
               {selectedSizeInfo.group} — {selectedSizeInfo.label}: Ancho {selectedSizeInfo.ancho} cm · Largo {selectedSizeInfo.largo} cm
             </p>
           )}
