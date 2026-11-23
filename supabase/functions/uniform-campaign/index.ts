@@ -15,9 +15,8 @@ const PRICES: Record<string, number> = {
 };
 
 const VALID_SIZES = [
-  "4", "6", "8", "10", "12", "14", "16",
-  "S", "M", "L", "XL", "XXL",
-  "S-F", "M-F", "L-F", "XL-F",
+  "2-4", "6-8", "10-12", "14-16",
+  "S", "M", "L", "XL", "XXL", "XXXL", "4XL",
 ];
 
 Deno.serve(async (req) => {

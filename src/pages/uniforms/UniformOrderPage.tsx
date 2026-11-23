@@ -15,22 +15,17 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const SIZE_OPTIONS = [
-  { group: 'INFANTIL CORTE RECTO', value: '4', label: 'Talla 4', alto: 41, ancho: 34 },
-  { group: 'INFANTIL CORTE RECTO', value: '6', label: 'Talla 6', alto: 44, ancho: 36 },
-  { group: 'INFANTIL CORTE RECTO', value: '8', label: 'Talla 8', alto: 52.5, ancho: 49 },
-  { group: 'INFANTIL CORTE RECTO', value: '10', label: 'Talla 10', alto: 55.5, ancho: 41.5 },
-  { group: 'INFANTIL CORTE RECTO', value: '12', label: 'Talla 12', alto: 57, ancho: 44.5 },
-  { group: 'INFANTIL CORTE RECTO', value: '14', label: 'Talla 14', alto: 61, ancho: 47.5 },
-  { group: 'INFANTIL CORTE RECTO', value: '16', label: 'Talla 16', alto: 64, ancho: 50.5 },
-  { group: 'MASCULINO', value: 'S', label: 'S', alto: 67, ancho: 54 },
-  { group: 'MASCULINO', value: 'M', label: 'M', alto: 69, ancho: 57 },
-  { group: 'MASCULINO', value: 'L', label: 'L', alto: 71, ancho: 60 },
-  { group: 'MASCULINO', value: 'XL', label: 'XL', alto: 73, ancho: 63 },
-  { group: 'MASCULINO', value: 'XXL', label: 'XXL', alto: 75, ancho: 66 },
-  { group: 'FEMENINO', value: 'S-F', label: 'S', alto: 61, ancho: 48 },
-  { group: 'FEMENINO', value: 'M-F', label: 'M', alto: 63, ancho: 51 },
-  { group: 'FEMENINO', value: 'L-F', label: 'L', alto: 65, ancho: 54 },
-  { group: 'FEMENINO', value: 'XL-F', label: 'XL', alto: 68, ancho: 57 },
+  { group: 'INFANTIL', value: '2-4', label: 'Talla 2-4', ancho: 29, largo: 44 },
+  { group: 'INFANTIL', value: '6-8', label: 'Talla 6-8', ancho: 31, largo: 52 },
+  { group: 'INFANTIL', value: '10-12', label: 'Talla 10-12', ancho: 33, largo: 57 },
+  { group: 'INFANTIL', value: '14-16', label: 'Talla 14-16', ancho: 36, largo: 60 },
+  { group: 'ADULTO', value: 'S', label: 'Talla S/36', ancho: 50, largo: 70 },
+  { group: 'ADULTO', value: 'M', label: 'Talla M/38', ancho: 52, largo: 72 },
+  { group: 'ADULTO', value: 'L', label: 'Talla L/40', ancho: 57, largo: 75 },
+  { group: 'ADULTO', value: 'XL', label: 'Talla XL/42', ancho: 57, largo: 77 },
+  { group: 'ADULTO', value: 'XXL', label: 'Talla XXL/44', ancho: 58, largo: 80 },
+  { group: 'ADULTO', value: 'XXXL', label: 'Talla XXXL/46', ancho: 62, largo: 80 },
+  { group: 'ADULTO', value: '4XL', label: 'Talla 4XL', ancho: 67, largo: 82 },
 ];
 
 // STRYK colors
@@ -370,7 +365,7 @@ export default function UniformOrderPage() {
               <optgroup key={group} label={group}>
                 {SIZE_OPTIONS.filter((s) => s.group === group).map((s) => (
                   <option key={s.value} value={s.value}>
-                    {s.label} — Alto {s.alto} cm · Ancho {s.ancho} cm
+                    {s.label} — Ancho {s.ancho} cm · Largo {s.largo} cm
                   </option>
                 ))}
               </optgroup>
@@ -378,7 +373,7 @@ export default function UniformOrderPage() {
           </select>
           {selectedSizeInfo && (
             <p className="text-xs text-center mt-2" style={{ color: GOLD }}>
-              {selectedSizeInfo.group} — {selectedSizeInfo.label}: Alto {selectedSizeInfo.alto} cm · Ancho {selectedSizeInfo.ancho} cm
+              {selectedSizeInfo.group} — {selectedSizeInfo.label}: Ancho {selectedSizeInfo.ancho} cm · Largo {selectedSizeInfo.largo} cm
             </p>
           )}
         </Section>
