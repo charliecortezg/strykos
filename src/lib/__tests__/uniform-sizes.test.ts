@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SIZE_OPTIONS, SIZE_GROUPS } from '../uniform-sizes';
+import { SIZE_OPTIONS, SIZE_GROUPS, formatUniformSize } from '../uniform-sizes';
 
 describe('Uniform measurements', () => {
   it.each([
@@ -13,5 +13,14 @@ describe('Uniform measurements', () => {
   it('includes every size in a selectable group', () => {
     const selectable = SIZE_GROUPS.flatMap((group) => SIZE_OPTIONS.filter((size) => size.group === group));
     expect(selectable.map((size) => size.value)).toEqual(['2-4', '6-8', '10-12', '14-16', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL']);
+  });
+
+  it('uses the selected measurements in the new order summary and confirmation', () => {
+    expect(formatUniformSize('6-8')).toBe('INFANTIL Talla 6-8 — Ancho 31 cm · Largo 52 cm');
+    expect(formatUniformSize('4XL')).toBe('ADULTO Talla 4XL — Ancho 67 cm · Largo 82 cm');
+  });
+
+  it('does not reinterpret unknown legacy sizes', () => {
+    expect(formatUniformSize('FEMENINO M')).toBe('FEMENINO M');
   });
 });

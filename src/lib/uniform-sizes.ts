@@ -13,3 +13,10 @@ export const SIZE_OPTIONS = [
 ] as const;
 
 export const SIZE_GROUPS = [...new Set(SIZE_OPTIONS.map((size) => size.group))];
+
+export function formatUniformSize(value: string): string {
+  const size = SIZE_OPTIONS.find((option) => option.value === value);
+  return size
+    ? `${size.group} ${size.label} — Ancho ${size.ancho} cm · Largo ${size.largo} cm`
+    : value;
+}

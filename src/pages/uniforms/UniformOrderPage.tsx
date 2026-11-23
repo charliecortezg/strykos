@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { SIZE_OPTIONS, SIZE_GROUPS } from '@/lib/uniform-sizes';
+import { SIZE_OPTIONS, SIZE_GROUPS, formatUniformSize } from '@/lib/uniform-sizes';
 
 const PERMANENT_BLOCKS = [67, 69];
 
@@ -207,7 +207,7 @@ export default function UniformOrderPage() {
             <Row label="Jugador" value={successData.player_name} />
             <Row label="Categoría" value={successData.category_name} />
             <Row label="Tipo" value={TYPE_LABELS[successData.uniform_type] || successData.uniform_type} />
-            <Row label="Talla" value={successData.jersey_size} />
+            <Row label="Talla" value={formatUniformSize(successData.jersey_size)} />
             <Row label="Nombre camiseta" value={successData.name_on_jersey} />
             <Row label="Número" value={`#${successData.assigned_number}`} />
           </div>
@@ -472,7 +472,7 @@ export default function UniformOrderPage() {
             {playerName && <Row label="Jugador" value={playerName} />}
             {categoryName && <Row label="Categoría" value={categoryName} />}
             {uniformType && <Row label="Tipo" value={TYPE_LABELS[uniformType] || uniformType} />}
-            {jerseySize && <Row label="Talla" value={selectedSizeInfo ? `${selectedSizeInfo.group} ${selectedSizeInfo.label}` : jerseySize} />}
+            {jerseySize && <Row label="Talla" value={formatUniformSize(jerseySize)} />}
             {nameOnJersey && <Row label="Nombre" value={nameOnJersey} />}
             {requestedNumber && <Row label="Número" value={`#${requestedNumber}`} />}
             {price > 0 && (
@@ -515,9 +515,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between">
-      <span className="text-white/50">{label}:</span>
-      <span className="text-white font-medium">{value}</span>
+    <div className="flex justify-between gap-3">
+      <span className="shrink-0 text-white/50">{label}:</span>
+      <span className="min-w-0 break-words text-right text-white font-medium">{value}</span>
     </div>
   );
 }
