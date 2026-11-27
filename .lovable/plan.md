@@ -1,16 +1,14 @@
-# Permitir confirmar todos los pedidos de "Uniformes noviembre"
+# Confirmar pedidos de uniformes sin volver a revisar números
 
-## Causa (confirmada)
-No es la categoría. Al confirmar, el panel busca si el número ya fue confirmado en esa categoría en **cualquier** pedido de temporadas pasadas (marzo, abril, septiembre). Los 26 pedidos pendientes de noviembre chocan solo con pedidos viejos; por ejemplo, Alexis Espinoza (#1) choca con su propio pedido de septiembre, y Katherine (#9) con Leonardo Ramírez, de abril. Dentro de noviembre no hay números repetidos en la misma categoría.
+## Qué pasa hoy
+Al presionar confirmar, el panel vuelve a revisar el número y lo compara con pedidos de meses pasados (marzo, abril, septiembre). Por eso salta "Número ya confirmado en otra orden" aunque en noviembre no haya repetidos.
 
 ## Cambio
-- Al confirmar, solo se revisan los pedidos **de este mismo pedido de uniformes** y de la misma categoría. Es la misma regla que ya usa el formulario de los papás.
-- Si hay un choque real dentro del mismo pedido de uniformes, el mensaje dirá qué jugador tiene ya ese número.
-- Nada más cambia. La base de datos ya permite repetir un número en categorías distintas y en pedidos de uniformes distintos.
+- El botón de confirmar ya **no revisa números**. Solo marca la orden como confirmada. El formulario de los papás ya evita que dos jugadores de la misma categoría elijan el mismo número.
+- Al confirmar, el número se sigue guardando en la ficha del jugador, igual que hoy.
 
 ## Verificación
-- Confirmar la orden de Katherine (#9, Biberón) y revisar que pase.
-- Revisar que ninguna de las 26 pendientes tenga un choque dentro de noviembre.
+- Confirmar la orden de Katherine (#9, Biberón) y comprobar que pasa.
 
 ## Detalle técnico
-`src/hooks/useUniforms.ts` → `confirmNumber`: agregar `.eq('campaign_id', order.campaign_id)` a la consulta de choques y mostrar el nombre del jugador en el error.
+`src/hooks/useUniforms.ts` → `confirmNumber`: eliminar la consulta de choques y el error; dejar solo el update `number_status='confirmed'`. La restricción única de la base de datos (pedido de uniformes + categoría + número) sigue existiendo como respaldo.
