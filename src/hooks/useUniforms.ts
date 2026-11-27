@@ -89,29 +89,6 @@ export function useUniformOrders(campaignId: string | null) {
 
   const confirmNumber = useMutation({
     mutationFn: async (orderId: string) => {
-      // Re-check availability before confirming
-      const { data: order } = await supabase
-        .from('uniform_orders')
-        .select('*')
-        .eq('id', orderId)
-        .single();
-
-      if (!order) throw new Error('Orden no encontrada');
-
-      // Check conflicts
-      const { data: conflicts } = await supabase
-        .from('uniform_orders')
-        .select('id')
-        .eq('org_id', order.org_id)
-        .eq('category_id', order.category_id)
-        .eq('assigned_number', order.assigned_number)
-        .eq('number_status', 'confirmed')
-        .neq('id', orderId);
-
-      if (conflicts && conflicts.length > 0) {
-        throw new Error('Número ya confirmado en otra orden');
-      }
-
       const { error } = await supabase
         .from('uniform_orders')
         .update({ number_status: 'confirmed' })
